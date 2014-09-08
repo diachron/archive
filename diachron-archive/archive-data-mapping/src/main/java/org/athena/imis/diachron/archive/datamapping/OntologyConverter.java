@@ -44,11 +44,12 @@ import com.hp.hpl.jena.rdf.model.impl.StatementImpl;
 import com.hp.hpl.jena.vocabulary.RDF;
 
 
-public class OntologyConverter {
+public class OntologyConverter implements DataConverter {
 	private OWLOntologyManager manager;
     private Dataset dataset;
     private DiachronicDataset diachronicDataset;
     
+    @Override
     public void convert(InputStream input, OutputStream output) {
 
         Collection<URI> filter = new HashSet<URI>();

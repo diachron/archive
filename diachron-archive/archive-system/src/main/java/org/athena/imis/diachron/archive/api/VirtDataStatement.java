@@ -5,8 +5,8 @@ import java.util.HashMap;
 import java.util.Set;
 
 import org.athena.imis.diachron.archive.core.dataloader.ArchiveEntityMetadata;
-import org.athena.imis.diachron.archive.core.dataloader.StoreFactory;
 import org.athena.imis.diachron.archive.core.dataloader.DictionaryService;
+import org.athena.imis.diachron.archive.core.dataloader.VirtLoader;
 import org.athena.imis.diachron.archive.models.DiachronicDataset;
 import org.athena.imis.diachron.archive.models.RDFDiachronicDataset;
 
@@ -16,6 +16,13 @@ import org.athena.imis.diachron.archive.models.RDFDiachronicDataset;
  *
  */
 public class VirtDataStatement implements DataStatement {
+  private final VirtLoader virtLoader;
+  private final DictionaryService dictionary;
+  
+  public VirtDataStatement(VirtLoader virtLoader, DictionaryService dictionary) {
+    this.virtLoader = virtLoader;
+    this.dictionary = dictionary;
+  }
 
 	/**
 	 * Creates a new diachronic dataset and associates it with metadata defined in the input parameter.
@@ -31,10 +38,7 @@ public class VirtDataStatement implements DataStatement {
 		for(String predicate : keySet){
 			diachronicDataset.setMetaProperty(predicate, metadataMap.get(predicate));
 		}
-		DictionaryService dictService = StoreFactory.createDictionaryService();
-		String URI = dictService.createDiachronicDataset(diachronicDataset);
-		return URI;
-		
+		return dictionary.createDiachronicDataset(diachronicDataset);
 	}
 
 	/**
@@ -50,7 +54,7 @@ public class VirtDataStatement implements DataStatement {
 		//TODO this should be read from the dictonary ???
 		
 		//This uploads directly the rdf file defined in the FileInputStream into namedGraph
-		StoreFactory.createDataLoader().loadData(stream, diachronicDatasetURI);
+		this.virtLoader.loadData(stream, diachronicDatasetURI);
 		
 	}
 }

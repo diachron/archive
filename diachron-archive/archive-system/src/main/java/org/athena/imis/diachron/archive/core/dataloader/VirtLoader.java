@@ -1,14 +1,13 @@
 package org.athena.imis.diachron.archive.core.dataloader;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
-import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.sql.Statement;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -18,14 +17,15 @@ import org.athena.imis.diachron.archive.core.datamanager.StoreConnection;
 import org.athena.imis.diachron.archive.core.loggers.DataStatistics;
 import org.athena.imis.diachron.archive.models.DiachronOntology;
 
+import virtuoso.jdbc4.VirtuosoDataSource;
 import virtuoso.jena.driver.VirtGraph;
 import virtuoso.jena.driver.VirtModel;
 import virtuoso.jena.driver.VirtuosoQueryExecution;
 import virtuoso.jena.driver.VirtuosoQueryExecutionFactory;
+import virtuoso.jena.driver.VirtuosoUpdateFactory;
 
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
@@ -35,33 +35,44 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
  * the DIACHRON archive.
  *
  */
-class VirtLoader implements Loader {
+public class VirtLoader implements Loader {
+  private final VirtuosoDataSource dataSource;
+
+  public VirtLoader(VirtuosoDataSource dataSource) {
+    this.dataSource = dataSource;
+  }
 	
 	/* (non-Javadoc)
 	 * @see org.athena.imis.diachron.archive.core.dataloader.Loader#loadModel(com.hp.hpl.jena.rdf.model.Model, java.lang.String)
 	 */
 	@Override
 	public void loadModel(Model model, String namedGraph){
-		VirtGraph graph = StoreConnection.getVirtGraph(namedGraph);	    
-	    Model remoteModel = new VirtModel(graph);
-	    remoteModel.add(model);
+		VirtGraph graph = new VirtGraph(namedGraph, this.dataSource);
+		try {
+		  Model remoteModel = new VirtModel(graph);
+		  remoteModel.add(model);
+		} finally {
+		  graph.close();
+		}
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.athena.imis.diachron.archive.core.dataloader.Loader#loadData(java.io.InputStream, java.lang.String)
 	 */
 	@Override
-	public void loadData(InputStream stream, String diachronicDatasetURI){
+	public void loadData(InputStream stream, String diachronicDatasetURI) {
 		
 		String tempGraph = DiachronOntology.diachronResourcePrefix+"stageGraph/"+System.currentTimeMillis();
+		Connection connection = null;
 	    try {
-	    	bulkLoadRDFDataToGraph(stream, tempGraph);
+	      connection = this.dataSource.getConnection();
+	    	bulkLoadRDFDataToGraph(stream, tempGraph, connection);
 	    	
 	    	//split the dataset into the corresponding named graphs
 			splitDataset(tempGraph, diachronicDatasetURI);
 			//empty the temp graph
 			
-			clearStageGraph(tempGraph);
+			clearStageGraph(tempGraph, connection);
 			
 			//update the statistics for this dataset
 			DataStatistics.getInstance().updateStatistics(diachronicDatasetURI);
@@ -72,26 +83,31 @@ class VirtLoader implements Loader {
 			
 		} catch (Exception e) {			
 			e.printStackTrace();
+		} finally {
+          try {
+            connection.close();
+          } catch (SQLException e) {
+            // silent
+          }
 		}
-	    
+
 	}
 
 	/**
 	 * Empties the given named graph from the store
 	 * @param tempGraph the graph name to be emptied
 	 */
-	private void clearStageGraph(String tempGraph) {
+	private void clearStageGraph(String tempGraph, Connection connection) {
 		/*VirtGraph graph = StoreConnection.getVirtGraph(tempGraph);	    
 		graph.clear();
 		graph.close();*/
 		try{			
-			Connection conn = StoreConnection.getConnection();											 
-		    Statement stmt = conn.createStatement ();
+		    Statement stmt = connection.createStatement ();
 		    stmt.execute ("log_enable(3,1)");
 		    stmt.executeQuery("SPARQL CLEAR GRAPH <"+tempGraph+">");
-		}catch(Exception e){
+		} catch(Exception e){
 			e.printStackTrace();
-			VirtGraph graph = StoreConnection.getVirtGraph(tempGraph);	    
+			VirtGraph graph = new VirtGraph(tempGraph, dataSource);
 			graph.clear();
 			graph.close();
 		}
@@ -99,15 +115,17 @@ class VirtLoader implements Loader {
 	}
 
 	private void createStageGraphStreaming(InputStream stream, String graphName) {
-		VirtGraph graph = StoreConnection.getVirtGraph(graphName);	    
+		VirtGraph graph = new VirtGraph(graphName, this.dataSource);
 	    Model remoteModel = new VirtModel(graph);
 	    try {
 			//InputStream is = new FileInputStream("C:/Users/Marios/Desktop/datasetGraph.rdf");
 			remoteModel.read(stream,null);
 		} catch (Exception e) {			
 			e.printStackTrace();
+		} finally {
+		  remoteModel.close();
+		  graph.close();
 		}
-	    remoteModel.close();
 	}
 	
 	/**
@@ -118,27 +136,23 @@ class VirtLoader implements Loader {
 	 * </p>
 	 * @param stream	the input stream to read from
 	 * @param graphName	the graph name to be created with the data from the input stream
+	 * @throws IOException 
+	 * @throws SQLException 
 	 */
-	private void bulkLoadRDFDataToGraph(InputStream stream, String graphName) {
+	private void bulkLoadRDFDataToGraph(InputStream stream, String graphName, Connection connection) throws IOException, SQLException {
 		String fileName = "upload_file."+(new Date()).getTime()+".rdf";
 		Path path = Paths.get(StoreConnection.getBulkLoadPath()+fileName);
 		
-		try {
+		try (Statement statement = connection.createStatement()){
 			Files.copy(stream, path);
 			// do the ISQL stuff
-			Connection conn = StoreConnection.getConnection();		     
-			Statement statement = conn.createStatement();			
 			String deletePastUploads = "delete from db.dba.load_list where ll_state='2'";
 			statement.execute(deletePastUploads);
 		    String bulkLoadSetQuery = "ld_dir('"+StoreConnection.getBulkLoadPath()+"', '"+fileName+"', '"+graphName+"')";		    
 		    statement.execute(bulkLoadSetQuery);
 		    String runBulkLoader = "rdf_loader_run()";
 		    statement.execute(runBulkLoader);
-		    statement.close();
 			
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 	}
 	
@@ -153,29 +167,34 @@ class VirtLoader implements Loader {
 	 */
 	private void splitDataset(String tempGraph, String diachronicDatasetURI) throws Exception{				
 		
-		VirtGraph graph = StoreConnection.getVirtGraph(tempGraph);	    
+		VirtGraph graph = new VirtGraph(tempGraph, this.dataSource);
 		
-		insertDatasetMetadata(graph, tempGraph, diachronicDatasetURI);
-		
-		//This will link the dataset version to its diachronic dataset, if this information exists in the stream.
-				
-		String query = "SELECT DISTINCT ?rs FROM <"+tempGraph+"> WHERE {?rs a diachron:RecordSet}";
-		VirtuosoQueryExecution vqe = VirtuosoQueryExecutionFactory.create (query, graph);
-		ResultSet results = vqe.execSelect();
-		while(results.hasNext()){
-			QuerySolution rs = results.next();
-			RDFNode recordSet = rs.get("rs");
-			insertRecordSetTriples(graph, recordSet.toString(), tempGraph);													
-		}vqe.close();		
-		query = "SELECT DISTINCT ?ss FROM <"+tempGraph+"> WHERE {?ss a diachron:SchemaSet}";
-		vqe = VirtuosoQueryExecutionFactory.create (query, graph);
-		results = vqe.execSelect();
-		while(results.hasNext()){
-			QuerySolution rs = results.next();
-			RDFNode schemaSet = rs.get("ss");
-			insertSchemaSetTriples(graph, schemaSet.toString(), tempGraph);													
-		}vqe.close();		
-		insertChangeSetTriples(graph, tempGraph);		
+		try {
+    		insertDatasetMetadata(graph, tempGraph, diachronicDatasetURI);
+    		
+    		//This will link the dataset version to its diachronic dataset, if this information exists in the stream.
+    				
+    		String query = "SELECT DISTINCT ?rs FROM <"+tempGraph+"> WHERE {?rs a diachron:RecordSet}";
+    		VirtuosoQueryExecution vqe = VirtuosoQueryExecutionFactory.create (query, graph);
+    		ResultSet results = vqe.execSelect();
+    		while(results.hasNext()){
+    			QuerySolution rs = results.next();
+    			RDFNode recordSet = rs.get("rs");
+    			insertRecordSetTriples(graph, recordSet.toString(), tempGraph);													
+    		}vqe.close();		
+    		query = "SELECT DISTINCT ?ss FROM <"+tempGraph+"> WHERE {?ss a diachron:SchemaSet}";
+    		vqe = VirtuosoQueryExecutionFactory.create (query, graph);
+    		results = vqe.execSelect();
+    		while(results.hasNext()){
+    			QuerySolution rs = results.next();
+    			RDFNode schemaSet = rs.get("ss");
+    			insertSchemaSetTriples(graph, schemaSet.toString(), tempGraph);													
+    		}
+    		vqe.close();		
+    		insertChangeSetTriples(graph, tempGraph);
+		} finally {
+		  graph.close();
+		}
 		
 	}
 	
@@ -289,15 +308,14 @@ class VirtLoader implements Loader {
 				}vqeDataset.close();
 				if(changeSetAlreadyExists) return;
 				
-				String changesQuery = "INSERT INTO <"+changeSetURI+"> {?change ?p ?o }" +
+				String changesQuery = "INSERT { GRAPH <"+changeSetURI+"> {?change ?p ?o }}" +
 						"WHERE {{SELECT ?change ?p ?o FROM <"+tempGraph+"> WHERE {?change <"+DiachronOntology.oldVersion+"> <"+rs.get("old").toString()+"> ; " + 
 									   "<"+DiachronOntology.newVersion+"> <"+rs.get("new").toString()+"> ; " +
 									   "?p ?o FILTER(?p!=<"+DiachronOntology.oldVersion+">n && ?p!=<"+DiachronOntology.newVersion+">) . " +
 									   //"OPTIONAL {?o ?pp ?oo FILTER(?pp!=co:old_version}" +								   
 						"}}}";
-				VirtuosoQueryExecution vqeChanges = VirtuosoQueryExecutionFactory.create (changesQuery, graph);
-				vqeChanges.execSelect();
-				String innerChangesQuery = "INSERT INTO <"+changeSetURI+"> {?inner ?p ?o}  "+
+				VirtuosoUpdateFactory.create(changesQuery, graph).exec();
+				String innerChangesQuery = "INSERT { GRAPH <"+changeSetURI+"> {?inner ?p ?o}}  "+
 						" WHERE {" +
 								"GRAPH <"+changeSetURI+"> {" +
 											"?change ?prop ?inner " +
@@ -307,15 +325,7 @@ class VirtLoader implements Loader {
 											"}} . " +
 										"}" +								
 						"}";
-				System.out.println(innerChangesQuery);
-				try{
-					//Class.forName("virtuoso.jdbc4.Driver");
-					Connection conn = StoreConnection.getConnection();											 
-				    Statement stmt = conn.createStatement ();
-				    stmt.executeQuery ("SPARQL " + innerChangesQuery);
-				}catch(Exception e){e.printStackTrace();}
-				/*VirtuosoQueryExecution vqeInnerChanges = VirtuosoQueryExecutionFactory.create (innerChangesQuery, graph);
-				ResultSet resultsInnerChanges = vqeInnerChanges.execSelect();*/
+				VirtuosoUpdateFactory.create(innerChangesQuery, graph);
 				
 			}vqe.close();				
 	}

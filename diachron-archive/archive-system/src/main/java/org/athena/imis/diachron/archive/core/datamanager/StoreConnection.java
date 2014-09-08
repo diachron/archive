@@ -1,18 +1,15 @@
 package org.athena.imis.diachron.archive.core.datamanager;
 
+import java.io.IOException;
 import java.io.InputStream;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
-
-import javax.sql.DataSource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import virtuoso.jdbc4.VirtuosoConnectionPoolDataSource;
 import virtuoso.jdbc4.VirtuosoDataSource;
-import virtuoso.jena.driver.VirtGraph;
 
 /**
  * 
@@ -20,8 +17,6 @@ import virtuoso.jena.driver.VirtGraph;
  *
  */
 public class StoreConnection {
-	private static boolean isInit = false;
-	
 	private static final String DEFAULT_BULK_LOAD_PATH = "c:/RDF/";
 	private static final String DEFAULT_USERNAME = "dba";
 	private static final String DEFAULT_PWD = "dba";
@@ -42,22 +37,7 @@ public class StoreConnection {
 
 	private static String bulkLoadPath = DEFAULT_BULK_LOAD_PATH;
 	
-	
-	private static VirtuosoDataSource vDatasource = new VirtuosoConnectionPoolDataSource();
-	
-	
-	private static final String JDBC_DRIVER = "virtuoso.jdbc4.Driver";
 	private static final Logger logger = LoggerFactory.getLogger(StoreConnection.class);
-	
-	
-	private StoreConnection() {
-		
-	}
-	
-	static {
-		if (!isInit)
-			init();
-	}
 	
 	private static String loadConfigParam(Properties prop, String paramName, String paramLabel, String defaultValue) {
 		if (prop.getProperty(paramName)!=null) {
@@ -88,104 +68,58 @@ public class StoreConnection {
 	
 	/**
 	 * Initializes the StoreConnection object.
+	 * @throws IOException 
+	 * @throws SQLException 
 	 */
-	public static void init() {
-		try {
-			if (!isInitialized()) {
-				//initializing the connection parameters from the configuration file, 
-				//if a parameter or the whole file isn't found the initialization will be done with default values
-				
-				InputStream input = StoreConnection.class.getClassLoader().getResourceAsStream("virt-connection.properties");
-				Properties prop = new Properties();
-					
-				if (input == null) {
-					logger.warn("RDF STORE CONFIGURATION WASN'T FOUND. REVERTING TO DEFAULT PARAMETERS");
-				} else {
-					prop.load(input);
-					username = loadConfigParam(prop, "virtuoso-username", "USERNAME", DEFAULT_USERNAME);
-					pwd = loadConfigParam(prop, "virtuoso-pwd", "PASSWORD", DEFAULT_PWD);
-					host = loadConfigParam(prop, "virtuoso-host", "HOST", DEFAULT_HOST);
-					port = loadConfigParam(prop, "virtuoso-port", "PORT", DEFAULT_PORT);
-					initialPool = loadConfigParam(prop, "virtuoso-initial-pool", "INITIAL-POOL", DEFAULT_INITIAL_POOL);
-					maxPool = loadConfigParam(prop, "virtuoso-max-pool", "MAX-POOL", DEFAULT_MAX_POOL);
-					connPool = loadConfigParam(prop, "virtuoso-connection-pooling", "CONNECTION-POOLING", DEFAULT_CONN_POOL);
-					bulkLoadPath = loadConfigParam(prop, "virtuoso-bulk-load-path", "BULK-LOAD-PATH", DEFAULT_BULK_LOAD_PATH);
-					input.close();
-				}
-				
-				if (connPool) {
-					//create the pool Datasource
-					vDatasource = new VirtuosoConnectionPoolDataSource();
-					
-					((VirtuosoConnectionPoolDataSource)vDatasource).setInitialPoolSize(initialPool);
-					((VirtuosoConnectionPoolDataSource)vDatasource).setMaxPoolSize(maxPool);
-					
-					//initial the pool
-					((VirtuosoConnectionPoolDataSource)vDatasource).fill();
-				} else {
-					vDatasource = new VirtuosoDataSource();
-				}
-				
-				vDatasource.setCharset("UTF-8");
-				vDatasource.setPassword(pwd);
-				vDatasource.setPortNumber(port);
-				vDatasource.setUser(username);
-				vDatasource.setServerName(host);
-				
-				isInit = true;
-			}
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+	public static VirtuosoDataSource staticVirtuosoDataSource() {
+	    try {
+    		//initializing the connection parameters from the configuration file, 
+    		//if a parameter or the whole file isn't found the initialization will be done with default values
+    		
+    		InputStream input = StoreConnection.class.getClassLoader().getResourceAsStream("virt-connection.properties");
+    		Properties prop = new Properties();
+    			
+    		if (input == null) {
+    			logger.warn("RDF STORE CONFIGURATION WASN'T FOUND. REVERTING TO DEFAULT PARAMETERS");
+    		} else {
+    			prop.load(input);
+    			username = loadConfigParam(prop, "virtuoso-username", "USERNAME", DEFAULT_USERNAME);
+    			pwd = loadConfigParam(prop, "virtuoso-pwd", "PASSWORD", DEFAULT_PWD);
+    			host = loadConfigParam(prop, "virtuoso-host", "HOST", DEFAULT_HOST);
+    			port = loadConfigParam(prop, "virtuoso-port", "PORT", DEFAULT_PORT);
+    			initialPool = loadConfigParam(prop, "virtuoso-initial-pool", "INITIAL-POOL", DEFAULT_INITIAL_POOL);
+    			maxPool = loadConfigParam(prop, "virtuoso-max-pool", "MAX-POOL", DEFAULT_MAX_POOL);
+    			connPool = loadConfigParam(prop, "virtuoso-connection-pooling", "CONNECTION-POOLING", DEFAULT_CONN_POOL);
+    			bulkLoadPath = loadConfigParam(prop, "virtuoso-bulk-load-path", "BULK-LOAD-PATH", DEFAULT_BULK_LOAD_PATH);
+    			input.close();
+    		}
+    
+    		VirtuosoDataSource vDatasource;
+    		if (connPool) {
+    			//create the pool Datasource
+    			vDatasource = new VirtuosoConnectionPoolDataSource();
+    			
+    			((VirtuosoConnectionPoolDataSource)vDatasource).setInitialPoolSize(initialPool);
+    			((VirtuosoConnectionPoolDataSource)vDatasource).setMaxPoolSize(maxPool);
+    			
+    			//initial the pool
+    			((VirtuosoConnectionPoolDataSource)vDatasource).fill();
+    		} else {
+    			vDatasource = new VirtuosoDataSource();
+    		}
+    		
+    		vDatasource.setCharset("UTF-8");
+    		vDatasource.setPassword(pwd);
+    		vDatasource.setPortNumber(port);
+    		vDatasource.setUser(username);
+    		vDatasource.setServerName(host);
+    		
+    		return vDatasource;
+	    } catch (Exception e) {
+	      throw new RuntimeException("Could not initialize static virtuoso connection", e);
+	    }
+   }
 	
-	/**
-	 * Checks if the StoreConnection object is initialized.
-	 * @return True if StoreConnection is initialized, else false.
-	 */
-	public static boolean isInitialized() {
-		return isInit;
-	}
-	
-	private String getUsername(){	
-		return username;
-	}
-	
-	private String getPassword(){		
-		return pwd;
-	}
-	
-	private String getConnectionString(){		
-		return "jdbc:virtuoso://"+host+"/autoReconnect=true/charset=UTF-8/log_enable=2";
-	}
-	
-	/**
-	 * Fetches the connection to the data source.
-	 * @return A Connection object to the data source.
-	 * @throws SQLException
-	 */
-	public static Connection getConnection() throws SQLException{
-		return vDatasource.getConnection();
-	}
-	
-	/**
-	 * Fetches the VirtGraph connection to the Virtuoso data source.
-	 * @return A VirtGraph object with a connection to the Virtuoso data source.
-	 */
-	public static VirtGraph getVirtGraph(){
-		return new VirtGraph(vDatasource);
-	}
-	
-	/**
-	 * Fetches the VirtGraph connection to a specific named graph of the Virtuoso data source.
-	 * @param namedGraph The URI of the named graph to connect to.
-	 * @return A VirtGraph object with a connection to the specific named graph of the Virtuoso data source.
-	 */
-	public static VirtGraph getVirtGraph(String namedGraph){
-		return new VirtGraph (namedGraph,vDatasource);
-	}
-
 	/**
 	 * @return the bULK_LOAD_PATH
 	 */

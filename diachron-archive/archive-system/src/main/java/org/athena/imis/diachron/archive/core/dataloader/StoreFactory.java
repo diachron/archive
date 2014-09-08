@@ -1,16 +1,16 @@
 package org.athena.imis.diachron.archive.core.dataloader;
 
-public class StoreFactory {
-	public static DictionaryService createDictionaryService() {
-		return new DictionaryCache(new RDFDictionary());
+import virtuoso.jdbc4.VirtuosoDataSource;
+
+public final class StoreFactory {
+	public static DictionaryService createCachedDictionaryService(DictionaryService dictionaryService) {
+		DictionaryCache cache =  new DictionaryCache(dictionaryService);
+		cache.init();
+		return cache;
 	}
 	
-	public static Loader createDataLoader() {
-		return new VirtLoader();
-	}
-	
-	static DictionaryService createPersDictionaryService() {
-		return new RDFDictionary();
+	public static DictionaryService createPersDictionaryService(VirtuosoDataSource dataSource) {
+		return new RDFDictionary(dataSource);
 	}
 
 }

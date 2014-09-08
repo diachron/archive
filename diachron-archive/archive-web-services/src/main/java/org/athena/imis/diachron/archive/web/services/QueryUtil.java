@@ -1,9 +1,13 @@
-package org.athena.imis.diachron.archive.api;
+package org.athena.imis.diachron.archive.web.services;
 
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
 
+import org.athena.imis.diachron.archive.api.ArchiveResultSet;
+import org.athena.imis.diachron.archive.api.Query;
+import org.athena.imis.diachron.archive.api.QueryStatement;
+import org.athena.imis.diachron.archive.api.StatementFactory;
 import org.athena.imis.diachron.archive.core.dataloader.DictionaryService;
 import org.athena.imis.diachron.archive.core.dataloader.RDFDictionary;
 import org.athena.imis.diachron.archive.core.dataloader.StoreFactory;
@@ -13,6 +17,8 @@ import org.athena.imis.diachron.archive.models.DiachronicDataset;
 import org.athena.imis.diachron.archive.models.ModelsFactory;
 import org.athena.imis.diachron.archive.models.Serializer;
 
+import virtuoso.jdbc4.VirtuosoDataSource;
+
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
 
@@ -21,7 +27,13 @@ import com.hp.hpl.jena.query.ResultSet;
  * This class contains query templates that are commonly used in the archive.
  *
  */
-public class QueryLib {
+public final class QueryUtil {
+
+  private final VirtuosoDataSource dataSource;
+  
+  public QueryUtil(VirtuosoDataSource dataSource) {
+    this.dataSource = dataSource;
+  }
 	
 	/**
 	 * Lists the diachronic datasets that exist in the DIACHRON archive.
@@ -31,7 +43,7 @@ public class QueryLib {
 	 */
 	public String listDiachronicDatasets() throws Exception {
 		Serializer ser = ModelsFactory.getSerializer();
-		DictionaryService dict = StoreFactory.createDictionaryService();
+		DictionaryService dict = StoreFactory.createPersDictionaryService(dataSource);
 		
 		List<DiachronicDataset> list = dict.getListOfDiachronicDatasets();
         return ser.serialize(list);
@@ -44,7 +56,7 @@ public class QueryLib {
 	 * @return A RDF/JSON string of the de-reified dataset.
 	 */
 	public String getDatasetVersionById(String datasetId) {
-		QueryStatement query = StatementFactory.createQueryStatement();
+		QueryStatement query = StatementFactory.createQueryStatement(dataSource);
 		String queryString = "CONSTRUCT {?s ?p ?o} " +
 								"WHERE {{" +
 								"SELECT ?s ?p ?o FROM <" + RDFDictionary.getDictionaryNamedGraph() +"> " +
@@ -76,7 +88,7 @@ public class QueryLib {
 	 */
 	public String listDatasetVersions(String diachronicDatasetId, List<TimeConditions> time) throws Exception {
 		Serializer ser = ModelsFactory.getSerializer();
-		DictionaryService dict = StoreFactory.createDictionaryService();
+		DictionaryService dict = StoreFactory.createPersDictionaryService(dataSource);
 		
 		List<Dataset> list = dict.getListOfDatasets(dict.getDiachronicDataset(diachronicDatasetId));		
         return ser.serialize(list);
@@ -88,7 +100,7 @@ public class QueryLib {
 	 * @return A RDF/JSON String of the last version (de-reified) of the defined diachronic dataset. 
 	 */
 	public String getLastDatasetVersion(String diachronicDatasetId) {
-		DictionaryService dict = StoreFactory.createDictionaryService();
+		DictionaryService dict = StoreFactory.createPersDictionaryService(dataSource);
 		Dataset ds = dict.getDiachronicDataset(diachronicDatasetId).getDatasetInstatiations().get(0);
 		
 		return getDatasetVersionById(ds.getId());
@@ -102,7 +114,7 @@ public class QueryLib {
 	 * @return The URI of the change set between old_version and new_version.
 	 */
 	public String getChangeSet(String old_version, String new_version){
-		QueryStatement query = StatementFactory.createQueryStatement();
+		QueryStatement query = StatementFactory.createQueryStatement(dataSource);
 		String queryString = "SELECT ?changeSet " +
 								"FROM <" + RDFDictionary.getDictionaryNamedGraph() +
 								"> WHERE { ?changeSet a <"+DiachronOntology.changeSet+"> ; " +
@@ -132,7 +144,7 @@ public class QueryLib {
 	 * @return RDF/JSON SPARQL results of the changes list.
 	 */
 	public String getChangesFromChangeSet(String changeSet, String changeType, List<String[]> parameters){
-		QueryStatement query = StatementFactory.createQueryStatement();
+		QueryStatement query = StatementFactory.createQueryStatement(dataSource);
 		String queryString = "SELECT ?change ?p ?o FROM <"+changeSet+"> WHERE {";
 		if(!changeType.equals("")){
 			queryString+="?change a <"+changeType+"> . ";			

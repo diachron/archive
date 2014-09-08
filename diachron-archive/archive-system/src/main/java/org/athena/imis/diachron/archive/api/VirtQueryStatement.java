@@ -2,9 +2,11 @@ package org.athena.imis.diachron.archive.api;
 
 import org.athena.imis.diachron.archive.core.datamanager.StoreConnection;
 
+import virtuoso.jdbc4.VirtuosoDataSource;
 import virtuoso.jena.driver.VirtGraph;
 import virtuoso.jena.driver.VirtuosoQueryExecution;
 import virtuoso.jena.driver.VirtuosoQueryExecutionFactory;
+
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
 
@@ -13,8 +15,10 @@ import com.hp.hpl.jena.rdf.model.Model;
  *
  */
 class VirtQueryStatement implements QueryStatement {
-	
-	protected VirtQueryStatement(){
+	private final VirtuosoDataSource dataSource;
+  
+	protected VirtQueryStatement(VirtuosoDataSource dataSource){
+	  this.dataSource = dataSource;
 	}
 	
 	/**
@@ -25,24 +29,27 @@ class VirtQueryStatement implements QueryStatement {
 		
 		
 		ArchiveResultSet ars = new ArchiveResultSet();		
-	    VirtGraph graph =  StoreConnection.getVirtGraph();	    
+	    VirtGraph graph =  new VirtGraph(this.dataSource);
 	    VirtuosoQueryExecution vqe = VirtuosoQueryExecutionFactory.create (query.getQueryText(), graph);
-	    String queryType = query.getQueryType();
-		if(queryType.equals("SELECT")){		
-			ResultSet results = vqe.execSelect();						     	    
-			ars.setJenaResultSet(results);
-			vqe.close();
-			graph.close();
-			return ars;
-		}
-		else if (queryType.equals("CONSTRUCT")){			
-			Model results = vqe.execConstruct();			
-			ars.setJenaModel(results);
-			vqe.close();
-			graph.close();
-			return ars;
-		}
-		else return null;
+	    try {
+    	    String queryType = query.getQueryType();
+    		if(queryType.equals("SELECT")){		
+    			ResultSet results = vqe.execSelect();						     	    
+    			ars.setJenaResultSet(results);
+    			return ars;
+    		}
+    		else if (queryType.equals("CONSTRUCT")){			
+    			Model results = vqe.execConstruct();			
+    			ars.setJenaModel(results);
+    			return ars;
+    		}
+    		else {
+    		  return null;
+    		}
+	    } finally {
+	      vqe.close();
+//	      graph.close(); FIXME since a resultSet is returned, this is not executable!!! FIX ASAP!
+	    }
 		
 	}
 

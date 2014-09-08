@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>diachron-athena</groupId>
 		<artifactId>archive</artifactId>
-		<version>1.0.0</version>
+		<version>1.0.1</version>
   
 	</parent>
 	<artifactId>archive-system</artifactId>
@@ -18,7 +18,7 @@
 		<dependency>
 			<groupId>com.openlink.virtuoso</groupId>
 			<artifactId>virtjdbc4</artifactId>
-			<version>7.0.0</version>
+			<version>7.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>

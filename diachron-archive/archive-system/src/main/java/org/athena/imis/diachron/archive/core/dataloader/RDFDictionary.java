@@ -3,7 +3,6 @@ package org.athena.imis.diachron.archive.core.dataloader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Hashtable;
 import java.util.List;
 
@@ -11,13 +10,13 @@ import org.athena.imis.diachron.archive.api.ArchiveResultSet;
 import org.athena.imis.diachron.archive.api.Query;
 import org.athena.imis.diachron.archive.api.QueryStatement;
 import org.athena.imis.diachron.archive.api.StatementFactory;
-import org.athena.imis.diachron.archive.core.datamanager.StoreConnection;
 import org.athena.imis.diachron.archive.models.Dataset;
 import org.athena.imis.diachron.archive.models.DiachronOntology;
 import org.athena.imis.diachron.archive.models.DiachronicDataset;
 import org.athena.imis.diachron.archive.models.ModelsFactory;
 import org.athena.imis.diachron.archive.models.RDFDataset;
 
+import virtuoso.jdbc4.VirtuosoDataSource;
 import virtuoso.jena.driver.VirtGraph;
 import virtuoso.jena.driver.VirtModel;
 
@@ -44,25 +43,30 @@ public class RDFDictionary implements DictionaryService {
 		return dictionaryNamedGraph;
 	}
 
-	// just to change the visibility
-	RDFDictionary() {
-		
+    private final VirtuosoDataSource dataSource;
+
+	public RDFDictionary(VirtuosoDataSource dataSource) {
+		this.dataSource = dataSource;
 	}
 	
 	/**
 	 * Creates a diachronic dataset object in the dictionary of datasets.
 	 * 
+	 * FIXME the lack of a DataStore interface makes this functionality Virtuoso-only
+	 * 
 	 * @param dds The DiachronicDataset to be created.
 	 * @return A String URI of the created diachronic dataset.
 	 *  
 	 */
+	@Override
 	public String createDiachronicDataset(DiachronicDataset dds) {
 
 		String URI = createDiachronicDatasetId();
 				
-		VirtGraph graph = StoreConnection.getVirtGraph(dictionaryNamedGraph);	    
-
+		VirtGraph graph = new VirtGraph(dictionaryNamedGraph, dataSource);
 		Model model = new VirtModel(graph);
+		try {
+		  
 		Resource diachronicDatasetResource = model.createResource(URI, DiachronOntology.diachronicDataset);
 		
 		for(String predicate : dds.getMetaPropertiesNames()){
@@ -74,8 +78,11 @@ public class RDFDictionary implements DictionaryService {
 				diachronicDatasetResource.addProperty(ResourceFactory.createProperty(predicate), model.createLiteral(objectString));
 			}
 		}
-		model.close();
 		return URI;
+		} finally {
+		  model.close();
+		  graph.close();
+		}
 
 	}
 	
@@ -99,7 +106,7 @@ public class RDFDictionary implements DictionaryService {
 	 */
 	@Override
 	public List<DiachronicDataset> getListOfDiachronicDatasets() {
-		QueryStatement query = StatementFactory.createQueryStatement();
+		QueryStatement query = StatementFactory.createQueryStatement(dataSource);
 		Query q = new Query();
 		q.setQueryText("SELECT DISTINCT ?s FROM <" + RDFDictionary.getDictionaryNamedGraph() +
 				"> WHERE {  ?s a <"+DiachronOntology.diachronicDataset+">} ");
@@ -123,7 +130,7 @@ public class RDFDictionary implements DictionaryService {
 	 */
 	@Override
 	public List<Dataset> getListOfDatasets(DiachronicDataset diachronicDataset) {		
-		QueryStatement query = StatementFactory.createQueryStatement();
+		QueryStatement query = StatementFactory.createQueryStatement(dataSource);
 		Query q = new Query();
 		q.setQueryText("SELECT DISTINCT ?o FROM <" + RDFDictionary.getDictionaryNamedGraph() +
 				"> WHERE {  <"+diachronicDataset.getId()+"> <"+DiachronOntology.hasInstantiation+"> ?o . " +
@@ -147,7 +154,7 @@ public class RDFDictionary implements DictionaryService {
 	 * {@inheritDoc}
 	 */
 	public Hashtable<String, Object>  getDiachronicDatasetMetadata(String diachronicDatasetId) {
-		QueryStatement query = StatementFactory.createQueryStatement();
+		QueryStatement query = StatementFactory.createQueryStatement(dataSource);
 		Query q = new Query();
 		q.setQueryText("SELECT ?p ?o FROM <" + RDFDictionary.getDictionaryNamedGraph() +
 				"> WHERE {  <"+diachronicDatasetId+"> ?p ?o " +

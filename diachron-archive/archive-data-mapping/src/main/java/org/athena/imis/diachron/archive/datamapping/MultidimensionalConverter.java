@@ -1,13 +1,11 @@
 package org.athena.imis.diachron.archive.datamapping;
 
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.io.OutputStream;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.athena.imis.diachron.archive.core.datamanager.StoreConnection;
 import org.athena.imis.diachron.archive.models.DiachronOntology;
 
+import virtuoso.jdbc4.VirtuosoDataSource;
 import virtuoso.jena.driver.VirtGraph;
 import virtuoso.jena.driver.VirtuosoQueryExecution;
 import virtuoso.jena.driver.VirtuosoQueryExecutionFactory;
@@ -23,6 +21,12 @@ import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.vocabulary.RDFS;
 
 public class MultidimensionalConverter {
+  
+  private final VirtuosoDataSource dataSource;
+  
+  public MultidimensionalConverter(VirtuosoDataSource dataSource) {
+    this.dataSource = dataSource;
+  }
 
 	public void convert(String fullGraph, OutputStream out) {		
 		diachronizeDataCubeSchema(out, fullGraph);
@@ -31,21 +35,23 @@ public class MultidimensionalConverter {
 	}
 	
 	
-public static void diachronizeDataCubeObservations(OutputStream out, String fullGraph){
+	public void diachronizeDataCubeObservations(OutputStream out, String fullGraph){
 							
-		VirtGraph graph = StoreConnection.getVirtGraph();
+		VirtGraph graph = new VirtGraph(this.dataSource);
 		
 		String datasetQuery = "SELECT ?dataset FROM <"+fullGraph+"> WHERE {" +
 				"?dataset a qb:DataSet" +
 				"}";
 		VirtuosoQueryExecution vqeD = VirtuosoQueryExecutionFactory.create (datasetQuery, graph);
 		ResultSet resultsD = vqeD.execSelect();		
+		// FIXME: what is the point of this while block???????
 		String datasetID = "";
 		while(resultsD.hasNext()){
 			QuerySolution rs = resultsD.next();	
 			RDFNode dataset = rs.get("dataset");
 			datasetID = dataset.toString().substring(dataset.toString().lastIndexOf("/")+1);
-		}vqeD.close();
+		}
+		vqeD.close();
 		
 		String obsQuery = "SELECT ?obs ?p ?o FROM <"+fullGraph+"> WHERE {" +
 								"?obs a qb:Observation ; " +
@@ -68,16 +74,19 @@ public static void diachronizeDataCubeObservations(OutputStream out, String full
 			else if (o.isLiteral()) ratt.addProperty(DiachronOntology.object, o.asLiteral());
 			record.addProperty(DiachronOntology.hasRecordAttribute, ratt);
 					
-		}vqe.close();
+		}
+		vqe.close();
+		graph.close();
 		try{ 			
 			diachronModel.write(out, "RDF/XML-ABBREV");			
-		}catch(Exception e){}
-		diachronModel.close();
+		} finally{
+		  diachronModel.close();		  
+		}
 	}
 	
-public static void diachronizeDataCubeSchema(OutputStream out, String fullGraph){
-							
-		VirtGraph graph = StoreConnection.getVirtGraph();
+	public void diachronizeDataCubeSchema(OutputStream out, String fullGraph){
+
+        VirtGraph graph = new VirtGraph(this.dataSource);
 		
 		String datasetQuery = "SELECT ?dataset FROM <"+fullGraph+"> WHERE {" +
 								"?dataset a qb:DataSet" +
@@ -101,7 +110,6 @@ public static void diachronizeDataCubeSchema(OutputStream out, String fullGraph)
 		Model diachronModel = ModelFactory.createDefaultModel();		
 		while(results.hasNext()){
 			QuerySolution rs = results.next();	
-			RDFNode dsd = rs.get("dsd");						
 			Resource factTable = diachronModel.createResource(DiachronOntology.diachronResourcePrefix+"FactTable/"+datasetID, DiachronOntology.factTable);
 			RDFNode p = rs.get("p");
 			RDFNode o = rs.get("o");
@@ -150,11 +158,13 @@ public static void diachronizeDataCubeSchema(OutputStream out, String fullGraph)
 			}
 			//TODO check for attributes
 			
-		}vqe.close();		
+		}
+		vqe.close();		
 		try{ 			
 			diachronModel.write(out, "RDF/XML-ABBREV");			
-		}catch(Exception e){}
-		diachronModel.close();
+		} finally {
+		  diachronModel.close();		  
+		}
 	}
 
 }

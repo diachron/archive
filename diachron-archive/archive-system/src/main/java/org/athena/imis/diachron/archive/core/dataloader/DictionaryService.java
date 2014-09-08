@@ -1,6 +1,5 @@
 package org.athena.imis.diachron.archive.core.dataloader;
 
-import java.util.Collection;
 import java.util.Hashtable;
 import java.util.List;
 

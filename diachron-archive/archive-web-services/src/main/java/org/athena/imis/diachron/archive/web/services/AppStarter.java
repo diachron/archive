@@ -3,9 +3,6 @@ package org.athena.imis.diachron.archive.web.services;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 
-import org.athena.imis.diachron.archive.core.dataloader.DictionaryCache;
-import org.athena.imis.diachron.archive.core.datamanager.StoreConnection;
-
 
 public class AppStarter  extends HttpServlet {/**
 	 * 
@@ -14,9 +11,10 @@ public class AppStarter  extends HttpServlet {/**
 
 	@Override
 	public void init() throws ServletException {
-		
-			StoreConnection.init();
-			DictionaryCache.init();
+		// FIXME There are still several static initializations based on 
+	    // hard-coded paths (see StoreConnection class). Those should be
+	    // modified to be more configurable. Usage of Spring for configuration
+	    // & dependency injection is highly recommended at this point
 	}
 
 	

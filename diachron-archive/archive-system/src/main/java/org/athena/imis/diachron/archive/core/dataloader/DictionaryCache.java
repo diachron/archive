@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.Set;
 
 import org.athena.imis.diachron.archive.models.Dataset;
 import org.athena.imis.diachron.archive.models.DiachronicDataset;
@@ -22,47 +21,33 @@ public class DictionaryCache implements DictionaryService {
 
 	private static final Logger logger = LoggerFactory.getLogger(DictionaryCache.class);
 
-	private DictionaryService persistentStorage = null;
+	private DictionaryService store = null;
 
-	private static boolean initialized = false;
-	static {
-		logger.info("STATIC");
-        if (!initialized) {
-        	logger.info("STATIC INITIALIZING");
-            init();
-		}
-	}
-	
-	
-	DictionaryCache(DictionaryService persistentStorage) {
-		this.persistentStorage = persistentStorage;
+	public DictionaryCache(DictionaryService persistentStorage) {
+		this.store = persistentStorage;
 	}
 	
 	/**
 	 * Initializes the cache and populates it with objects from the dictionary of datasets.
 	 */
-	public static void init() {
-		if (!initialized) {
-			logger.info("INITIALIZING DICTIONARY");
-	        
-			DictionaryService store = StoreFactory.createPersDictionaryService();
-			Collection<DiachronicDataset> dDatasets = store.getListOfDiachronicDatasets();			
-			for(DiachronicDataset dds: dDatasets) {				
-				diachronicDatasets.put(dds.getId(), dds);				
-				List<Dataset> datasets = store.getListOfDatasets(dds);					
-				dds.setMetaProperties(store.getDiachronicDatasetMetadata(dds.getId()));
-				for (Dataset ds : datasets) {
-					
-					dds.addDatasetInstatiation(ds);					
-					//dds.setMetaProperties(store.getDiachronicDatasetMetadata(dds.getId()));
-				}
+	public void init() {
+		logger.info("INITIALIZING DICTIONARY");
+        
+		Collection<DiachronicDataset> dDatasets = store.getListOfDiachronicDatasets();			
+		for(DiachronicDataset dds: dDatasets) {				
+			diachronicDatasets.put(dds.getId(), dds);				
+			List<Dataset> datasets = store.getListOfDatasets(dds);					
+			dds.setMetaProperties(store.getDiachronicDatasetMetadata(dds.getId()));
+			for (Dataset ds : datasets) {
 				
+				dds.addDatasetInstatiation(ds);					
+				//dds.setMetaProperties(store.getDiachronicDatasetMetadata(dds.getId()));
 			}
 			
-			initialized = true;
-			logger.info("DICTIONARY INITIALIZED");
 		}
-        
+		
+		logger.info("DICTIONARY INITIALIZED");
+
 	}
 	
 	/**
@@ -71,7 +56,7 @@ public class DictionaryCache implements DictionaryService {
 	 * @return A String with the URI of the Diachronic Dataset.
 	 */
 	public String createDiachronicDataset(DiachronicDataset dds) {
-		String id = persistentStorage.createDiachronicDataset(dds);
+		String id = store.createDiachronicDataset(dds);
 		dds.setId(id);
 		diachronicDatasets.put(id, dds);
 		return id;
@@ -79,7 +64,7 @@ public class DictionaryCache implements DictionaryService {
 	}
 
 	public String createDiachronicDatasetId() {
-		return persistentStorage.createDiachronicDatasetId();
+		return store.createDiachronicDatasetId();
 	}
 
 	/**
