@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>diachron-athena</groupId>
 		<artifactId>archive</artifactId>
-		<version>1.0.1</version>
+		<version>1.0.2</version>
   </parent>
 	<artifactId>archive-data-mapping</artifactId>
 	<name>archive-data-mapping</name>
@@ -43,6 +43,18 @@
             <version>1.9.13</version>
         </dependency>
 
-       
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>17.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+
   </dependencies>
 </project>

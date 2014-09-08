@@ -47,13 +47,12 @@ public class VirtLoader implements Loader {
 	 */
 	@Override
 	public void loadModel(Model model, String namedGraph){
-		VirtGraph graph = new VirtGraph(namedGraph, this.dataSource);
-		try {
-		  Model remoteModel = new VirtModel(graph);
-		  remoteModel.add(model);
-		} finally {
-		  graph.close();
-		}
+	    Model remoteModel = new VirtModel(new VirtGraph(namedGraph, this.dataSource));
+	    try {
+	      remoteModel.add(model);
+	    } finally {
+	      remoteModel.close();
+	    }
 	}
 	
 	/* (non-Javadoc)

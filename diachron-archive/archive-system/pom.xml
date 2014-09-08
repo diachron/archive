@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>diachron-athena</groupId>
 		<artifactId>archive</artifactId>
-		<version>1.0.1</version>
+		<version>1.0.2</version>
   
 	</parent>
 	<artifactId>archive-system</artifactId>
