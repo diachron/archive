@@ -56,8 +56,8 @@
 		</dependency>
 		<dependency>
 			<groupId>com.openlink.virtuoso</groupId>
-			<artifactId>virtjena2</artifactId>
-			<version>1.0.0</version>
+			<artifactId>virt_jena2</artifactId>
+			<version>7.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.servlet</groupId>

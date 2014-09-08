@@ -14,14 +14,6 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
-	<repositories>
-		<repository>
-			<id>maven.aksw.snapshots/</id>
-			<name>University Leipzig, AKSW Maven2 Repository</name>
-			<url>http://maven.aksw.org/archiva/repository/internal</url>
-		</repository>
-	</repositories>
-
 	<dependencies>
 		<dependency>
 			<groupId>com.openlink.virtuoso</groupId>
@@ -42,8 +34,8 @@
 		</dependency>
 		<dependency>
 			<groupId>com.openlink.virtuoso</groupId>
-			<artifactId>virtjena2</artifactId>
-			<version>1.0.0</version>
+			<artifactId>virt_jena2</artifactId>
+			<version>7.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
