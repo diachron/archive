@@ -52,7 +52,8 @@ public class GraphStoreOntologyMapperTest {
 
     // execute TBox mapping
     GraphStore store = new GraphStoreBasic(dsg);
-    RdfDiachronModelMapper mapper =new RdfDiachronModelMapper(new JenaSparqlGraphStore(store, 2), 2);
+    JenaSparqlGraphStore graphStore = new JenaSparqlGraphStore(store, 2);
+    RdfDiachronModelMapper mapper = new RdfDiachronModelMapper(graphStore, graphStore, 2);
     mapper.executeTboxMapping(graph.getURI());
 
     // assert that classes became the new expected types

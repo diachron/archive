@@ -11,31 +11,19 @@ import virtuoso.jena.driver.VirtuosoUpdateRequest;
 import com.hp.hpl.jena.query.QueryExecution;
 
 /**
- * PROTOTYPE (not tested)
  * 
  * Implementation of {@link SparqlStore} which uses an OpenLink Virtuoso server as data backend.
  *
  * @author Ruben Navarro Piris
  *
  */
-public class VirtuosoSparqlStore extends BufferedWriterSparqlStore implements SparqlStore {
+public class VirtuosoSparqlStore implements SparqlStore {
 
   private final VirtuosoDataSource dataSource;
 
-  public VirtuosoSparqlStore(VirtuosoDataSource dataSource, int flushSize) {
-    super(flushSize);
+  public VirtuosoSparqlStore(VirtuosoDataSource dataSource) {
     this.dataSource = dataSource;
   }
-
-  // @Override
-  // public void storeTriples(String targetGraph, Model model) throws IOException {
-  // Model remoteModel = new VirtModel(new VirtGraph(targetGraph, this.dataSource));
-  // try {
-  // remoteModel.add(model);
-  // } finally {
-  // remoteModel.close();
-  // }
-  // }
 
   @Override
   public void executeUpdate(String update) throws IOException {

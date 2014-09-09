@@ -15,12 +15,11 @@ import com.hp.hpl.jena.update.UpdateFactory;
  * @author Ruben Navarro Piris
  *
  */
-public class HttpSparqlStore extends BufferedWriterSparqlStore implements SparqlStore {
+public class HttpSparqlStore implements SparqlStore {
 
   private final String endpoint;
 
-  public HttpSparqlStore(String endpoint, int flushSize) {
-    super(flushSize);
+  public HttpSparqlStore(String endpoint) {
     this.endpoint = endpoint;
   }
 

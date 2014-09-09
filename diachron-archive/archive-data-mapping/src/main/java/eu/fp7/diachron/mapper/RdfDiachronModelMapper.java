@@ -5,6 +5,7 @@ import static eu.fp7.diachron.mapper.MappingUtils.sha256;
 import java.io.IOException;
 import java.util.Set;
 
+import org.athena.imis.diachron.archive.core.dataloader.Loader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,10 +84,22 @@ public final class RdfDiachronModelMapper implements DiachronModelMapper {
                   .addAll(propertyGraphPatterns).build())).append("}").toString();
 
   private final SparqlStore store;
+  private final Loader loader;
   private final long flushSize;
 
-  public RdfDiachronModelMapper(SparqlStore store, long flushSize) {
+  /**
+   * Standard constructor. In standard case the {@link SparqlStore} & {@link Loader} point to the
+   * same data backend (since the mapping information should be stored in the same location). Using
+   * different locations implies that the original data & its diachron mapping are separated (which
+   * is not generally supported in the diachron framework), so use with caution.
+   * 
+   * @param store used to execute the sparql queries (selection)
+   * @param loader used to store the information
+   * @param flushSize
+   */
+  public RdfDiachronModelMapper(SparqlStore store, Loader loader, long flushSize) {
     this.store = Preconditions.checkNotNull(store);
+    this.loader = Preconditions.checkNotNull(loader);
     this.flushSize = flushSize;
   }
 
@@ -157,13 +170,13 @@ public final class RdfDiachronModelMapper implements DiachronModelMapper {
         buffer.add(recordAttributeId, DiachronVocabulary.PROPERTY.asProperty(), sol.get("p"));
 
         if (buffer.size() >= flushSize) {
-          this.store.storeTriples(datasetUri, buffer);
+          this.loader.loadModel(buffer, datasetUri);
           buffer.removeAll();
         }
       }
 
       if (!buffer.isEmpty()) {
-        this.store.storeTriples(datasetUri, buffer);
+        this.loader.loadModel(buffer, datasetUri);
       }
 
       LOGGER.debug("{} records mapped for dataset: {}", recordIdCount, datasetUri);
