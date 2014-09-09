@@ -8,16 +8,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.athena.imis.diachron.archive.models.Dataset;
-import org.athena.imis.diachron.archive.models.DiachronOntology;
-import org.athena.imis.diachron.archive.models.DiachronicDataset;
-import org.athena.imis.diachron.archive.models.ModelsFactory;
-import org.athena.imis.diachron.archive.models.RDFDataset;
-import org.athena.imis.diachron.archive.models.RDFDiachronicDataset;
-import org.athena.imis.diachron.archive.models.RDFRecordSet;
-import org.athena.imis.diachron.archive.models.Record;
-import org.athena.imis.diachron.archive.models.RecordAttribute;
-import org.athena.imis.diachron.archive.models.RecordSet;
 import org.coode.owlapi.rdf.model.RDFGraph;
 import org.coode.owlapi.rdf.model.RDFLiteralNode;
 import org.coode.owlapi.rdf.model.RDFResourceNode;
@@ -43,12 +33,24 @@ import com.hp.hpl.jena.rdf.model.impl.ResourceImpl;
 import com.hp.hpl.jena.rdf.model.impl.StatementImpl;
 import com.hp.hpl.jena.vocabulary.RDF;
 
+import eu.fp7.diachron.archive.models.Dataset;
+import eu.fp7.diachron.archive.models.DiachronOntology;
+import eu.fp7.diachron.archive.models.DiachronicDataset;
+import eu.fp7.diachron.archive.models.ModelsFactory;
+import eu.fp7.diachron.archive.models.RDFDataset;
+import eu.fp7.diachron.archive.models.RDFDiachronicDataset;
+import eu.fp7.diachron.archive.models.RDFRecordSet;
+import eu.fp7.diachron.archive.models.Record;
+import eu.fp7.diachron.archive.models.RecordAttribute;
+import eu.fp7.diachron.archive.models.RecordSet;
 
-public class OntologyConverter {
+
+public class OntologyConverter implements DataConverter {
 	private OWLOntologyManager manager;
     private Dataset dataset;
     private DiachronicDataset diachronicDataset;
     
+    @Override
     public void convert(InputStream input, OutputStream output) {
 
         Collection<URI> filter = new HashSet<URI>();
@@ -155,8 +157,7 @@ public class OntologyConverter {
 
     try {
     	DiachronURIFactory uriFactory = new DiachronURIFactory(datasetName, version);
-    	diachronicDataset = new RDFDiachronicDataset();
-    	diachronicDataset.setId(uriFactory.generateDiachronicDatasetUri().toString());
+    	diachronicDataset = new RDFDiachronicDataset(uriFactory.generateDiachronicDatasetUri().toString());
         this.manager = OWLManager.createOWLOntologyManager();
         // load ontology into OWLAPI
         OWLOntology ontology = manager.loadOntologyFromOntologyDocument(input);
@@ -194,14 +195,12 @@ public class OntologyConverter {
         if (ontologyUriAsString.endsWith("/")) {
             ontologyUriAsString = ontologyUriAsString.substring(0, ontologyUriAsString.lastIndexOf("/"));
         }
-        this.dataset = new RDFDataset(); 
+        this.dataset = new RDFDataset(uriFactory.generateDatasetUri().toString()); 
         		//new DiachronDataset(URI.create(ontologyUriAsString), name, version);
 
-        dataset.setId(uriFactory.generateDatasetUri().toString());
         RDFGraph graph = visitor.getGraph();
         
-        RecordSet rs = new RDFRecordSet();
-        rs.setId(uriFactory.generateDiachronRecordSetURI().toString());
+        RecordSet rs = new RDFRecordSet(uriFactory.generateDiachronRecordSetURI().toString());
         dataset.setRecordSet(rs);
         
         for (OWLClass entity : reasonedOntology.getClassesInSignature()) {
@@ -209,8 +208,7 @@ public class OntologyConverter {
             //System.out.println("Triples for " + entity.getIRI().toURI().toString());
         
             
-            Record rec = ModelsFactory.createRecord();
-            rec.setId(uriFactory.generateRecordUri(entity.getIRI().toURI()).toString());
+            Record rec = ModelsFactory.createRecord(uriFactory.generateRecordUri(entity.getIRI().toURI()).toString());
             rec.setSubject(entity.getIRI().toURI().toString());
             rs.addRecord(rec);
             //System.out.println(entity.getIRI().toURI());
@@ -219,10 +217,11 @@ public class OntologyConverter {
 
                 //System.out.println("\t" + triple.toString());
 
-                RecordAttribute recAttr = ModelsFactory.createRecordAttribute();
+                RecordAttribute recAttr = null;
                 
                 if (triple.getObject().isLiteral()) {
-                	recAttr.setId(uriFactory.generateRecordAttributeUri(entity.getIRI().toURI(), 
+                    recAttr = ModelsFactory.createRecordAttribute(uriFactory.
+                      generateRecordAttributeUri(entity.getIRI().toURI(), 
                     		triple.getProperty().getIRI().toURI(),
                             ((RDFLiteralNode)triple.getObject()).getLiteral()).toString());
                 	recAttr.setProperty(triple.getProperty().getIRI().toString());
@@ -230,9 +229,10 @@ public class OntologyConverter {
                 	recAttr.setPropertyValueIsLiteral();
                 }
                 else {
-                	recAttr.setId(uriFactory.generateRecordAttributeUri(entity.getIRI().toURI(), 
-                    		triple.getProperty().getIRI().toURI(),
-                    		triple.getObject().getIRI().toURI().toString()).toString());
+                    recAttr = ModelsFactory.createRecordAttribute(uriFactory.
+                        generateRecordAttributeUri(entity.getIRI().toURI(), 
+                      triple.getProperty().getIRI().toURI(),
+                      triple.getObject().getIRI().toURI().toString()).toString());
                 	recAttr.setProperty(triple.getProperty().getIRI().toString());
                 	recAttr.setPropertyValue(triple.getObject().getIRI().toURI().toString());
                 	

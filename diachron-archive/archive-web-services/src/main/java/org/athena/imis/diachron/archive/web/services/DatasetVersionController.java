@@ -14,6 +14,7 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.fileupload.util.Streams;
 import org.athena.imis.diachron.archive.api.DataStatement;
 import org.athena.imis.diachron.archive.api.StatementFactory;
+import org.athena.imis.diachron.archive.core.datamanager.StoreConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -21,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+
+import virtuoso.jdbc4.VirtuosoDataSource;
 
 /**
  * This class implements the web service interface for creating new dataset versions 
@@ -30,13 +33,15 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 @RequestMapping("/archive/dataset/version")
 public class DatasetVersionController {
+  private final static Logger logger = LoggerFactory.getLogger(DatasetVersionController.class);
 	
 	private static final DateFormat df;
 	static {
 		df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ"); //ISO 8601 format
 		df.setTimeZone(TimeZone.getTimeZone("UTC"));
 	}
-    private final Logger logger = LoggerFactory.getLogger(DatasetVersionController.class);
+
+    private final VirtuosoDataSource dataSource = StoreConnection.staticVirtuosoDataSource();
 
     //@Autowired
     //private ContactService contactService;
@@ -60,7 +65,7 @@ public class DatasetVersionController {
         logger.info("createDatasetVersion called");
         Response resp = new Response();
         try {
-        	DataStatement vds = StatementFactory.createDataStatement();
+        	DataStatement vds = StatementFactory.createVirtuosoDataStatement(dataSource);
      		boolean isMultipart = ServletFileUpload.isMultipartContent(request);
 	        if (isMultipart) {
 	        	// Create a new file upload handler

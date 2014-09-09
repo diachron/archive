@@ -3,10 +3,13 @@ package org.athena.imis.diachron.archive.web.services;
 import org.athena.imis.diachron.archive.api.DataStatement;
 import org.athena.imis.diachron.archive.api.StatementFactory;
 import org.athena.imis.diachron.archive.core.dataloader.ArchiveEntityMetadata;
+import org.athena.imis.diachron.archive.core.datamanager.StoreConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+
+import virtuoso.jdbc4.VirtuosoDataSource;
 
 import com.hp.hpl.jena.vocabulary.DCTerms;
 import com.hp.hpl.jena.vocabulary.RDFS;
@@ -23,13 +26,16 @@ import java.util.TimeZone;
 @Controller
 @RequestMapping("/archive/dataset")
 public class DatasetController {
+  private static final Logger logger = LoggerFactory.getLogger(DatasetController.class);
 	
 	private static final DateFormat df;
 	static {
 		df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ"); //ISO 8601 format
 		df.setTimeZone(TimeZone.getTimeZone("UTC"));
 	}
-    private final Logger logger = LoggerFactory.getLogger(DatasetController.class);
+	  
+	private final VirtuosoDataSource dataSource = StoreConnection.staticVirtuosoDataSource();
+	private final DataStatement vds = StatementFactory.createVirtuosoDataStatement(dataSource);
 
     //@Autowired
     //private ContactService contactService;
@@ -54,7 +60,6 @@ public class DatasetController {
         logger.info("createDiachronicDataset called");
         Response resp = new Response();
         
-        DataStatement vds = StatementFactory.createDataStatement();
 		ArchiveEntityMetadata metadata = new ArchiveEntityMetadata();
 		HashMap<String, String> metadataMap = new HashMap<String, String>();
 		metadataMap.put(RDFS.label.toString(), label);

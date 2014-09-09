@@ -8,9 +8,9 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.athena.imis.diachron.archive.api.ArchiveResultSet;
 import org.athena.imis.diachron.archive.api.Query;
-import org.athena.imis.diachron.archive.api.QueryLib;
 import org.athena.imis.diachron.archive.api.QueryStatement;
 import org.athena.imis.diachron.archive.api.StatementFactory;
+import org.athena.imis.diachron.archive.core.datamanager.StoreConnection;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -21,14 +21,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import virtuoso.jdbc4.VirtuosoDataSource;
+
 /**
  * This class implements the web service interface for querying the archive through SPAQL queries or through the templates functionality.
  * 
  */
 @Controller
 public class QueryController {
-
-    private final Logger logger = LoggerFactory.getLogger(QueryController.class);
+    private final static Logger logger = LoggerFactory.getLogger(QueryController.class);
+    
+    private final VirtuosoDataSource dataSource = StoreConnection.staticVirtuosoDataSource();
+    private final QueryUtil queryLib = new QueryUtil(dataSource);
 
     //@Autowired
     //private ContactService contactService;
@@ -76,7 +80,7 @@ public class QueryController {
 	        logger.info(queryType);
 	        
 	        if (query != null && queryType != null) {
-	            QueryStatement qs = StatementFactory.createQueryStatement();
+	            QueryStatement qs = StatementFactory.createQueryStatement(this.dataSource);
 		        Query q = new Query();
 		        q.setQueryText(query);
 		        q.setQueryType(queryType);
@@ -171,7 +175,6 @@ public class QueryController {
 	private Response handleListDiachronicDatasets()
 			throws Exception {
 		Response data = new Response();
-		QueryLib queryLib = new QueryLib();
         String resultString = queryLib.listDiachronicDatasets();
 		data.setSuccess(true);
 		data.setData(resultString);
@@ -182,7 +185,6 @@ public class QueryController {
 			boolean isForm, JSONObject json)
 			throws Exception {
 		Response data = new Response();
-		QueryLib queryLib = new QueryLib();
         String diachronicDatasetId = getStringParam(request, isForm, json, "diachronicDatasetId");
 		
         if (diachronicDatasetId != null) {
@@ -209,7 +211,6 @@ public class QueryController {
 
 	private Response handleGetDataset(HttpServletRequest request, boolean isForm, JSONObject json) {
 		Response data = new Response();
-		QueryLib queryLib = new QueryLib();
         String datasetId = getStringParam(request, isForm, json, "datasetId");
 		if (datasetId != null) {
 			//ArchiveResultSet ars = queryLib.getDatasetVersionById(request.getParameter("datasetId"));
@@ -233,7 +234,6 @@ public class QueryController {
 
 	private Response handleGetChangeSet(HttpServletRequest request, boolean isForm, JSONObject json) {
 		Response data = new Response();
-		QueryLib queryLib = new QueryLib();
 		
 		String oldVersion = getStringParam(request, isForm, json, "oldVersion");
 		String newVersion = getStringParam(request, isForm, json, "newVersion");
@@ -260,7 +260,6 @@ public class QueryController {
 	private Response handleGetChangesFromChangeSet(HttpServletRequest request,
 			boolean isForm, JSONObject json) throws UnsupportedEncodingException {
 		Response data = new Response();
-		QueryLib queryLib = new QueryLib();
 		
 		String changeSetId = getStringParam(request, isForm, json, "changeSetId");
 		if (changeSetId == null) {
