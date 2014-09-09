@@ -1,4 +1,4 @@
-package eu.fp7.diachron.mapper;
+package eu.fp7.diachron.archive.mapping;
 
 import java.io.IOException;
 

@@ -1,4 +1,4 @@
-package eu.fp7.diachron.mapper;
+package eu.fp7.diachron.archive.mapping;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;

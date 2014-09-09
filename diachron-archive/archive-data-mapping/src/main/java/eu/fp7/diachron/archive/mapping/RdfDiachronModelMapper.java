@@ -1,6 +1,6 @@
-package eu.fp7.diachron.mapper;
+package eu.fp7.diachron.archive.mapping;
 
-import static eu.fp7.diachron.mapper.MappingUtils.sha256;
+import static eu.fp7.diachron.archive.mapping.MappingUtils.sha256;
 
 import java.io.IOException;
 import java.util.Set;

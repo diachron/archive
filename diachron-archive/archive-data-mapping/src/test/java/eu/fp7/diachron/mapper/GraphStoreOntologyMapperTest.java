@@ -18,6 +18,8 @@ import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.vocabulary.RDFS;
 
 import eu.fp7.diachron.archive.core.store.JenaSparqlGraphStore;
+import eu.fp7.diachron.archive.mapping.DiachronVocabulary;
+import eu.fp7.diachron.archive.mapping.RdfDiachronModelMapper;
 
 /**
  * 
