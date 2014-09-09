@@ -3,7 +3,7 @@ package org.athena.imis.diachron.archive.models;
 import java.util.Collection;
 import java.util.HashMap;
 
-import org.athena.imis.diachron.archive.api.ArchiveResultSet;
+import com.hp.hpl.jena.query.QueryExecution;
 
 
 public class RDFRecordSet extends AbstractDiachronEntity  implements RecordSet {
@@ -14,7 +14,7 @@ public class RDFRecordSet extends AbstractDiachronEntity  implements RecordSet {
 		return records.values();
 	}
 	@Override
-	public ArchiveResultSet getRawData() {
+	public QueryExecution getRawData() {
 		// TODO Auto-generated method stub
 		return null;
 	}

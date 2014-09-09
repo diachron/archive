@@ -2,10 +2,10 @@ package org.athena.imis.diachron.archive.models;
 
 import java.util.Collection;
 
-import org.athena.imis.diachron.archive.api.ArchiveResultSet;
+import com.hp.hpl.jena.query.QueryExecution;
 
 public interface RecordSet extends DiachronEntity {
-	public ArchiveResultSet getRawData();
+	public QueryExecution getRawData();
 	public Collection<Record> getRecords();
 	public void addRecord(Record record);
 }

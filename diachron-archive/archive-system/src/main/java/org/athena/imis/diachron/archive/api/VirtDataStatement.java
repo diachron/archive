@@ -1,6 +1,6 @@
 package org.athena.imis.diachron.archive.api;
 
-import java.io.InputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -18,43 +18,30 @@ import org.athena.imis.diachron.archive.models.RDFDiachronicDataset;
 public class VirtDataStatement implements DataStatement {
   private final VirtLoader virtLoader;
   private final DictionaryService dictionary;
-  
+
   public VirtDataStatement(VirtLoader virtLoader, DictionaryService dictionary) {
     this.virtLoader = virtLoader;
     this.dictionary = dictionary;
   }
 
-	/**
-	 * Creates a new diachronic dataset and associates it with metadata defined in the input parameter.
-	 * @param metadata A set of metadata to be associated with the new diachronic dataset.
-	 */
-	public String createDiachronicDataset(ArchiveEntityMetadata metadata){
-		
-		//TODO create with factory
-		DiachronicDataset diachronicDataset = new RDFDiachronicDataset();
-		HashMap<String, String> metadataMap = metadata.getMetadataMap();
-		Set<String> keySet = metadataMap.keySet();
-		
-		for(String predicate : keySet){
-			diachronicDataset.setMetaProperty(predicate, metadataMap.get(predicate));
-		}
-		return dictionary.createDiachronicDataset(diachronicDataset);
-	}
+  /**
+   * Creates a new diachronic dataset and associates it with metadata defined in the input
+   * parameter.
+   * 
+   * @param metadata A set of metadata to be associated with the new diachronic dataset.
+   * @throws IOException
+   */
+  public String createDiachronicDataset(ArchiveEntityMetadata metadata) throws IOException {
 
-	/**
-	 * Updates a diachronic dataset by loading new data to a Virtuoso instance associated with the archive store. 
-	 * Accepts an InputStream object that contains the data to be loaded, and 
-	 * a URI of the diachronic dataset to be updated.
-	 * 
-	 * @param stream The InputStream that contains the data to be loaded.
-	 * @param diachronicDatasetURI The URI of the diachronic dataset to write to.
-	 */
-	public void loadData(InputStream stream, String diachronicDatasetURI) {
-		//stream = new FileInputStream("C:/Users/Marios/Desktop/datasetGraph.rdf");
-		//TODO this should be read from the dictonary ???
-		
-		//This uploads directly the rdf file defined in the FileInputStream into namedGraph
-		this.virtLoader.loadData(stream, diachronicDatasetURI);
-		
-	}
+    // TODO create with factory
+    DiachronicDataset diachronicDataset = new RDFDiachronicDataset();
+    HashMap<String, String> metadataMap = metadata.getMetadataMap();
+    Set<String> keySet = metadataMap.keySet();
+
+    for (String predicate : keySet) {
+      diachronicDataset.setMetaProperty(predicate, metadataMap.get(predicate));
+    }
+    return dictionary.createDiachronicDataset(diachronicDataset);
+  }
+
 }

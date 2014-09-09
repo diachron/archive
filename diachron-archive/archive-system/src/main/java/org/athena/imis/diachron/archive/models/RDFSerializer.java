@@ -3,15 +3,8 @@ package org.athena.imis.diachron.archive.models;
 import java.util.Iterator;
 import java.util.List;
 
-import org.athena.imis.diachron.archive.api.ArchiveResultSet;
 import org.json.JSONArray;
 import org.json.JSONObject;
-
-import com.hp.hpl.jena.rdf.model.AnonId;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.sparql.resultset.RDFInput;
 
 /**
  * This class implements a serializer for RDF data.

@@ -1,5 +1,6 @@
 package org.athena.imis.diachron.archive.core.dataloader;
 
+import java.io.IOException;
 import java.util.Hashtable;
 import java.util.List;
 
@@ -12,11 +13,11 @@ import org.athena.imis.diachron.archive.models.DiachronicDataset;
  *
  */
 public interface DictionaryService {
-	public String createDiachronicDataset(DiachronicDataset dds);
-	String createDiachronicDatasetId();
-	public List<DiachronicDataset> getListOfDiachronicDatasets();
-	public List<Dataset> getListOfDatasets(DiachronicDataset diachronicDatasetId);
-	public Hashtable<String, Object>  getDiachronicDatasetMetadata(String diachronicDatasetId);
-	public DiachronicDataset getDiachronicDataset(String id);
+	public String createDiachronicDataset(DiachronicDataset dds) throws IOException;
+	String createDiachronicDatasetId() throws IOException;
+	public List<DiachronicDataset> getListOfDiachronicDatasets() throws IOException;
+	public List<Dataset> getListOfDatasets(DiachronicDataset diachronicDatasetId) throws IOException;
+	public Hashtable<String, Object>  getDiachronicDatasetMetadata(String diachronicDatasetId) throws IOException;
+	public DiachronicDataset getDiachronicDataset(String id) throws IOException;
 		
 }

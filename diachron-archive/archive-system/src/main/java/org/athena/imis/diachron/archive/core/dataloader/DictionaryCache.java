@@ -1,5 +1,6 @@
 package org.athena.imis.diachron.archive.core.dataloader;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Hashtable;
@@ -29,8 +30,9 @@ public class DictionaryCache implements DictionaryService {
 	
 	/**
 	 * Initializes the cache and populates it with objects from the dictionary of datasets.
+	 * @throws IOException 
 	 */
-	public void init() {
+	public void init() throws IOException {
 		logger.info("INITIALIZING DICTIONARY");
         
 		Collection<DiachronicDataset> dDatasets = store.getListOfDiachronicDatasets();			
@@ -54,8 +56,9 @@ public class DictionaryCache implements DictionaryService {
 	 * Creates a new diachronic dataset entry in the cache.
 	 * @param dds The DiachronicDataset entry to be created in the cache.
 	 * @return A String with the URI of the Diachronic Dataset.
+	 * @throws IOException 
 	 */
-	public String createDiachronicDataset(DiachronicDataset dds) {
+	public String createDiachronicDataset(DiachronicDataset dds) throws IOException {
 		String id = store.createDiachronicDataset(dds);
 		dds.setId(id);
 		diachronicDatasets.put(id, dds);
@@ -63,7 +66,7 @@ public class DictionaryCache implements DictionaryService {
 		
 	}
 
-	public String createDiachronicDatasetId() {
+	public String createDiachronicDatasetId() throws IOException {
 		return store.createDiachronicDatasetId();
 	}
 

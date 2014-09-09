@@ -1,6 +1,6 @@
 package org.athena.imis.diachron.archive.models;
 
-import org.athena.imis.diachron.archive.api.ArchiveResultSet;
+import com.hp.hpl.jena.query.QueryExecution;
 
 /**
  * 
@@ -43,7 +43,7 @@ public class RDFChangeSet  extends AbstractDiachronEntity implements ChangeSet {
 		this.newDatasetVersionId = newDatasetVersionId;
 	}
 	@Override
-	public ArchiveResultSet getRawData() {
+	public QueryExecution getRawData() {
 		// TODO Auto-generated method stub
 		return null;
 	}

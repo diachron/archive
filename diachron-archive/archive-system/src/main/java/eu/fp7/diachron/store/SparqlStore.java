@@ -32,6 +32,6 @@ public interface SparqlStore {
    * @return
    * @throws IOException
    */
-  QueryExecution queryExecution(String query) throws IOException;
+  QueryExecution queryExecution(String query);
 
 }

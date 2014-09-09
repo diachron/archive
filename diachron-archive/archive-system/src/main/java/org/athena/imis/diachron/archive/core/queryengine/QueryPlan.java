@@ -1,19 +1,20 @@
 package org.athena.imis.diachron.archive.core.queryengine;
 
-import org.athena.imis.diachron.archive.api.ArchiveResultSet;
-import org.athena.imis.diachron.archive.api.Query;
+import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryExecution;
 
-public class QueryPlan {
-	private Query source;
+// FIXME what is the point of this class???
+public class QueryPlan extends PlanOperator {
+	private Query sourceQuery;
 	private PlanOperator root;
 	private Object statistics;
 	
-	public QueryPlan(Query source) {
-		this.source = source;
+	public QueryPlan(Query sourceQuery) {
+		this.sourceQuery = sourceQuery;
 		root = new PlanOperator() {
 			
 			@Override
-			public ArchiveResultSet execute() {
+			public QueryExecution execute() {
 				// TODO Auto-generated method stub
 				return null;
 			}
@@ -21,7 +22,7 @@ public class QueryPlan {
 	}
 	
 		
-	public ArchiveResultSet execute() {
+	public QueryExecution execute() {
 		return root.execute();
 	}
 		

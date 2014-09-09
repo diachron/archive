@@ -1,6 +1,5 @@
 package org.athena.imis.diachron.archive.core.loggers;
 
-import org.athena.imis.diachron.archive.api.Query;
 
 
 public class QueryLogger {
@@ -13,7 +12,7 @@ public class QueryLogger {
 		return logger;
 	}
 	
-	public void log(Query query) {
+	public void log(String query) {
 		//TODO to be implemented
 	}
 	

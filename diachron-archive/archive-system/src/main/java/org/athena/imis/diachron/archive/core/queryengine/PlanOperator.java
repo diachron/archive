@@ -1,12 +1,13 @@
 package org.athena.imis.diachron.archive.core.queryengine;
 
-import org.athena.imis.diachron.archive.api.ArchiveResultSet;
-import org.athena.imis.diachron.archive.api.Query;
+import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryExecution;
 
+//FIXME what is the point of this class???
 public abstract class PlanOperator {
 
 	private Query primaryChildPart;
 	private Query secondaryChildPart;
 	
-	public abstract ArchiveResultSet execute();
+	public abstract QueryExecution execute();
 }

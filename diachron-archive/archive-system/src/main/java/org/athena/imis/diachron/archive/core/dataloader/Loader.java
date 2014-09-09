@@ -18,10 +18,13 @@ public interface Loader {
 	public void loadModel(Model model, String namedGraph) throws IOException;
 
 	/**
-	 * 
-	 * @param stream
-	 * @param diachronicDatasetURI
-	 */
+     * Updates a diachronic dataset by loading new data to the archive store. 
+     * Accepts an InputStream object that contains the data to be loaded, and 
+     * a URI of the diachronic dataset to be updated.
+     * 
+     * @param stream The {@link InputStream} that contains the data to be loaded.
+     * @param diachronicDatasetURI The URI of the diachronic dataset to write to.
+     */
 	public void loadData(InputStream stream, String diachronicDatasetURI) throws IOException;
 
 }
