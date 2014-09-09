@@ -61,13 +61,11 @@ public class RDFDictionary implements DictionaryService {
    * 
    */
   @Override
-  public String createDiachronicDataset(DiachronicDataset dds) throws IOException {
-    String URI = createDiachronicDatasetId();
-
+  public void storeDiachronicDataset(DiachronicDataset dds) throws IOException {
     Model model = ModelFactory.createDefaultModel();
 
     Resource diachronicDatasetResource =
-        model.createResource(URI, DiachronOntology.diachronicDataset);
+        model.createResource(dds.getId(), DiachronOntology.diachronicDataset);
 
     for (String predicate : dds.getMetaPropertiesNames()) {
       String objectString = (String) dds.getMetaProperty(predicate);
@@ -82,7 +80,6 @@ public class RDFDictionary implements DictionaryService {
     }
 
     this.loader.loadModel(model, dictionaryNamedGraph);
-    return URI;
 
   }
 
@@ -125,8 +122,7 @@ public class RDFDictionary implements DictionaryService {
       while (rs.hasNext()) {
         QuerySolution qs = rs.next();
         String diachronicDatasetId = qs.get("s").toString();
-        DiachronicDataset dds = ModelsFactory.createDiachronicDataset();
-        dds.setId(diachronicDatasetId);
+        DiachronicDataset dds = ModelsFactory.createDiachronicDataset(diachronicDatasetId);
         diachronicDatasets.add(dds);
       }
       return diachronicDatasets;
@@ -152,8 +148,7 @@ public class RDFDictionary implements DictionaryService {
         QuerySolution qs = rs.next();
         String datasetId = qs.get("o").toString();
         // Dataset ds = ModelsFactory.createDataset(diachronicDataset);
-        Dataset ds = new RDFDataset();
-        ds.setId(datasetId);
+        Dataset ds = new RDFDataset(datasetId);
         datasets.add(ds);
       }
       return datasets;
@@ -193,8 +188,7 @@ public class RDFDictionary implements DictionaryService {
    */
   @Override
   public DiachronicDataset getDiachronicDataset(String id) throws IOException {
-    DiachronicDataset dds = ModelsFactory.createDiachronicDataset();
-    dds.setId(id);
+    DiachronicDataset dds = ModelsFactory.createDiachronicDataset(id);
     dds.setMetaProperties(getDiachronicDatasetMetadata(id));
     for (Dataset dataset : getListOfDatasets(dds))
       dds.addDatasetInstatiation(dataset);

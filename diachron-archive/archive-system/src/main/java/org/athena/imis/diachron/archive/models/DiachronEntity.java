@@ -6,5 +6,4 @@ package org.athena.imis.diachron.archive.models;
  */
 public interface DiachronEntity {
 	public String getId();
-	public void setId(String id);
 }

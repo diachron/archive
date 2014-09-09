@@ -14,6 +14,10 @@ public class RDFDiachronicDataset extends AbstractDiachronEntity implements Diac
 	private Hashtable<String, Object> metaProperties = new Hashtable<String, Object>();
 	private LinkedHashMap<String, Dataset> datasets = new LinkedHashMap<String, Dataset>();
 	private LinkedHashMap<String, ChangeSet> changeSets = new LinkedHashMap<String, ChangeSet>();
+    
+    public RDFDiachronicDataset(String id) {
+      super(id);
+    }
 	
 	/**
 	 * Fetches the Metadata Property based on the provided property name.

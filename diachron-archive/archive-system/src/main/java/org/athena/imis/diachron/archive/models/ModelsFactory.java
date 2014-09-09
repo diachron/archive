@@ -11,8 +11,8 @@ public class ModelsFactory {
 	 * Creates a new DiachronicDataset object.
 	 * @return The created DiachronicDataset object.
 	 */
-	public static DiachronicDataset createDiachronicDataset() {
-		return new RDFDiachronicDataset();
+	public static DiachronicDataset createDiachronicDataset(String id) {
+		return new RDFDiachronicDataset(id);
 	}
 
 	/**
@@ -20,8 +20,8 @@ public class ModelsFactory {
 	 * @param dds DiachronicDataset to be associated with the created Dataset object.
 	 * @return The created Dataset object.
 	 */
-	public static Dataset createDataset(DiachronicDataset dds) {
-		Dataset ds =  new RDFDataset();
+	public static Dataset createDataset(String id, DiachronicDataset dds) {
+		Dataset ds =  new RDFDataset(id);
 		dds.addDatasetInstatiation(ds);
 		return ds;
 	}
@@ -35,11 +35,11 @@ public class ModelsFactory {
 		return new RDFSerializer();
 	}
 	
-	public static Record createRecord() {
-		return new RDFRecord();
+	public static Record createRecord(String id) {
+		return new RDFRecord(id);
 	}
 	
-	public static RecordAttribute createRecordAttribute() {
-		return new RDFRecordAttribute();
+	public static RecordAttribute createRecordAttribute(String id) {
+		return new RDFRecordAttribute(id);
 	}
 }

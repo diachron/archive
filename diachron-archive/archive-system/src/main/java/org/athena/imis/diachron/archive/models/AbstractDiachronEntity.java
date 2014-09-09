@@ -7,7 +7,11 @@ package org.athena.imis.diachron.archive.models;
  */
 public class AbstractDiachronEntity implements DiachronEntity {
 
-	private String id;
+	private final String id;
+	
+	public AbstractDiachronEntity(String id) {
+	  this.id = id;
+	}
 	
 	/**
 	 * Fetches the id of the Diachron Entity.
@@ -15,14 +19,6 @@ public class AbstractDiachronEntity implements DiachronEntity {
 	 */
 	public String getId() {
 		return id;
-	}
-
-	/**
-	 * Sets the id of this Diachron Entity.
-	 * @param id The id of the Diachron Entity to be set.
-	 */
-	public void setId(String id) {
-		this.id = id;
 	}
 
 }

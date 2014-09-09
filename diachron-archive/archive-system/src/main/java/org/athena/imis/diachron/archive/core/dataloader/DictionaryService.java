@@ -13,7 +13,7 @@ import org.athena.imis.diachron.archive.models.DiachronicDataset;
  *
  */
 public interface DictionaryService {
-	public String createDiachronicDataset(DiachronicDataset dds) throws IOException;
+	public void storeDiachronicDataset(DiachronicDataset dds) throws IOException;
 	String createDiachronicDatasetId() throws IOException;
 	public List<DiachronicDataset> getListOfDiachronicDatasets() throws IOException;
 	public List<Dataset> getListOfDatasets(DiachronicDataset diachronicDatasetId) throws IOException;

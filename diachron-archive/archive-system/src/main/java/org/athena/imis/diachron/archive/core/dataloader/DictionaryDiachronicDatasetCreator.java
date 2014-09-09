@@ -1,12 +1,9 @@
-package org.athena.imis.diachron.archive.api;
+package org.athena.imis.diachron.archive.core.dataloader;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Set;
 
-import org.athena.imis.diachron.archive.core.dataloader.ArchiveEntityMetadata;
-import org.athena.imis.diachron.archive.core.dataloader.DictionaryService;
-import org.athena.imis.diachron.archive.core.dataloader.VirtLoader;
 import org.athena.imis.diachron.archive.models.DiachronicDataset;
 import org.athena.imis.diachron.archive.models.RDFDiachronicDataset;
 
@@ -15,12 +12,10 @@ import org.athena.imis.diachron.archive.models.RDFDiachronicDataset;
  * Implements the DataStatement interface for Virtuoso specific data statements.
  *
  */
-public class VirtDataStatement implements DataStatement {
-  private final VirtLoader virtLoader;
+public class DictionaryDiachronicDatasetCreator implements DiachronicDatasetCreator {
   private final DictionaryService dictionary;
 
-  public VirtDataStatement(VirtLoader virtLoader, DictionaryService dictionary) {
-    this.virtLoader = virtLoader;
+  public DictionaryDiachronicDatasetCreator(DictionaryService dictionary) {
     this.dictionary = dictionary;
   }
 
@@ -34,14 +29,16 @@ public class VirtDataStatement implements DataStatement {
   public String createDiachronicDataset(ArchiveEntityMetadata metadata) throws IOException {
 
     // TODO create with factory
-    DiachronicDataset diachronicDataset = new RDFDiachronicDataset();
+    DiachronicDataset diachronicDataset = new RDFDiachronicDataset(dictionary.createDiachronicDatasetId());
     HashMap<String, String> metadataMap = metadata.getMetadataMap();
     Set<String> keySet = metadataMap.keySet();
 
     for (String predicate : keySet) {
       diachronicDataset.setMetaProperty(predicate, metadataMap.get(predicate));
     }
-    return dictionary.createDiachronicDataset(diachronicDataset);
+    dictionary.storeDiachronicDataset(diachronicDataset);
+
+    return diachronicDataset.getId();
   }
 
 }

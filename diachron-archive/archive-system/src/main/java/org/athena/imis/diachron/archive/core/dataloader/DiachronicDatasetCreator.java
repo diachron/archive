@@ -1,8 +1,6 @@
-package org.athena.imis.diachron.archive.api;
+package org.athena.imis.diachron.archive.core.dataloader;
 
 import java.io.IOException;
-
-import org.athena.imis.diachron.archive.core.dataloader.ArchiveEntityMetadata;
 
 /**
  * 
@@ -10,7 +8,7 @@ import org.athena.imis.diachron.archive.core.dataloader.ArchiveEntityMetadata;
  * the archive store.
  *
  */
-public interface DataStatement {
+public interface DiachronicDatasetCreator {
 	
 	/**
 	 * Creates a new diachronic dataset in the arhive and associates it with metadata.

@@ -6,6 +6,10 @@ import java.util.HashMap;
 public class RDFRecord extends AbstractDiachronEntity implements Record {
 	private String subject;
 	private HashMap<String, RecordAttribute> attributes = new HashMap<String, RecordAttribute>();
+    
+    public RDFRecord(String id) {
+      super(id);
+    }
 	
 	@Override
 	public String getSubject() {

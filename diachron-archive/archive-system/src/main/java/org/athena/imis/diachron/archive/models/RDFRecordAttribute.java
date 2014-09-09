@@ -4,6 +4,11 @@ public class RDFRecordAttribute extends AbstractDiachronEntity implements Record
 	private String property;
 	private String propertyValue;
 	private boolean propertyValueIsLiteral = false;
+    
+    public RDFRecordAttribute(String id) {
+      super(id);
+    }
+    
 	public String getProperty() {
 		return property;
 	}

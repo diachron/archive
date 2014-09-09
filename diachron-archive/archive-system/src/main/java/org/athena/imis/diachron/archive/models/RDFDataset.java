@@ -5,12 +5,17 @@ package org.athena.imis.diachron.archive.models;
  *
  */
 public class RDFDataset extends AbstractDiachronEntity implements Dataset  {
-	private RecordSet recSet;
+  private RecordSet recSet;
+  
+	public RDFDataset(String id) {
+    super(id);
+  }
 
 	/**
 	 * Fetches the record set of this RDFDataset.
 	 * @return the recSet
 	 */
+	@Override
 	public RecordSet getRecordSet() {
 		return recSet;
 	}
@@ -22,7 +27,5 @@ public class RDFDataset extends AbstractDiachronEntity implements Dataset  {
 	public void setRecordSet(RecordSet recSet) {
 		this.recSet = recSet;
 	}
-
-
 	
 }

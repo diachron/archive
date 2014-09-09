@@ -8,8 +8,12 @@ import com.hp.hpl.jena.query.QueryExecution;
  *
  */
 public class RDFChangeSet  extends AbstractDiachronEntity implements ChangeSet {
-	private String oldDatasetVersionId;
+    private String oldDatasetVersionId;
 	private String newDatasetVersionId;
+	
+	public RDFChangeSet(String id) {
+	  super(id);
+	}
 	
 	/**
 	 * Fetches the old version of the change set.

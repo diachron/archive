@@ -9,6 +9,10 @@ import com.hp.hpl.jena.query.QueryExecution;
 public class RDFRecordSet extends AbstractDiachronEntity  implements RecordSet {
 
 	private HashMap<String, Record> records = new HashMap<String, Record>();
+    
+    public RDFRecordSet(String id) {
+      super(id);
+    }
 	
 	public Collection<Record> getRecords() {
 		return records.values();
