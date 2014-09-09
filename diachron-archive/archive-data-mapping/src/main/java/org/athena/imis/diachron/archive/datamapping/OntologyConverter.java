@@ -8,16 +8,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.athena.imis.diachron.archive.models.Dataset;
-import org.athena.imis.diachron.archive.models.DiachronOntology;
-import org.athena.imis.diachron.archive.models.DiachronicDataset;
-import org.athena.imis.diachron.archive.models.ModelsFactory;
-import org.athena.imis.diachron.archive.models.RDFDataset;
-import org.athena.imis.diachron.archive.models.RDFDiachronicDataset;
-import org.athena.imis.diachron.archive.models.RDFRecordSet;
-import org.athena.imis.diachron.archive.models.Record;
-import org.athena.imis.diachron.archive.models.RecordAttribute;
-import org.athena.imis.diachron.archive.models.RecordSet;
 import org.coode.owlapi.rdf.model.RDFGraph;
 import org.coode.owlapi.rdf.model.RDFLiteralNode;
 import org.coode.owlapi.rdf.model.RDFResourceNode;
@@ -42,6 +32,17 @@ import com.hp.hpl.jena.rdf.model.impl.PropertyImpl;
 import com.hp.hpl.jena.rdf.model.impl.ResourceImpl;
 import com.hp.hpl.jena.rdf.model.impl.StatementImpl;
 import com.hp.hpl.jena.vocabulary.RDF;
+
+import eu.fp7.diachron.archive.models.Dataset;
+import eu.fp7.diachron.archive.models.DiachronOntology;
+import eu.fp7.diachron.archive.models.DiachronicDataset;
+import eu.fp7.diachron.archive.models.ModelsFactory;
+import eu.fp7.diachron.archive.models.RDFDataset;
+import eu.fp7.diachron.archive.models.RDFDiachronicDataset;
+import eu.fp7.diachron.archive.models.RDFRecordSet;
+import eu.fp7.diachron.archive.models.Record;
+import eu.fp7.diachron.archive.models.RecordAttribute;
+import eu.fp7.diachron.archive.models.RecordSet;
 
 
 public class OntologyConverter implements DataConverter {

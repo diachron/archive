@@ -3,7 +3,8 @@ package org.athena.imis.diachron.archive.datamapping;
 import java.net.URI;
 
 import org.athena.imis.diachron.archive.datamapping.utils.URIUtils;
-import org.athena.imis.diachron.archive.models.DiachronOntology;
+
+import eu.fp7.diachron.archive.models.DiachronOntology;
 
 /**
  * @author Simon Jupp

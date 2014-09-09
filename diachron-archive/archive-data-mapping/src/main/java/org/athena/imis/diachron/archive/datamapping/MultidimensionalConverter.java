@@ -3,7 +3,6 @@ package org.athena.imis.diachron.archive.datamapping;
 import java.io.OutputStream;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.athena.imis.diachron.archive.models.DiachronOntology;
 
 import virtuoso.jdbc4.VirtuosoDataSource;
 import virtuoso.jena.driver.VirtGraph;
@@ -19,6 +18,8 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.vocabulary.RDFS;
+
+import eu.fp7.diachron.archive.models.DiachronOntology;
 
 public class MultidimensionalConverter {
   

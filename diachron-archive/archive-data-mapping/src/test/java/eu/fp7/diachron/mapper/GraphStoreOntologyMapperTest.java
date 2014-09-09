@@ -17,7 +17,7 @@ import com.hp.hpl.jena.vocabulary.OWL;
 import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.vocabulary.RDFS;
 
-import eu.fp7.diachron.store.JenaSparqlGraphStore;
+import eu.fp7.diachron.archive.core.store.JenaSparqlGraphStore;
 
 /**
  * 

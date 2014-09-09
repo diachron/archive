@@ -5,7 +5,6 @@ import static eu.fp7.diachron.mapper.MappingUtils.sha256;
 import java.io.IOException;
 import java.util.Set;
 
-import org.athena.imis.diachron.archive.core.dataloader.Loader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +24,8 @@ import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.vocabulary.RDFS;
 import com.hp.hpl.jena.vocabulary.XSD;
 
-import eu.fp7.diachron.store.SparqlStore;
+import eu.fp7.diachron.archive.core.store.Loader;
+import eu.fp7.diachron.archive.core.store.SparqlStore;
 
 /**
  * Implementation of the {@link DiachronModelMapper} interface. Reads & inserts data using solely
