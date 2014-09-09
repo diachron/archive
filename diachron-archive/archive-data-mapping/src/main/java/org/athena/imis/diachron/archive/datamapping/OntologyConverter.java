@@ -156,8 +156,7 @@ public class OntologyConverter implements DataConverter {
 
     try {
     	DiachronURIFactory uriFactory = new DiachronURIFactory(datasetName, version);
-    	diachronicDataset = new RDFDiachronicDataset();
-    	diachronicDataset.setId(uriFactory.generateDiachronicDatasetUri().toString());
+    	diachronicDataset = new RDFDiachronicDataset(uriFactory.generateDiachronicDatasetUri().toString());
         this.manager = OWLManager.createOWLOntologyManager();
         // load ontology into OWLAPI
         OWLOntology ontology = manager.loadOntologyFromOntologyDocument(input);
@@ -195,14 +194,12 @@ public class OntologyConverter implements DataConverter {
         if (ontologyUriAsString.endsWith("/")) {
             ontologyUriAsString = ontologyUriAsString.substring(0, ontologyUriAsString.lastIndexOf("/"));
         }
-        this.dataset = new RDFDataset(); 
+        this.dataset = new RDFDataset(uriFactory.generateDatasetUri().toString()); 
         		//new DiachronDataset(URI.create(ontologyUriAsString), name, version);
 
-        dataset.setId(uriFactory.generateDatasetUri().toString());
         RDFGraph graph = visitor.getGraph();
         
-        RecordSet rs = new RDFRecordSet();
-        rs.setId(uriFactory.generateDiachronRecordSetURI().toString());
+        RecordSet rs = new RDFRecordSet(uriFactory.generateDiachronRecordSetURI().toString());
         dataset.setRecordSet(rs);
         
         for (OWLClass entity : reasonedOntology.getClassesInSignature()) {
@@ -210,8 +207,7 @@ public class OntologyConverter implements DataConverter {
             //System.out.println("Triples for " + entity.getIRI().toURI().toString());
         
             
-            Record rec = ModelsFactory.createRecord();
-            rec.setId(uriFactory.generateRecordUri(entity.getIRI().toURI()).toString());
+            Record rec = ModelsFactory.createRecord(uriFactory.generateRecordUri(entity.getIRI().toURI()).toString());
             rec.setSubject(entity.getIRI().toURI().toString());
             rs.addRecord(rec);
             //System.out.println(entity.getIRI().toURI());
@@ -220,10 +216,11 @@ public class OntologyConverter implements DataConverter {
 
                 //System.out.println("\t" + triple.toString());
 
-                RecordAttribute recAttr = ModelsFactory.createRecordAttribute();
+                RecordAttribute recAttr = null;
                 
                 if (triple.getObject().isLiteral()) {
-                	recAttr.setId(uriFactory.generateRecordAttributeUri(entity.getIRI().toURI(), 
+                    recAttr = ModelsFactory.createRecordAttribute(uriFactory.
+                      generateRecordAttributeUri(entity.getIRI().toURI(), 
                     		triple.getProperty().getIRI().toURI(),
                             ((RDFLiteralNode)triple.getObject()).getLiteral()).toString());
                 	recAttr.setProperty(triple.getProperty().getIRI().toString());
@@ -231,9 +228,10 @@ public class OntologyConverter implements DataConverter {
                 	recAttr.setPropertyValueIsLiteral();
                 }
                 else {
-                	recAttr.setId(uriFactory.generateRecordAttributeUri(entity.getIRI().toURI(), 
-                    		triple.getProperty().getIRI().toURI(),
-                    		triple.getObject().getIRI().toURI().toString()).toString());
+                    recAttr = ModelsFactory.createRecordAttribute(uriFactory.
+                        generateRecordAttributeUri(entity.getIRI().toURI(), 
+                      triple.getProperty().getIRI().toURI(),
+                      triple.getObject().getIRI().toURI().toString()).toString());
                 	recAttr.setProperty(triple.getProperty().getIRI().toString());
                 	recAttr.setPropertyValue(triple.getObject().getIRI().toURI().toString());
                 	
