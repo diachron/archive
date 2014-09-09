@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import eu.fp7.diachron.archive.core.store.Loader;
 import eu.fp7.diachron.archive.core.store.SparqlStore;
-import eu.fp7.diachron.archive.core.store.VirtLoader;
+import eu.fp7.diachron.archive.core.store.VirtuosoLoader;
 import eu.fp7.diachron.archive.core.store.VirtuosoSparqlStore;
 import virtuoso.jdbc4.VirtuosoDataSource;
 
@@ -16,7 +16,7 @@ public final class StoreFactory {
 	}
     
     public static DictionaryService createVirtuosoDictionaryService(VirtuosoDataSource dataSource) {
-        return new RDFDictionary(new VirtuosoSparqlStore(dataSource), new VirtLoader(dataSource));
+        return new RDFDictionary(new VirtuosoSparqlStore(dataSource), new VirtuosoLoader(dataSource));
     }
     
     public static DictionaryService createPersDictionaryService(SparqlStore sparqlStore, Loader loader) {

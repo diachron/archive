@@ -16,6 +16,9 @@ import com.hp.hpl.jena.update.UpdateFactory;
 /**
  * Implementation of {@link SparqlStore} & {@link Loader} which uses a Jena {@link GraphStore} as
  * data backend.
+ * 
+ * Internally, a {@link SparqlStoreLoader} is used (with the {@link JenaSparqlGraphStore} as
+ * {@link SparqlStore} delegate).
  *
  * @author Ruben Navarro Piris
  *

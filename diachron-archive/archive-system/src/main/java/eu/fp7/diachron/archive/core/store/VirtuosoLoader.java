@@ -38,10 +38,10 @@ import eu.fp7.diachron.archive.models.DiachronOntology;
  * the DIACHRON archive.
  *
  */
-public class VirtLoader implements Loader {
+public class VirtuosoLoader implements Loader {
   private final VirtuosoDataSource dataSource;
 
-  public VirtLoader(VirtuosoDataSource dataSource) {
+  public VirtuosoLoader(VirtuosoDataSource dataSource) {
     this.dataSource = dataSource;
   }
 	

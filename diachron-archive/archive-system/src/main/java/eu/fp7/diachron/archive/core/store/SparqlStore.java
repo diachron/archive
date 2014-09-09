@@ -14,6 +14,7 @@ import com.hp.hpl.jena.query.QueryExecution;
 public interface SparqlStore {
 
   /**
+   * Executes a SPARQL 1.1 update query
    * 
    * @param update
    * @throws IOException
@@ -21,6 +22,8 @@ public interface SparqlStore {
   void executeUpdate(String update) throws IOException;
 
   /**
+   * Creates a SPARQL 1.1 query execution.
+   * 
    * Clients of this API must call the {@link QueryExecution#close()} method once processing is done
    * (at best in a finally block to ensure its execution), otherwise connection/memory leaks could
    * appear.
