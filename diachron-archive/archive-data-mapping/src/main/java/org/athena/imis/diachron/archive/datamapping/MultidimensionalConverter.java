@@ -69,6 +69,28 @@ public static void diachronizeDataCubeObservations(OutputStream out, String full
 			record.addProperty(DiachronOntology.hasRecordAttribute, ratt);
 					
 		}vqe.close();
+		
+		String allQuery = "SELECT ?s ?p ?o FROM <"+fullGraph+"> WHERE {" +
+				"?s a ?type ; ?p ?o FILTER(?type!=qb:Observation)" +
+			"}";
+		vqe = VirtuosoQueryExecutionFactory.create (allQuery, graph);
+		results = vqe.execSelect();			
+		while(results.hasNext()){
+			QuerySolution rs = results.next();	
+			RDFNode obs = rs.get("s");
+			String obsID = DigestUtils.md5Hex(obs.toString());			
+			Resource record = diachronModel.createResource(DiachronOntology.diachronResourcePrefix+"Record/"+obsID, DiachronOntology.record);
+			RDFNode p = rs.get("p");
+			RDFNode o = rs.get("o");
+			String rattID = DigestUtils.md5Hex(p.toString() + o.toString());
+			Resource ratt = diachronModel.createResource(DiachronOntology.diachronResourcePrefix+"RecordAttribute/"+obsID+"/"+rattID, DiachronOntology.recordAttribute)
+						.addProperty(DiachronOntology.predicate, p.asResource());
+			if(o.isResource()) ratt.addProperty(DiachronOntology.object, o.asResource());
+			else if (o.isLiteral()) ratt.addProperty(DiachronOntology.object, o.asLiteral());
+			record.addProperty(DiachronOntology.hasRecordAttribute, ratt);
+			
+		}
+		vqe.close();
 		try{ 			
 			diachronModel.write(out, "RDF/XML-ABBREV");			
 		}catch(Exception e){}

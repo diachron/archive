@@ -72,11 +72,14 @@ public class ArchiveResultSet {
 	 * @return A string containing a serialization of the ArchiveResultSet's jena result set as RDF/JSON.
 	 */
 	public String serializeJenaResultSet(){
+		
+		/*
 		Model model = ModelFactory.createDefaultModel();
 		ResultSetFormatter.asRDF(model, jenaResultSet);		
 		ByteArrayOutputStream os = new ByteArrayOutputStream();
 		model.write(os, "RDF/JSON");
-		return os.toString();
+		return os.toString();*/
+		return ResultSetFormatter.asXMLString(jenaResultSet);		
 	}
 	
 	/**
