@@ -45,212 +45,251 @@ import com.hp.hpl.jena.rdf.model.impl.ResourceImpl;
 import com.hp.hpl.jena.rdf.model.impl.StatementImpl;
 import com.hp.hpl.jena.vocabulary.RDF;
 
-
 public class OntologyConverter {
 	private OWLOntologyManager manager;
-    private Dataset dataset;
-    private DiachronicDataset diachronicDataset;
-    
-    private static final Logger logger = LoggerFactory.getLogger(OntologyConverter.class);
-    
-    public void convert(InputStream input, OutputStream output) {
+	private Dataset dataset;
+	private DiachronicDataset diachronicDataset;
 
-        Collection<URI> filter = new HashSet<URI>();
-        filter.add(OWLRDFVocabulary.RDFS_LABEL.getIRI().toURI());
-        filter.add(URI.create("http://www.ebi.ac.uk/efo/reason_for_obsolescence"));
-        filter.add(URI.create("http://www.ebi.ac.uk/efo/definition"));
-        filter.add(URI.create("http://www.ebi.ac.uk/efo/alternative_term"));
+	private static final Logger logger = LoggerFactory
+			.getLogger(OntologyConverter.class);
 
+	public void convert(InputStream input, OutputStream output, String datasetName, Collection<URI> filter) {
 
-        String version  = (new Date()).getTime()+""; 
-        //OntologyConverter converter = new OntologyConverter();
-        //converter.
-        convert(
-                input,
-                "efo",
-                version,
-                filter );
-        //System.out.println(dataset.getId());
-        Model model = getJenaModelFromDataset();
-        model.write(output);
-        
-    
-    }
-    
-    
-    
-    public Model getJenaModelFromDataset() {
-    	Model model = ModelFactory.createDefaultModel();
-    	
-        // create the diachron dataset
-    	//TODO
-    	
-        Statement s1 = new StatementImpl(new ResourceImpl(diachronicDataset.getId().toString()),
-                RDF.type,
-                new ResourceImpl(DiachronOntology.diachronicDataset.getURI().toString()));
+		String version = (new Date()).getTime() + "";
+		convert(input, datasetName, version, filter);
+		Model model = getJenaModelFromDataset();
+		model.write(output);
 
+	}
+	
+	public void convert(InputStream input, OutputStream output,  String datasetName) {
 
-        // create the dataset
-        Statement s2 = new StatementImpl(new ResourceImpl(dataset.getId().toString()),
-                RDF.type,
-                new ResourceImpl(DiachronOntology.dataset.getURI().toString()));
+		String version = (new Date()).getTime() + "";
+		convert(input, datasetName, version, null);
+		// System.out.println(dataset.getId());
+		Model model = getJenaModelFromDataset();
+		model.write(output);
 
-        model.add(s1);
-        model.add(s2);
-        model.add(s1.getSubject(), new PropertyImpl(DiachronOntology.hasInstantiation.getURI().toString()), s2.getSubject());
-        
-        //TODO these should go to diachronic dataset
-        //model.add(s2.getSubject(), DC.creator, "EBI");
-        //model.add(s2.getSubject(), DC.title, "EFO Ontology");
+	}
 
-        // create the record set
-        Statement s3 = new StatementImpl(
-                new ResourceImpl(dataset.getRecordSet().getId()),
-                RDF.type,
-                new ResourceImpl(DiachronOntology.recordSet.getURI().toString()));
+	public Model getJenaModelFromDataset() {
+		Model model = ModelFactory.createDefaultModel();
 
-        model.add(s3);
-        model.add(s2.getSubject(), new PropertyImpl(DiachronOntology.hasRecordSet.getURI().toString()), s3.getSubject());
+		// create the diachron dataset
+		// TODO
 
-        for (Record record : dataset.getRecordSet().getRecords()) {
+		Statement s1 = new StatementImpl(new ResourceImpl(diachronicDataset
+				.getId().toString()), RDF.type, new ResourceImpl(
+				DiachronOntology.diachronicDataset.getURI().toString()));
 
-            Statement s4 = new StatementImpl(
-                    new ResourceImpl(record.getId().toString()),
-                    RDF.type,
-                    new ResourceImpl(DiachronOntology.record.getURI().toString()));
-            model.add(s4);
-            model.add(s3.getSubject(), new PropertyImpl(DiachronOntology.hasRecord.getURI().toString()), s4.getSubject());
-            //System.out.println(record.getId());
-            model.add(s4.getSubject(), new PropertyImpl(DiachronOntology.subject.getURI().toString()), new ResourceImpl(record.getSubject().toString()));
+		// create the dataset
+		Statement s2 = new StatementImpl(new ResourceImpl(dataset.getId()
+				.toString()), RDF.type, new ResourceImpl(
+				DiachronOntology.dataset.getURI().toString()));
 
-            for (RecordAttribute attribute : record.getRecordAttributes()) {
+		model.add(s1);
+		model.add(s2);
+		model.add(s1.getSubject(), new PropertyImpl(
+				DiachronOntology.hasInstantiation.getURI().toString()), s2
+				.getSubject());
 
-                Statement s5 = new StatementImpl(
-                        new ResourceImpl(attribute.getId()),
-                        RDF.type,
-                        new ResourceImpl(DiachronOntology.recordAttribute.getURI().toString()));
-                model.add(s5);
-                model.add(s4.getSubject(), new PropertyImpl(DiachronOntology.hasRecordAttribute.getURI().toString()), s5.getSubject());
+		// TODO these should go to diachronic dataset
+		// model.add(s2.getSubject(), DC.creator, "EBI");
+		// model.add(s2.getSubject(), DC.title, "EFO Ontology");
 
-                model.add(s5.getSubject(), new PropertyImpl(DiachronOntology.predicate.getURI().toString()), new ResourceImpl(attribute.getProperty()));
+		// create the record set
+		Statement s3 = new StatementImpl(new ResourceImpl(dataset
+				.getRecordSet().getId()), RDF.type, new ResourceImpl(
+				DiachronOntology.recordSet.getURI().toString()));
 
-                if(attribute.getPropertyValueIsLiteral())
-                	model.add(s5.getSubject(), new PropertyImpl(DiachronOntology.object.getURI().toString()), attribute.getPropertyValue());                
-                else 
-                	model.add(s5.getSubject(), new PropertyImpl(DiachronOntology.object.getURI().toString()), new ResourceImpl(attribute.getPropertyValue()));
+		model.add(s3);
+		model.add(s2.getSubject(), new PropertyImpl(
+				DiachronOntology.hasRecordSet.getURI().toString()), s3
+				.getSubject());
 
-                /*
-                if (attribute instanceof ResourceAttribute) {
-                    model.add(s5.getSubject(), new PropertyImpl(DiachronOntology.object.getURI().toString()), new ResourceImpl(((ResourceAttribute) attribute).getObject().toString()));
-                }
-                else if (attribute instanceof LiteralAttribute) {
-                    model.add(s5.getSubject(), new PropertyImpl(DiachronOntology.object.getURI().toString()), ((LiteralAttribute)attribute).getValue());
-                }
-                else {
-                    throw new UnsupportedOperationException();
-                }
-                */
-            }
-        }
-        return model;
-    }
+		for (Record record : dataset.getRecordSet().getRecords()) {
 
-    private void convert(InputStream input, String datasetName, String version, Collection<URI> predicateFilters) {
+			Statement s4 = new StatementImpl(new ResourceImpl(record.getId()
+					.toString()), RDF.type, new ResourceImpl(
+					DiachronOntology.record.getURI().toString()));
+			model.add(s4);
+			model.add(s3.getSubject(), new PropertyImpl(
+					DiachronOntology.hasRecord.getURI().toString()), s4
+					.getSubject());
+			// System.out.println(record.getId());
+			model.add(s4.getSubject(), new PropertyImpl(
+					DiachronOntology.subject.getURI().toString()),
+					new ResourceImpl(record.getSubject().toString()));
 
-    try {
-    	DiachronURIFactory uriFactory = new DiachronURIFactory(datasetName, version);
-    	diachronicDataset = new RDFDiachronicDataset();
-    	diachronicDataset.setId(uriFactory.generateDiachronicDatasetUri().toString());
-        this.manager = OWLManager.createOWLOntologyManager();
-        // load ontology into OWLAPI
-        OWLOntology ontology = manager.loadOntologyFromOntologyDocument(input);
+			for (RecordAttribute attribute : record.getRecordAttributes()) {
 
-        // create a reasoner factory and classify ontology
-        Reasoner.ReasonerFactory owlReasonerFactory = new Reasoner.ReasonerFactory();
-        OWLReasoner owlReasoner = owlReasonerFactory.createReasoner(ontology);
+				Statement s5 = new StatementImpl(new ResourceImpl(
+						attribute.getId()), RDF.type, new ResourceImpl(
+						DiachronOntology.recordAttribute.getURI().toString()));
+				model.add(s5);
+				model.add(s4.getSubject(),
+						new PropertyImpl(DiachronOntology.hasRecordAttribute
+								.getURI().toString()), s5.getSubject());
 
-        OWLOntology reasonedOntology = owlReasoner.getRootOntology();
-        FilteredRDFVisitor visitor = new FilteredRDFVisitor(manager, reasonedOntology, true, predicateFilters);
+				model.add(s5.getSubject(), new PropertyImpl(
+						DiachronOntology.predicate.getURI().toString()),
+						new ResourceImpl(attribute.getProperty()));
 
-        
-        InferredSubClassAxiomGenerator inferredAxioms = new InferredSubClassAxiomGenerator();
-		Set<OWLSubClassOfAxiom> subClasses = inferredAxioms.createAxioms(manager, owlReasoner);
+				if (attribute.getPropertyValueIsLiteral())
+					model.add(s5.getSubject(), new PropertyImpl(
+							DiachronOntology.object.getURI().toString()),
+							attribute.getPropertyValue());
+				else
+					model.add(s5.getSubject(), new PropertyImpl(
+							DiachronOntology.object.getURI().toString()),
+							new ResourceImpl(attribute.getPropertyValue()));
+
+				/*
+				 * if (attribute instanceof ResourceAttribute) {
+				 * model.add(s5.getSubject(), new
+				 * PropertyImpl(DiachronOntology.object.getURI().toString()),
+				 * new ResourceImpl(((ResourceAttribute)
+				 * attribute).getObject().toString())); } else if (attribute
+				 * instanceof LiteralAttribute) { model.add(s5.getSubject(), new
+				 * PropertyImpl(DiachronOntology.object.getURI().toString()),
+				 * ((LiteralAttribute)attribute).getValue()); } else { throw new
+				 * UnsupportedOperationException(); }
+				 */
+			}
+		}
+		return model;
+	}
+
+	private void convert(InputStream input, String datasetName, String version,
+			Collection<URI> predicateFilters) {
+
+		try {
+			DiachronURIFactory uriFactory = new DiachronURIFactory(datasetName, version);
+			diachronicDataset = new RDFDiachronicDataset();
+			diachronicDataset.setId(uriFactory.generateDiachronicDatasetUri().toString());
+			this.manager = OWLManager.createOWLOntologyManager();
+			// load ontology into OWLAPI
+			OWLOntology ontology = manager.loadOntologyFromOntologyDocument(input);
+
+			// create a reasoner factory and classify ontology
+			Reasoner.ReasonerFactory owlReasonerFactory = new Reasoner.ReasonerFactory();
+			OWLReasoner owlReasoner = owlReasonerFactory.createReasoner(ontology);
+
+			OWLOntology reasonedOntology = owlReasoner.getRootOntology();
+			FilteredRDFVisitor visitor = new FilteredRDFVisitor(manager, reasonedOntology, true, predicateFilters);
+
+			InferredSubClassAxiomGenerator inferredAxioms = new InferredSubClassAxiomGenerator();
+			Set<OWLSubClassOfAxiom> subClasses = inferredAxioms.createAxioms(
+					manager, owlReasoner);
+
+			for (OWLSubClassOfAxiom subClass : subClasses)
+				visitor.visit(subClass);
+
+			for (OWLClass entity : reasonedOntology.getClassesInSignature()) {
+
+				for (OWLDeclarationAxiom declarationAxiom : reasonedOntology
+						.getDeclarationAxioms(entity))
+					visitor.visit(declarationAxiom);
+
+				/*
+				 * for (OWLSubClassOfAxiom subClasses :
+				 * reasonedOntology.getSubClassAxiomsForSubClass(entity))
+				 * visitor.visit(subClasses);
+				 */
+
+				for (OWLAnnotationAssertionAxiom annotation : reasonedOntology
+						.getAnnotationAssertionAxioms(entity.getIRI()))
+					visitor.visit(annotation);
+
+			}
+
+			// create a new diachronic dataset based on this ontology instance
+			/*
+			 * URI ontologyUri =
+			 * ontology.getOntologyID().getOntologyIRI().toURI(); String
+			 * ontologyUriAsString = ontologyUri.toString(); if
+			 * (ontologyUriAsString.endsWith("/")) { ontologyUriAsString =
+			 * ontologyUriAsString.substring(0,
+			 * ontologyUriAsString.lastIndexOf("/")); }
+			 */
+			this.dataset = new RDFDataset();
+			// new DiachronDataset(URI.create(ontologyUriAsString), name,
+			// version);
+
+			dataset.setId(uriFactory.generateDatasetUri().toString());
+			RDFGraph graph = visitor.getGraph();
+
+			RecordSet rs = new RDFRecordSet();
+			rs.setId(uriFactory.generateDiachronRecordSetURI().toString());
+			dataset.setRecordSet(rs);
+
+			for (OWLClass entity : reasonedOntology.getClassesInSignature()) {
+
+				// System.out.println("Triples for " +
+				// entity.getIRI().toURI().toString());
+
+				Record rec = ModelsFactory.createRecord();
+				rec.setId(uriFactory.generateRecordUri(entity.getIRI().toURI()).toString());
+				rec.setSubject(entity.getIRI().toURI().toString());
+				rs.addRecord(rec);
+				// System.out.println(entity.getIRI().toURI());
+
+				for (RDFTriple triple : graph.getTriplesForSubject(
+						new RDFResourceNode(entity.getIRI()), true)) {
+
+					// System.out.println("\t" + triple.toString());
+
+					RecordAttribute recAttr = ModelsFactory
+							.createRecordAttribute();
+
+					if (triple.getObject().isLiteral()) {
+						recAttr.setId(uriFactory.generateRecordAttributeUri(
+								entity.getIRI().toURI(),
+								triple.getProperty().getIRI().toURI(),
+								((RDFLiteralNode) triple.getObject())
+										.getLiteral()).toString());
+						recAttr.setProperty(triple.getProperty().getIRI()
+								.toString());
+						recAttr.setPropertyValue(((RDFLiteralNode) triple
+								.getObject()).getLiteral());
+						recAttr.setPropertyValueIsLiteral();
+					} else {
+						recAttr.setId(uriFactory.generateRecordAttributeUri(
+								entity.getIRI().toURI(),
+								triple.getProperty().getIRI().toURI(),
+								triple.getObject().getIRI().toURI().toString())
+								.toString());
+						recAttr.setProperty(triple.getProperty().getIRI()
+								.toString());
+						recAttr.setPropertyValue(triple.getObject().getIRI()
+								.toURI().toString());
+
+					}
+					rec.addRecordAttribute(recAttr);
+					// System.out.println(recAttr.getPropertyValue());
+				}
+			}
+			// System.out.println(dataset.getRecordSet().getId());
+		} catch (OWLOntologyCreationException e) {
+			logger.error(e.getMessage(), e);
+		}
+	}
+	
+	public static void main(String args[]) {
+
+		Collection<URI> filter = new HashSet<URI>();
+		filter.add(OWLRDFVocabulary.RDFS_LABEL.getIRI().toURI());
+		filter.add(URI
+				.create("http://www.ebi.ac.uk/efo/reason_for_obsolescence"));
+		filter.add(URI.create("http://www.ebi.ac.uk/efo/definition"));
+		filter.add(URI.create("http://www.ebi.ac.uk/efo/alternative_term"));
+
+		InputStream input = null; //open the efo file here 
+		OntologyConverter converter = new OntologyConverter();
+		converter.convert(input, System.out, "efo", filter);
+		// System.out.println(dataset.getId());
 		
-		for (OWLSubClassOfAxiom subClass : subClasses)
-			visitor.visit(subClass);
-		
-        for (OWLClass entity : reasonedOntology.getClassesInSignature()) {
 
-            for (OWLDeclarationAxiom declarationAxiom: reasonedOntology.getDeclarationAxioms(entity))
-                visitor.visit(declarationAxiom);
-
-            /*for (OWLSubClassOfAxiom subClasses : reasonedOntology.getSubClassAxiomsForSubClass(entity))
-                visitor.visit(subClasses);*/
-
-            for (OWLAnnotationAssertionAxiom annotation : reasonedOntology.getAnnotationAssertionAxioms(entity.getIRI()))
-                visitor.visit(annotation);
-
-        }
-
-        // create a new diachronic dataset based on this ontology instance
-       /* URI ontologyUri = ontology.getOntologyID().getOntologyIRI().toURI();
-        String ontologyUriAsString = ontologyUri.toString();
-        if (ontologyUriAsString.endsWith("/")) {
-            ontologyUriAsString = ontologyUriAsString.substring(0, ontologyUriAsString.lastIndexOf("/"));
-        }*/
-        this.dataset = new RDFDataset(); 
-        		//new DiachronDataset(URI.create(ontologyUriAsString), name, version);
-
-        dataset.setId(uriFactory.generateDatasetUri().toString());
-        RDFGraph graph = visitor.getGraph();
-        
-        RecordSet rs = new RDFRecordSet();
-        rs.setId(uriFactory.generateDiachronRecordSetURI().toString());
-        dataset.setRecordSet(rs);
-        
-        for (OWLClass entity : reasonedOntology.getClassesInSignature()) {
-
-            //System.out.println("Triples for " + entity.getIRI().toURI().toString());
-        
-            
-            Record rec = ModelsFactory.createRecord();
-            rec.setId(uriFactory.generateRecordUri(entity.getIRI().toURI()).toString());
-            rec.setSubject(entity.getIRI().toURI().toString());
-            rs.addRecord(rec);
-            //System.out.println(entity.getIRI().toURI());
-            
-            for (RDFTriple triple : graph.getTriplesForSubject(new RDFResourceNode(entity.getIRI()), true)) {
-
-                //System.out.println("\t" + triple.toString());
-
-                RecordAttribute recAttr = ModelsFactory.createRecordAttribute();
-                
-                if (triple.getObject().isLiteral()) {
-                	recAttr.setId(uriFactory.generateRecordAttributeUri(entity.getIRI().toURI(), 
-                    		triple.getProperty().getIRI().toURI(),
-                            ((RDFLiteralNode)triple.getObject()).getLiteral()).toString());
-                	recAttr.setProperty(triple.getProperty().getIRI().toString());
-                	recAttr.setPropertyValue(((RDFLiteralNode)triple.getObject()).getLiteral());
-                	recAttr.setPropertyValueIsLiteral();
-                }
-                else {
-                	recAttr.setId(uriFactory.generateRecordAttributeUri(entity.getIRI().toURI(), 
-                    		triple.getProperty().getIRI().toURI(),
-                    		triple.getObject().getIRI().toURI().toString()).toString());
-                	recAttr.setProperty(triple.getProperty().getIRI().toString());
-                	recAttr.setPropertyValue(triple.getObject().getIRI().toURI().toString());
-                	
-                }
-                rec.addRecordAttribute(recAttr);
-                //System.out.println(recAttr.getPropertyValue());
-            }
-        }
-        //System.out.println(dataset.getRecordSet().getId());
-    } catch (OWLOntologyCreationException e) {
-    	logger.error(e.getMessage(), e);
-    }
-}
-
-
+	}
 
 }
