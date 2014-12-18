@@ -37,8 +37,11 @@ public class FilteredRDFVisitor extends RDFTranslator {
 
     @Override
     public void visit(OWLAnnotationAssertionAxiom axiom) {
-        if (filteredPredicates.contains(axiom.getProperty().getIRI().toURI())) {
-            super.visit(axiom);
-        }
+    	if (filteredPredicates != null) {
+    		if (filteredPredicates.contains(axiom.getProperty().getIRI().toURI())) {
+    			super.visit(axiom);
+    		}
+    	} else 
+    		super.visit(axiom);
     }
 }
