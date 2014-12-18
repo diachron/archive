@@ -34,6 +34,8 @@ import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.util.InferredSubClassAxiomGenerator;
 import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
@@ -48,6 +50,8 @@ public class OntologyConverter {
 	private OWLOntologyManager manager;
     private Dataset dataset;
     private DiachronicDataset diachronicDataset;
+    
+    private static final Logger logger = LoggerFactory.getLogger(OntologyConverter.class);
     
     public void convert(InputStream input, OutputStream output) {
 
@@ -189,11 +193,11 @@ public class OntologyConverter {
         }
 
         // create a new diachronic dataset based on this ontology instance
-        URI ontologyUri = ontology.getOntologyID().getOntologyIRI().toURI();
+       /* URI ontologyUri = ontology.getOntologyID().getOntologyIRI().toURI();
         String ontologyUriAsString = ontologyUri.toString();
         if (ontologyUriAsString.endsWith("/")) {
             ontologyUriAsString = ontologyUriAsString.substring(0, ontologyUriAsString.lastIndexOf("/"));
-        }
+        }*/
         this.dataset = new RDFDataset(); 
         		//new DiachronDataset(URI.create(ontologyUriAsString), name, version);
 
@@ -243,7 +247,7 @@ public class OntologyConverter {
         }
         //System.out.println(dataset.getRecordSet().getId());
     } catch (OWLOntologyCreationException e) {
-        e.printStackTrace();
+    	logger.error(e.getMessage(), e);
     }
 }
 

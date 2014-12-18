@@ -34,7 +34,7 @@
 
 	<servlet>
 		<servlet-name>starter</servlet-name>
-		<servlet-class>org.athena.imis.diachron.archive.web.services.AppStarter</servlet-class>
+		<servlet-class>org.athena.imis.diachron.archive.web.AppStarter</servlet-class>
         <load-on-startup>1</load-on-startup>
 	</servlet>
 	

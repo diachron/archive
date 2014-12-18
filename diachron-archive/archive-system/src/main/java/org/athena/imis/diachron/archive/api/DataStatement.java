@@ -19,8 +19,9 @@ public interface DataStatement {
 	 * 
 	 * @param input The InputStream that contains the data to be loaded.
 	 * @param diachronicDatasetURI The URI of the diachronic dataset to write to.
+	 * @throws Exception 
 	 */
-	public void loadData(InputStream input, String diachronicDatasetURI);
+	public String loadData(InputStream input, String diachronicDatasetURI) throws Exception;
 	
 	
 	/**
@@ -31,4 +32,25 @@ public interface DataStatement {
 	 */
 	public String createDiachronicDataset(ArchiveEntityMetadata metadata);
 
+	/**
+	 * Attributes metadata to a Diachronic Dataset. 
+	 * Accepts an InputStream object that contains the data to be loaded in JSON-LD, and 
+	 * a URI of the diachronic dataset to be updated.
+	 * 
+	 * @param stream The InputStream that contains the data to be loaded.
+	 * @param diachronicDatasetURI The URI of the diachronic dataset to write to.
+	 * @throws Exception when the Diachronic Dataset URI doesn't exist in the archive 
+	 */
+	public void loadDiachronicDatasetMetadata(InputStream stream, String diachronicDatasetURI) throws Exception;
+
+	/**
+	 * Attributes metadata to a Diachronic Dataset Instatiation. 
+	 * Accepts an InputStream object that contains the data to be loaded in JSON-LD, and 
+	 * a URI of the dataset instatiations to be updated.
+	 * 
+	 * @param stream The InputStream that contains the data to be loaded.
+	 * @param datasetURI The URI of the dataset instatiation to write to.
+	 * @throws Exception when the Dataset Instatiation URI doesn't exist in the archive
+	 */
+	public void loadDatasetMetadata(InputStream stream, String datasetURI) throws Exception;
 }

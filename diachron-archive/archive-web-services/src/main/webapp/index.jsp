@@ -3,7 +3,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/functions"  prefix="fn" %>
-<c:set var="baseURL" value="${fn:replace(pageContext.request.requestURL, pageContext.request.requestURI, pageContext.request.contextPath)}" />
+<c:set var="baseURL" value="${fn:replace(pageContext.request.requestURL[toString](), pageContext.request.requestURI, pageContext.request.contextPath)}" />
 			
 <c:redirect url="${baseURL }/ui/" ></c:redirect>
 		

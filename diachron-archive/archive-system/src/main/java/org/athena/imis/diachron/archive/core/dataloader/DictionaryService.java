@@ -1,11 +1,14 @@
 package org.athena.imis.diachron.archive.core.dataloader;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
 import org.athena.imis.diachron.archive.models.Dataset;
 import org.athena.imis.diachron.archive.models.DiachronicDataset;
+import org.athena.imis.diachron.archive.models.RDFDataset;
+
+import com.hp.hpl.jena.graph.Graph;
 
 /**
  * 
@@ -19,5 +22,10 @@ public interface DictionaryService {
 	public List<Dataset> getListOfDatasets(DiachronicDataset diachronicDatasetId);
 	public Hashtable<String, Object>  getDiachronicDatasetMetadata(String diachronicDatasetId);
 	public DiachronicDataset getDiachronicDataset(String id);
+	public Dataset getDataset(String id);
+	public void addDataset(Graph graph, String diachronicDatasetURI, String datasetURI);
+	public void addRecordSet(Graph graph, String recordSetURI, String datasetURI);
+	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, String diachronicDatasetURI);
+	//public void insertDatasetMetadata(String )
 		
 }

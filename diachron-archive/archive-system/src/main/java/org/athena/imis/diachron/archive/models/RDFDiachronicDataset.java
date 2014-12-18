@@ -89,14 +89,12 @@ public class RDFDiachronicDataset extends AbstractDiachronEntity implements Diac
 		return changeSets.get(id);
 	}
 
-	@Override
 	public void setMetaProperties(
 			Hashtable<String, Object> diachronicDatasetMetadata) {
 		this.metaProperties = diachronicDatasetMetadata;
 		
 	}
 
-	@Override
 	public Hashtable<String, Object> getMetaProperties() {
 		return metaProperties;
 	}

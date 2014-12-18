@@ -3,6 +3,7 @@ package org.athena.imis.diachron.archive.core.queryengine;
 import org.athena.imis.diachron.archive.api.ArchiveResultSet;
 import org.athena.imis.diachron.archive.api.Query;
 
+@SuppressWarnings("unused")
 public class QueryPlan {
 	private Query source;
 	private PlanOperator root;

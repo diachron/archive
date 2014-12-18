@@ -5,14 +5,16 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import javax.sql.DataSource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.hp.hpl.jena.graph.Graph;
+import com.hp.hpl.jena.rdf.model.Model;
 
 import virtuoso.jdbc4.VirtuosoConnectionPoolDataSource;
 import virtuoso.jdbc4.VirtuosoDataSource;
 import virtuoso.jena.driver.VirtGraph;
+import virtuoso.jena.driver.VirtModel;
 
 /**
  * 
@@ -46,7 +48,7 @@ public class StoreConnection {
 	private static VirtuosoDataSource vDatasource = new VirtuosoConnectionPoolDataSource();
 	
 	
-	private static final String JDBC_DRIVER = "virtuoso.jdbc4.Driver";
+	//private static final String JDBC_DRIVER = "virtuoso.jdbc4.Driver";
 	private static final Logger logger = LoggerFactory.getLogger(StoreConnection.class);
 	
 	
@@ -136,7 +138,7 @@ public class StoreConnection {
 			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error(e.getMessage(), e);
 		}
 	}
 	
@@ -148,6 +150,7 @@ public class StoreConnection {
 		return isInit;
 	}
 	
+	/*
 	private String getUsername(){	
 		return username;
 	}
@@ -159,7 +162,7 @@ public class StoreConnection {
 	private String getConnectionString(){		
 		return "jdbc:virtuoso://"+host+"/autoReconnect=true/charset=UTF-8/log_enable=2";
 	}
-	
+	*/
 	/**
 	 * Fetches the connection to the data source.
 	 * @return A Connection object to the data source.
@@ -182,8 +185,12 @@ public class StoreConnection {
 	 * @param namedGraph The URI of the named graph to connect to.
 	 * @return A VirtGraph object with a connection to the specific named graph of the Virtuoso data source.
 	 */
-	public static VirtGraph getVirtGraph(String namedGraph){
+	public static Graph getGraph(String namedGraph){
 		return new VirtGraph (namedGraph,vDatasource);
+	}
+	
+	public static Model getJenaModel(String namedGraph){
+		return new VirtModel(new VirtGraph (namedGraph,vDatasource));
 	}
 
 	/**

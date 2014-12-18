@@ -9,8 +9,8 @@ import java.util.HashMap;
  */
 public class ArchiveEntityMetadata implements Metadata {
 
-	String uri;
-	HashMap<String, String> metadataMap;
+	private String uri;
+	private HashMap<String, String> metadataMap;
 	
 	/**
 	 * Sets a metadata map for this ArchiveEntityMetadata object. 

@@ -1,12 +1,15 @@
 package org.athena.imis.diachron.archive.datamapping;
 
-import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Date;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.athena.imis.diachron.archive.core.datamanager.StoreConnection;
+import org.athena.imis.diachron.archive.datamapping.utils.BulkLoader;
 import org.athena.imis.diachron.archive.models.DiachronOntology;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import virtuoso.jena.driver.VirtGraph;
 import virtuoso.jena.driver.VirtuosoQueryExecution;
@@ -24,7 +27,25 @@ import com.hp.hpl.jena.vocabulary.RDFS;
 
 public class MultidimensionalConverter {
 
-	public void convert(String fullGraph, OutputStream out) {		
+	private static final Logger logger = LoggerFactory.getLogger(MultidimensionalConverter.class);
+	
+	public void convert(InputStream in, OutputStream out, String ext){		
+		
+		StoreConnection.init();
+		Long lDateTime = new Date().getTime();		
+		String tempName = lDateTime.toString().trim();
+		if(BulkLoader.bulkLoadRDFDataToGraph(in, tempName, ext)){
+			System.out.println("Converting temp graph " + tempName);
+			convertFromGraph(tempName, out);
+			BulkLoader.clearStageGraph(tempName);
+		}
+		else 
+			logger.error("Something went wrong.");
+		
+		
+	}
+	
+	public void convertFromGraph(String fullGraph, OutputStream out) {		
 		diachronizeDataCubeSchema(out, fullGraph);
 		diachronizeDataCubeObservations(out, fullGraph);
 		
@@ -45,7 +66,8 @@ public static void diachronizeDataCubeObservations(OutputStream out, String full
 			QuerySolution rs = resultsD.next();	
 			RDFNode dataset = rs.get("dataset");
 			datasetID = dataset.toString().substring(dataset.toString().lastIndexOf("/")+1);
-		}vqeD.close();
+		}
+		vqeD.close();
 		
 		String obsQuery = "SELECT ?obs ?p ?o FROM <"+fullGraph+"> WHERE {" +
 								"?obs a qb:Observation ; " +
@@ -64,8 +86,10 @@ public static void diachronizeDataCubeObservations(OutputStream out, String full
 			String rattID = DigestUtils.md5Hex(p.toString() + o.toString());
 			Resource ratt = diachronModel.createResource(DiachronOntology.diachronResourcePrefix+"RecordAttribute/"+obsID+"/"+rattID, DiachronOntology.recordAttribute)
 							.addProperty(DiachronOntology.predicate, p.asResource());
-			if(o.isResource()) ratt.addProperty(DiachronOntology.object, o.asResource());
-			else if (o.isLiteral()) ratt.addProperty(DiachronOntology.object, o.asLiteral());
+			if(o.isResource()) 
+				ratt.addProperty(DiachronOntology.object, o.asResource());
+			else if (o.isLiteral()) 
+				ratt.addProperty(DiachronOntology.object, o.asLiteral());
 			record.addProperty(DiachronOntology.hasRecordAttribute, ratt);
 					
 		}vqe.close();
@@ -85,8 +109,10 @@ public static void diachronizeDataCubeObservations(OutputStream out, String full
 			String rattID = DigestUtils.md5Hex(p.toString() + o.toString());
 			Resource ratt = diachronModel.createResource(DiachronOntology.diachronResourcePrefix+"RecordAttribute/"+obsID+"/"+rattID, DiachronOntology.recordAttribute)
 						.addProperty(DiachronOntology.predicate, p.asResource());
-			if(o.isResource()) ratt.addProperty(DiachronOntology.object, o.asResource());
-			else if (o.isLiteral()) ratt.addProperty(DiachronOntology.object, o.asLiteral());
+			if(o.isResource()) 
+				ratt.addProperty(DiachronOntology.object, o.asResource());
+			else if (o.isLiteral()) 
+				ratt.addProperty(DiachronOntology.object, o.asLiteral());
 			record.addProperty(DiachronOntology.hasRecordAttribute, ratt);
 			
 		}
@@ -111,7 +137,8 @@ public static void diachronizeDataCubeSchema(OutputStream out, String fullGraph)
 			QuerySolution rs = resultsD.next();	
 			RDFNode dataset = rs.get("dataset");
 			datasetID = dataset.toString().substring(dataset.toString().lastIndexOf("/")+1);
-		}vqeD.close();
+		}
+		vqeD.close();
 		String dsdQuery = "SELECT ?dsd ?p ?o ?codelist ?range FROM <"+fullGraph+"> WHERE {" +
 										"?dsd a qb:DataStructureDefinition ; " +
 										"qb:component [?p ?o] ." +										
@@ -132,8 +159,7 @@ public static void diachronizeDataCubeSchema(OutputStream out, String fullGraph)
 			//if(rs.get("componentType").toString().contains("DimensionProperty")){
 				 dimProperty= diachronModel.createResource(o.toString()).addProperty(RDF.type, DiachronOntology.dimensionProperty);
 				factTable.addProperty(DiachronOntology.hasDimension, dimProperty);
-			}
-			else if(p.toString().contains("measure")){
+			} else if(p.toString().contains("measure")){
 			//if(rs.get("componentType").toString().contains("MeasureProperty")){
 				dimProperty = diachronModel.createResource(o.toString()).addProperty(RDF.type, DiachronOntology.measureProperty);
 				factTable.addProperty(DiachronOntology.hasMeasure, dimProperty);
@@ -156,8 +182,7 @@ public static void diachronizeDataCubeSchema(OutputStream out, String fullGraph)
 					if(oCLQ.isResource()) {
 						term.addProperty(ResourceFactory.createProperty(rsCLQ.get("p").toString()), diachronModel.createResource(oCLQ.toString()));
 						//System.out.println(oCLQ.toString());
-					}
-					else if (oCLQ.isLiteral()) {
+					} else if (oCLQ.isLiteral()) {
 						term.addProperty(ResourceFactory.createProperty(rsCLQ.get("p").toString()), oCLQ.toString()); 
 					}
 						
@@ -172,10 +197,13 @@ public static void diachronizeDataCubeSchema(OutputStream out, String fullGraph)
 			}
 			//TODO check for attributes
 			
-		}vqe.close();		
+		}
+		vqe.close();		
 		try{ 			
 			diachronModel.write(out, "RDF/XML-ABBREV");			
-		}catch(Exception e){}
+		} catch(Exception e){
+			//TODO exception handle
+		}
 		diachronModel.close();
 	}
 

@@ -20,8 +20,17 @@ public interface Loader {
 	 * 
 	 * @param stream
 	 * @param diachronicDatasetURI
+	 * @throws Exception 
 	 */
-	public void loadData(InputStream stream,
+	public String loadData(InputStream stream,
+			String diachronicDatasetURI) throws Exception;
+	
+	/**
+	 * 
+	 * @param stream
+	 * @param diachronicDatasetURI
+	 */
+	public void loadMetadata(InputStream stream,
 			String diachronicDatasetURI);
 
 }

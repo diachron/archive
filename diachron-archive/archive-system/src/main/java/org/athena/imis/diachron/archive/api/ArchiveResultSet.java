@@ -1,19 +1,13 @@
 package org.athena.imis.diachron.archive.api;
 
 import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
 import java.io.StringWriter;
 import java.sql.ResultSet;
-import java.util.Iterator;
 
-import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSetFactory;
 import com.hp.hpl.jena.query.ResultSetFormatter;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 /**
  * Instances of the class ArchiveResultSet represent results of a query defined in a Query object. 
@@ -22,10 +16,31 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
  *
  */
 public class ArchiveResultSet {
+	public enum SerializationFormat {
+		RDFXML, RDFJSON;
+	
+		protected String getString() {
+			switch (this) {
+			case RDFXML: return "RDF/XML";
+			case RDFJSON: return "RDF/JSON";
+			default: return "";
+			}
+		}
+	};
+	private static SerializationFormat defaultSerialize = SerializationFormat.RDFXML;
+	private SerializationFormat serializationFormat = defaultSerialize;
+	
 	private ResultSet jdbcResult;
 	private com.hp.hpl.jena.query.ResultSet jenaResultSet;
 	private Model jenaModel;
 
+	public SerializationFormat getSerializationFormat() {
+		return serializationFormat;
+	}
+	public SerializationFormat setSerializationFormat(SerializationFormat serializationFormat) {
+		return this.serializationFormat = serializationFormat;
+	}
+	
 	/**
 	 * Fetches the Jena Model associated with this ArchiveResultSet object.
 	 * @return the Jena Model of the RDF result from a CONSTRUCT query, null if one does not exist
@@ -73,13 +88,17 @@ public class ArchiveResultSet {
 	 */
 	public String serializeJenaResultSet(){
 		
-		/*
-		Model model = ModelFactory.createDefaultModel();
-		ResultSetFormatter.asRDF(model, jenaResultSet);		
-		ByteArrayOutputStream os = new ByteArrayOutputStream();
-		model.write(os, "RDF/JSON");
-		return os.toString();*/
-		return ResultSetFormatter.asXMLString(jenaResultSet);		
+		if (getSerializationFormat()==SerializationFormat.RDFJSON) {
+			Model model = ModelFactory.createDefaultModel();
+			ResultSetFormatter.asRDF(model, jenaResultSet);		
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			model.write(os, "RDF/JSON");
+			return os.toString();
+		} else if (getSerializationFormat()==SerializationFormat.RDFXML) {
+			return ResultSetFormatter.asXMLString(jenaResultSet);		
+		} else {
+			return null;
+		}
 	}
 	
 	/**
@@ -96,7 +115,7 @@ public class ArchiveResultSet {
 	 */
 	public String serializeJenaModel(){
 		StringWriter out = new StringWriter();
-		jenaModel.write(out, "RDF/JSON");
+		jenaModel.write(out, getSerializationFormat().getString());
 		return out.toString();
 		
 	}

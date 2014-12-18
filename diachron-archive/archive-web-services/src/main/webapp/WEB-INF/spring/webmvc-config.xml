@@ -6,7 +6,7 @@
 
 
     <!-- Turns on component scanning to find all the annotated components -->
-    <context:component-scan base-package="org.athena.imis.diachron.archive.web.services"/>
+    <context:component-scan base-package="org.athena.imis.diachron.archive.web.controllers"/>
 
     <!-- Turns on support for mapping requests to Spring MVC @Controller methods
           Also registers default Formatters and Validators for use across all @Controllers -->
@@ -15,8 +15,12 @@
     <bean id="messageSource"
           class="org.springframework.context.support.ResourceBundleMessageSource"
           p:basename="messages"/>
-
-    <!-- selects a static view for rendering without the need for an explicit controller -->
+    
+    <bean id="statementFactory" class="org.athena.imis.diachron.archive.api.StatementFactory" />
+	<bean id="dataStatement" scope="request" factory-bean="statementFactory" factory-method="getDataStatement"/>
+	<bean id="queryStatement"  scope="request" factory-bean="statementFactory" factory-method="getQueryStatement"/>
+	
+	<!-- selects a static view for rendering without the need for an explicit controller -->
     <mvc:view-controller path="/index"/>
     
     <mvc:resources mapping="/ui/**" location="/ui/" />

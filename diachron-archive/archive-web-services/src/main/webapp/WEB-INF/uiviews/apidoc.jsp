@@ -10,7 +10,8 @@
 				<li>'query'    : The URL-encoded query string expressed in SPARQL</li>
 				<li>'queryType : The query type (e.g. 'CONSTRUCT' or 'SELECT')</li>  
 			</ul>
-			<c:set var="baseURL" value="${fn:replace(pageContext.request.requestURL, pageContext.request.requestURI, pageContext.request.contextPath)}" />
+			<c:set var="baseURL" 
+				value="${fn:replace(pageContext.request.requestURL[toString](), pageContext.request.requestURI, pageContext.request.contextPath)}" />
 			
 			<p>Example request: <br/>
 			<a target="_blank" href="${baseURL}/archive?query=CONSTRUCT%20{?dataset%20?p%20?o}%20FROM%20&lt;efo-datasets-v3&gt;%20WHERE%20{?dataset%20a%20diachron:Dataset%20;%20?p%20?o}&queryType=CONSTRUCT">

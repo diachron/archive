@@ -5,30 +5,39 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.Statement;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.GregorianCalendar;
+import java.util.Iterator;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
 import org.athena.imis.diachron.archive.core.datamanager.StoreConnection;
 import org.athena.imis.diachron.archive.core.loggers.DataStatistics;
 import org.athena.imis.diachron.archive.models.DiachronOntology;
+import org.athena.imis.diachron.archive.models.RDFDataset;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import virtuoso.jena.driver.VirtGraph;
-import virtuoso.jena.driver.VirtModel;
-import virtuoso.jena.driver.VirtuosoQueryExecution;
-import virtuoso.jena.driver.VirtuosoQueryExecutionFactory;
+import virtuoso.jena.driver.VirtuosoUpdateFactory;
+import virtuoso.jena.driver.VirtuosoUpdateRequest;
 
+import com.hp.hpl.jena.graph.Graph;
+import com.hp.hpl.jena.graph.NodeFactory;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.query.DatasetFactory;
+import com.hp.hpl.jena.query.QueryExecution;
+import com.hp.hpl.jena.query.QueryExecutionFactory;
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.update.GraphStore;
+import com.hp.hpl.jena.update.GraphStoreFactory;
+import com.hp.hpl.jena.update.UpdateAction;
 
 /**
  * Implementation of the Loader interface for loading data into the Virtuoso instance associated with 
@@ -37,30 +46,38 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
  */
 class VirtLoader implements Loader {
 	
+	private static final Logger logger = LoggerFactory.getLogger(VirtLoader.class);
+	
 	/* (non-Javadoc)
 	 * @see org.athena.imis.diachron.archive.core.dataloader.Loader#loadModel(com.hp.hpl.jena.rdf.model.Model, java.lang.String)
 	 */
-	@Override
 	public void loadModel(Model model, String namedGraph){
-		VirtGraph graph = StoreConnection.getVirtGraph(namedGraph);	    
-	    Model remoteModel = new VirtModel(graph);
+		Model remoteModel = StoreConnection.getJenaModel(namedGraph);
 	    remoteModel.add(model);
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.athena.imis.diachron.archive.core.dataloader.Loader#loadData(java.io.InputStream, java.lang.String)
 	 */
-	@Override
-	public void loadData(InputStream stream, String diachronicDatasetURI){
+	public String loadData(InputStream stream, String diachronicDatasetURI) throws Exception{
 		
+		long tStart = System.currentTimeMillis();
 		String tempGraph = DiachronOntology.diachronResourcePrefix+"stageGraph/"+System.currentTimeMillis();
+		
 	    try {
+	    	//TODO this is the only virtuoso dependent method, move to other class 
 	    	bulkLoadRDFDataToGraph(stream, tempGraph);
 	    	
 	    	//split the dataset into the corresponding named graphs
-			splitDataset(tempGraph, diachronicDatasetURI);
-			//empty the temp graph
+			String datasetURI = splitDataset(tempGraph, diachronicDatasetURI);
 			
+			//add the new dataset to the cache
+			DictionaryService dictService = StoreFactory.createDictionaryService();
+			Graph graph = StoreConnection.getGraph(RDFDictionary.dictionaryNamedGraph);
+			dictService.addDataset(graph, diachronicDatasetURI, datasetURI);
+			graph.close();
+			
+			//empty the temp graph
 			clearStageGraph(tempGraph);
 			
 			//update the statistics for this dataset
@@ -70,12 +87,39 @@ class VirtLoader implements Loader {
 			StorageOptimizer optimizer = new StorageOptimizer(diachronicDatasetURI);
 			optimizer.applyStrategy();
 			
-		} catch (Exception e) {			
-			e.printStackTrace();
+			return datasetURI;
+		} catch (Exception e) {		
+			//TODO error handling
+			throw e;
 		}
+	    finally {
+	    	long tEnd = System.currentTimeMillis();
+	    	long tDelta = tEnd - tStart;
+	    	double elapsedSeconds = tDelta / 1000.0;
+	    	System.out.println(elapsedSeconds);
+	    }
+		
 	    
 	}
 
+	public void loadMetadata(InputStream stream, String diachronicDatasetURI){
+		
+		Dataset dataset = DatasetFactory.createMem();
+		RDFDataMgr.read(dataset, stream, null, Lang.JSONLD);					
+		Iterator<String> names = dataset.listNames();
+		Model jena = ModelFactory.createDefaultModel();
+		while(names.hasNext()) {
+			String name = (String) names.next();				    
+			jena.add(dataset.getNamedModel(name));				   				    				    
+		}
+		jena.add(dataset.getDefaultModel());
+		Model remoteModel = StoreConnection.getJenaModel(diachronicDatasetURI);
+	    remoteModel.add(jena);
+	    remoteModel.close();
+		jena.close();
+	    
+	}
+	
 	/**
 	 * Empties the given named graph from the store
 	 * @param tempGraph the graph name to be emptied
@@ -89,23 +133,25 @@ class VirtLoader implements Loader {
 		    Statement stmt = conn.createStatement ();
 		    stmt.execute ("log_enable(3,1)");
 		    stmt.executeQuery("SPARQL CLEAR GRAPH <"+tempGraph+">");
+		    stmt.close();
 		}catch(Exception e){
-			e.printStackTrace();
-			VirtGraph graph = StoreConnection.getVirtGraph(tempGraph);	    
+			logger.error(e.getMessage(), e);
+			Graph graph = StoreConnection.getGraph(tempGraph);	    
 			graph.clear();
 			graph.close();
 		}
 		
 	}
 
+	@SuppressWarnings("unused")
 	private void createStageGraphStreaming(InputStream stream, String graphName) {
-		VirtGraph graph = StoreConnection.getVirtGraph(graphName);	    
-	    Model remoteModel = new VirtModel(graph);
+		Model remoteModel = StoreConnection.getJenaModel(graphName);
 	    try {
 			//InputStream is = new FileInputStream("C:/Users/Marios/Desktop/datasetGraph.rdf");
 			remoteModel.read(stream,null);
-		} catch (Exception e) {			
-			e.printStackTrace();
+		} catch (Exception e) {
+			//TODO throw above??? 
+			logger.error(e.getMessage(), e);
 		}
 	    remoteModel.close();
 	}
@@ -138,7 +184,7 @@ class VirtLoader implements Loader {
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error(e.getMessage(), e);
 		}
 	}
 	
@@ -151,31 +197,61 @@ class VirtLoader implements Loader {
 	 * @param diachronicDatasetURI	the URI of the diachronic dataset of which a new version is created
 	 * @throws Exception
 	 */
-	private void splitDataset(String tempGraph, String diachronicDatasetURI) throws Exception{				
+	private static String splitDataset(String tempGraph, String diachronicDatasetURI) throws Exception{				
 		
-		VirtGraph graph = StoreConnection.getVirtGraph(tempGraph);	    
+		Graph graph = StoreConnection.getGraph(tempGraph);	
+		Model model = StoreConnection.getJenaModel(tempGraph);
+		//String createdURI = diachronicDatasetURI;
+		diachronicDatasetURI = validateDiachronicDatasetURI(graph, tempGraph, diachronicDatasetURI);				
+		//System.out.println(diachronicDatasetURI);
+		ArrayList<RDFDataset> newDatasetVersions = selectDatasetMetadata(model, tempGraph, diachronicDatasetURI);
+		/*for(RDFDataset d : newDatasetVersions)
+			System.out.println("xxx " + d.getId());*/
+		DictionaryService dict = StoreFactory.createDictionaryService();
 		
-		insertDatasetMetadata(graph, tempGraph, diachronicDatasetURI);
-		
+		dict.addDatasetMetadata(graph, newDatasetVersions, diachronicDatasetURI);
 		//This will link the dataset version to its diachronic dataset, if this information exists in the stream.
 				
-		String query = "SELECT DISTINCT ?rs FROM <"+tempGraph+"> WHERE {?rs a diachron:RecordSet}";
-		VirtuosoQueryExecution vqe = VirtuosoQueryExecutionFactory.create (query, graph);
+		String query = "SELECT DISTINCT ?rs ?ds FROM <"+tempGraph+"> WHERE {?ds <"+DiachronOntology.hasRecordSet+"> ?rs }";//. ?rs a <"+DiachronOntology.recordSet+">}";		
+		QueryExecution vqe = QueryExecutionFactory.create (query, model);
 		ResultSet results = vqe.execSelect();
 		while(results.hasNext()){
 			QuerySolution rs = results.next();
 			RDFNode recordSet = rs.get("rs");
-			insertRecordSetTriples(graph, recordSet.toString(), tempGraph);													
-		}vqe.close();		
-		query = "SELECT DISTINCT ?ss FROM <"+tempGraph+"> WHERE {?ss a diachron:SchemaSet}";
-		vqe = VirtuosoQueryExecutionFactory.create (query, graph);
+			RDFNode dataset = rs.get("ds");
+			//System.out.println("Before insert record set");
+			insertRecordSetTriples(graph, recordSet.toString(), tempGraph);	
+			//System.out.println("After insert record set");
+			//register recordset
+			dict.addRecordSet(StoreConnection.getGraph(RDFDictionary.getDictionaryNamedGraph()), recordSet.toString(), dataset.toString());
+			//System.out.println("Before register record set");
+		}
+		vqe.close();		
+		
+		query = "SELECT DISTINCT ?ss FROM <"+tempGraph+"> WHERE {?ss a <"+DiachronOntology.schemaSet+">}";
+		vqe = QueryExecutionFactory.create (query, model);
 		results = vqe.execSelect();
 		while(results.hasNext()){
 			QuerySolution rs = results.next();
 			RDFNode schemaSet = rs.get("ss");
 			insertSchemaSetTriples(graph, schemaSet.toString(), tempGraph);													
-		}vqe.close();		
-		insertChangeSetTriples(graph, tempGraph);		
+		}
+		vqe.close();		
+		
+		insertChangeSetTriples(model, tempGraph);		
+		
+		query = "SELECT DISTINCT ?dataset FROM <"+tempGraph+"> WHERE {?dataset a <"+DiachronOntology.dataset+">}";
+		vqe = QueryExecutionFactory.create (query, model);
+		results = vqe.execSelect();
+		String datasetURI = null;
+		while(results.hasNext()){
+			QuerySolution rs = results.next();
+			RDFNode dataset = rs.get("dataset");
+			datasetURI = dataset.toString();
+		}
+		model.close();	
+		graph.close();
+		return datasetURI;
 		
 	}
 	
@@ -185,20 +261,42 @@ class VirtLoader implements Loader {
 	 * @param recordSet The URI of the record set to upload.
 	 * @param tempGraph The URI of the temporary graph where the bulk loading has been performed.
 	 */
-	private void insertRecordSetTriples(VirtGraph graph, String recordSet, String tempGraph){
-		
-		String query = "INSERT INTO <"+recordSet.toString()+"> {" +
+	private static void insertRecordSetTriples(Graph graph, String recordSet, String tempGraph){
+		//System.out.println(recordSet.toString());
+		Graph graph1 = StoreConnection.getGraph(recordSet);
+		GraphStore gs = GraphStoreFactory.create(graph1);
+		gs.addGraph(NodeFactory.createURI(recordSet.toString()), graph1);
+		String query = "INSERT { GRAPH <"+recordSet.toString()+"> {" +
 							"<"+recordSet.toString()+"> ?p ?o" +
-						"} FROM <"+tempGraph+"> WHERE " +
-								"{<"+recordSet.toString()+"> ?p ?o}";
-		VirtuosoQueryExecution vqe = VirtuosoQueryExecutionFactory.create (query, graph);
-		vqe.execSelect();
-		String queryRecords = "INSERT INTO <"+recordSet.toString()+"> {?rec ?p ?o} FROM <"+tempGraph+"> WHERE {<"+recordSet.toString()+"> diachron:hasRecord ?rec . ?rec ?p ?o. }";
-		VirtuosoQueryExecution vqeRec = VirtuosoQueryExecutionFactory.create (queryRecords, graph);			
-		vqeRec.execSelect();
-		String queryRecordAtts = "INSERT INTO <"+recordSet.toString()+"> {?att ?p ?o} FROM <"+tempGraph+"> WHERE {<"+recordSet.toString()+"> diachron:hasRecord ?rec .?rec diachron:hasRecordAttribute ?att . ?att ?p ?o. }";		
-		VirtuosoQueryExecution vqeRecAtts = VirtuosoQueryExecutionFactory.create (queryRecordAtts, graph);										
-		vqeRecAtts.execSelect();
+						"} } WHERE { GRAPH <"+tempGraph+">  " +
+								"{<"+recordSet.toString()+"> ?p ?o}}";
+		//System.out.println(query);
+		VirtGraph virt = StoreConnection.getVirtGraph();
+		VirtuosoUpdateRequest vur = VirtuosoUpdateFactory.create(query, virt);
+		vur.exec();
+		
+		/*UpdateRequest queryObj = UpdateFactory.create(query); 
+		UpdateProcessor qexec = UpdateExecutionFactory.create(queryObj,gs); 
+		qexec.execute();*/
+		//UpdateAction.parseExecute( query, graph);
+		
+		String queryRecords = "INSERT { GRAPH <"+recordSet.toString()+"> {?rec ?p ?o}} WHERE { GRAPH <"+tempGraph+"> {<"+recordSet.toString()+"> <"+DiachronOntology.hasRecord+"> ?rec . ?rec ?p ?o. }}";
+		//UpdateAction.parseExecute( queryRecords, graph);
+		vur = VirtuosoUpdateFactory.create(queryRecords, virt);
+		vur.exec();
+		
+		/*queryObj = UpdateFactory.create(queryRecords); 
+		qexec = UpdateExecutionFactory.create(queryObj,gs); 
+		qexec.execute(); */
+		
+		String queryRecordAtts = "INSERT { GRAPH <"+recordSet.toString()+"> {?att ?p ?o} } WHERE { GRAPH <"+tempGraph+"> {<"+recordSet.toString()+"> <"+DiachronOntology.hasRecord+"> ?rec .?rec <"+DiachronOntology.hasRecordAttribute+"> ?att . ?att ?p ?o. }}";		
+		//UpdateAction.parseExecute( queryRecordAtts, graph);
+		vur = VirtuosoUpdateFactory.create(queryRecordAtts, virt);
+		vur.exec();
+		/*queryObj = UpdateFactory.create(queryRecordAtts); 
+		qexec = UpdateExecutionFactory.create(queryObj,gs); 
+		qexec.execute(); */
+		graph1.close();
 	}
 	
 	/**
@@ -207,26 +305,25 @@ class VirtLoader implements Loader {
 	 * @param schemaSet The URI of the schema set to upload.
 	 * @param tempGraph The URI of the temporary graph where the bulk loading has been performed.
 	 */
-	private void insertSchemaSetTriples(VirtGraph graph, String schemaSet, String tempGraph){
+	private static void insertSchemaSetTriples(Graph graph, String schemaSet, String tempGraph){
 		
 		String query = "INSERT INTO <"+schemaSet.toString()+"> {" +
 							"<"+schemaSet.toString()+"> ?p ?o" +
 						"} FROM <"+tempGraph+"> WHERE " +
 								"{<"+schemaSet.toString()+"> ?p ?o}";
-		VirtuosoQueryExecution vqe = VirtuosoQueryExecutionFactory.create (query, graph);
-		vqe.execSelect();
+		UpdateAction.parseExecute( query, graph);
+		
 		query = "INSERT INTO <"+schemaSet.toString()+"> {" +
 				"?o ?p2 ?o2" +
 			"} FROM <"+tempGraph+"> WHERE " +
 					"{<"+schemaSet.toString()+"> ?p ?o . ?o ?p2 ?o2}";
-		vqe = VirtuosoQueryExecutionFactory.create (query, graph);
-		vqe.execSelect();
+		UpdateAction.parseExecute( query, graph);
+		
 		query = "INSERT INTO <"+schemaSet.toString()+"> {" +
 				"?o ?p3 ?o3" +
 			"} FROM <"+tempGraph+"> WHERE " +
 					"{<"+schemaSet.toString()+"> ?p1 [ ?p2 ?o ]. ?o ?p3 ?o3.}";
-		vqe = VirtuosoQueryExecutionFactory.create (query, graph);
-		vqe.execSelect();
+		UpdateAction.parseExecute( query, graph);
 	}
 	
 	/**
@@ -235,103 +332,162 @@ class VirtLoader implements Loader {
 	 * @param graph The connection VirtGraph to the archive.	
 	 * @param tempGraph The URI of the temporary graph where the bulk loading has been performed.
 	 */
-	private void insertChangeSetTriples(VirtGraph graph, String tempGraph){
+	private static void insertChangeSetTriples(Model model, String tempGraph){
 				
-			String changeSetURI = "";
-			String csURIQuery = "SELECT DISTINCT ?changeSet ?recordSet FROM <"+tempGraph+"> WHERE {" +
-					"?changeSet a <"+DiachronOntology.changeSet+"> " +
-					"OPTIONAL {?recordSet a <"+DiachronOntology.recordSet+">}" +
-					"}";			
-			VirtuosoQueryExecution vqe = VirtuosoQueryExecutionFactory.create (csURIQuery, graph);
-			ResultSet results = vqe.execSelect();
-			String existingRecordSet = "";
-			while(results.hasNext()){
-				QuerySolution rs = results.next();
-				changeSetURI = rs.get("changeSet").toString();
-				if(rs.contains("recordSet")){
-					existingRecordSet = rs.get("recordSet").toString();
-				}
+		String changeSetURI = "";
+		String csURIQuery = "SELECT DISTINCT ?changeSet ?recordSet FROM <"+tempGraph+"> WHERE {" +
+				"?changeSet a <"+DiachronOntology.changeSet+"> " +
+				"OPTIONAL {?recordSet a <"+DiachronOntology.recordSet+">}" +
+				"}";			
+		QueryExecution vqe = QueryExecutionFactory.create (csURIQuery, model);
+		ResultSet results = vqe.execSelect();
+		String existingRecordSet = "";
+		while(results.hasNext()){
+			QuerySolution rs = results.next();
+			changeSetURI = rs.get("changeSet").toString();
+			if(rs.contains("recordSet")){
+				existingRecordSet = rs.get("recordSet").toString();
 			}
-			vqe.close();
-			String versionsQuery = "SELECT DISTINCT ?old ?new " +
-					"FROM <"+tempGraph+"> WHERE " +
-					"{" +
-						"?change <"+DiachronOntology.oldVersion+"> ?old ; " +
-								"<"+DiachronOntology.newVersion+"> ";
-			if(existingRecordSet.equals("")) versionsQuery += "?new }";
-			else versionsQuery += "<"+existingRecordSet+"> }";			
-			vqe = VirtuosoQueryExecutionFactory.create (versionsQuery, graph);
-			results = vqe.execSelect();				
-			while(results.hasNext()){
-				QuerySolution rs = results.next();	
-				if(changeSetURI.equals(""))
-					changeSetURI = "http://www.diachron-fp7.eu/resource/changeset/"+DigestUtils.md5Hex(rs.get("old").toString() + rs.get("new").toString());
-				String datasetQuery = "SELECT DISTINCT ?old_dataset ?new_dataset " +
-						"FROM <"+RDFDictionary.getDictionaryNamedGraph()+"> " +
-						"WHERE {" +
-								"?old_dataset diachron:hasRecordSet <"+rs.get("old").toString()+"> . " +
-								"?new_dataset diachron:hasRecordSet <"+rs.get("new").toString()+"> . " +
-								"FILTER NOT EXISTS {" +
-									"?changeSet a diachron:ChangeSet ; " +
-												"<"+DiachronOntology.oldVersion+"> ?old_dataset ; " +
-												"<"+DiachronOntology.newVersion+"> ?new_dataset" +
-								"}" +
-						"}";				
-				VirtuosoQueryExecution vqeDataset = VirtuosoQueryExecutionFactory.create (datasetQuery, graph);
-				ResultSet resultsDataset = vqeDataset.execSelect();
-				boolean changeSetAlreadyExists = true;
-				while(resultsDataset.hasNext()){
-					changeSetAlreadyExists = false;
-					QuerySolution rsDataset = resultsDataset.next();
-					String dictionaryQuery = "INSERT INTO <"+RDFDictionary.getDictionaryNamedGraph()+"> {<"+changeSetURI+"> a <"+DiachronOntology.changeSet+"> ; <"+DiachronOntology.oldVersion+"> <"+rsDataset.get("old_dataset").toString()+"> ; <"+DiachronOntology.newVersion+"> <"+rsDataset.get("new_dataset").toString()+"> }";
-					VirtuosoQueryExecution vqeDatasetInsert = VirtuosoQueryExecutionFactory.create (dictionaryQuery, graph);
-					vqeDatasetInsert.execSelect();
-				}vqeDataset.close();
-				if(changeSetAlreadyExists) return;
-				
-				String changesQuery = "INSERT INTO <"+changeSetURI+"> {?change ?p ?o }" +
-						"WHERE {{SELECT ?change ?p ?o FROM <"+tempGraph+"> WHERE {?change <"+DiachronOntology.oldVersion+"> <"+rs.get("old").toString()+"> ; " + 
-									   "<"+DiachronOntology.newVersion+"> <"+rs.get("new").toString()+"> ; " +
-									   "?p ?o FILTER(?p!=<"+DiachronOntology.oldVersion+">n && ?p!=<"+DiachronOntology.newVersion+">) . " +
-									   //"OPTIONAL {?o ?pp ?oo FILTER(?pp!=co:old_version}" +								   
-						"}}}";
-				VirtuosoQueryExecution vqeChanges = VirtuosoQueryExecutionFactory.create (changesQuery, graph);
-				vqeChanges.execSelect();
-				String innerChangesQuery = "INSERT INTO <"+changeSetURI+"> {?inner ?p ?o}  "+
-						" WHERE {" +
-								"GRAPH <"+changeSetURI+"> {" +
-											"?change ?prop ?inner " +
-											"GRAPH <"+tempGraph+"> {?inner ?p ?o " +
-											"FILTER NOT EXISTS {" +
-												"?inner <"+DiachronOntology.oldVersion+"> []" +
-											"}} . " +
-										"}" +								
-						"}";
-				System.out.println(innerChangesQuery);
-				try{
-					//Class.forName("virtuoso.jdbc4.Driver");
-					Connection conn = StoreConnection.getConnection();											 
-				    Statement stmt = conn.createStatement ();
-				    stmt.executeQuery ("SPARQL " + innerChangesQuery);
-				}catch(Exception e){e.printStackTrace();}
-				/*VirtuosoQueryExecution vqeInnerChanges = VirtuosoQueryExecutionFactory.create (innerChangesQuery, graph);
-				ResultSet resultsInnerChanges = vqeInnerChanges.execSelect();*/
-				
-			}vqe.close();				
+		}
+		vqe.close();
+		String versionsQuery = "SELECT DISTINCT ?old ?new " +
+				"FROM <"+tempGraph+"> WHERE " +
+				"{" +
+					"?change <"+DiachronOntology.oldVersion+"> ?old ; " +
+							"<"+DiachronOntology.newVersion+"> ";
+		if(existingRecordSet.equals("")) 
+			versionsQuery += "?new }";
+		else 
+			versionsQuery += "<"+existingRecordSet+"> }";			
+
+		vqe = QueryExecutionFactory.create (versionsQuery, model);
+		results = vqe.execSelect();				
+		while(results.hasNext()){
+			QuerySolution rs = results.next();	
+			if(changeSetURI.equals(""))
+				changeSetURI = "http://www.diachron-fp7.eu/resource/changeset/"+DigestUtils.md5Hex(rs.get("old").toString() + rs.get("new").toString());
+			String datasetQuery = "SELECT DISTINCT ?old_dataset ?new_dataset " +
+					"FROM <"+RDFDictionary.getDictionaryNamedGraph()+"> " +
+					"WHERE {" +
+							"?old_dataset diachron:hasRecordSet <"+rs.get("old").toString()+"> . " +
+							"?new_dataset diachron:hasRecordSet <"+rs.get("new").toString()+"> . " +
+							"FILTER NOT EXISTS {" +
+								"?changeSet a diachron:ChangeSet ; " +
+											"<"+DiachronOntology.oldVersion+"> ?old_dataset ; " +
+											"<"+DiachronOntology.newVersion+"> ?new_dataset" +
+							"}" +
+					"}";				
+
+			QueryExecution vqeDataset = QueryExecutionFactory.create (datasetQuery, model);
+			ResultSet resultsDataset = vqeDataset.execSelect();
+			boolean changeSetAlreadyExists = true;
+			while(resultsDataset.hasNext()){
+				changeSetAlreadyExists = false;
+				QuerySolution rsDataset = resultsDataset.next();
+				String dictionaryQuery = "INSERT INTO <"+RDFDictionary.getDictionaryNamedGraph()+"> {<"+changeSetURI+"> a <"+DiachronOntology.changeSet+"> ; <"+DiachronOntology.oldVersion+"> <"+rsDataset.get("old_dataset").toString()+"> ; <"+DiachronOntology.newVersion+"> <"+rsDataset.get("new_dataset").toString()+"> }";
+				QueryExecution vqeDatasetInsert = QueryExecutionFactory.create (dictionaryQuery, model);
+				vqeDatasetInsert.execSelect();
+			}
+			vqeDataset.close();
+			if(changeSetAlreadyExists) 
+				return;
+			
+			String changesQuery = "INSERT INTO <"+changeSetURI+"> {?change ?p ?o }" +
+					"WHERE {{SELECT ?change ?p ?o FROM <"+tempGraph+"> WHERE {?change <"+DiachronOntology.oldVersion+"> <"+rs.get("old").toString()+"> ; " + 
+								   "<"+DiachronOntology.newVersion+"> <"+rs.get("new").toString()+"> ; " +
+								   "?p ?o FILTER(?p!=<"+DiachronOntology.oldVersion+">n && ?p!=<"+DiachronOntology.newVersion+">) . " +
+								   //"OPTIONAL {?o ?pp ?oo FILTER(?pp!=co:old_version}" +								   
+					"}}}";
+			QueryExecution vqeChanges = QueryExecutionFactory.create (changesQuery, model);
+			vqeChanges.execSelect();
+			String innerChangesQuery = "INSERT INTO <"+changeSetURI+"> {?inner ?p ?o}  "+
+					" WHERE {" +
+							"GRAPH <"+changeSetURI+"> {" +
+										"?change ?prop ?inner " +
+										"GRAPH <"+tempGraph+"> {?inner ?p ?o " +
+										"FILTER NOT EXISTS {" +
+											"?inner <"+DiachronOntology.oldVersion+"> []" +
+										"}} . " +
+									"}" +								
+					"}";
+			System.out.println(innerChangesQuery);
+			try{
+				//Class.forName("virtuoso.jdbc4.Driver");
+				Connection conn = StoreConnection.getConnection();											 
+			    Statement stmt = conn.createStatement ();
+			    stmt.executeQuery ("SPARQL " + innerChangesQuery);
+			} catch(Exception e){
+				logger.error(e.getMessage(), e);
+			}
+			/*VirtuosoQueryExecution vqeInnerChanges = VirtuosoQueryExecutionFactory.create (innerChangesQuery, graph);
+			ResultSet resultsInnerChanges = vqeInnerChanges.execSelect();*/
+			
+		}vqe.close();				
 	}
 	
 	/**
-	 * Inserts the metadata of the dataset to the archive's dictionary of datasets.
+	 * Selects the metadata of the dataset.
 	 * @param graph The connection's VirtGraph.
 	 * @param tempGraph The URI of the temporary graph where the bulk loading has been performed.
 	 * @param diachronicDatasetURI The diachronic dataset URI provided by the user, if any. If it doesn't exist, it is looked for in the temporary graph.
 	 */
-	private void insertDatasetMetadata(VirtGraph graph, String tempGraph, String diachronicDatasetURI){
+	private static ArrayList<RDFDataset> selectDatasetMetadata(Model model, String tempGraph, String diachronicDatasetURI){
+				
+		//Calendar cal = GregorianCalendar.getInstance();
+		//String timestamp = ResourceFactory.createTypedLiteral(cal).getString();
+		/*ArrayList<RDFDataset> list = new ArrayList<RDFDataset>();
+		String query = "SELECT ?dataset ?p ?o FROM <"+tempGraph+"> WHERE { ";
+		query += "?dataset a <"+DiachronOntology.dataset+"> ; " +
+							 "?p ?o} ORDER BY ?dataset";
 		
-		diachronicDatasetURI = validateDiachronicDatasetURI(graph, tempGraph, diachronicDatasetURI);
-		Calendar cal = GregorianCalendar.getInstance();
-		String timestamp = ResourceFactory.createTypedLiteral(cal).getString();
-		String query = "INSERT INTO <"+RDFDictionary.dictionaryNamedGraph+"> " +
+		QueryExecution vqe = QueryExecutionFactory.create (query, model);
+		ResultSet results = vqe.execSelect();		
+		String previousDatasetId = null;
+		ArrayList<String[]> metadata = new ArrayList<String[]>();
+		RDFDataset dataset = new RDFDataset();
+		while(results.hasNext()){			
+			QuerySolution rs = results.next();
+			String datasetId = rs.get("dataset").toString();
+			if(datasetId!=previousDatasetId){
+				dataset.setMetadata(metadata);
+				list.add(dataset);
+				dataset = new RDFDataset();								
+				dataset.setId(datasetId);								
+				metadata = new ArrayList<String[]>();
+			}
+			metadata.add(new String[] {rs.get("p").toString(), rs.get("o").toString()});
+			//dataset.se
+			previousDatasetId = datasetId;
+		}
+		vqe.close();*/
+		ArrayList<RDFDataset> list = new ArrayList<RDFDataset>();
+		String query = "SELECT DISTINCT ?dataset FROM <"+tempGraph+"> WHERE { ";
+		query += "?dataset a <"+DiachronOntology.dataset+"> } ";
+		
+		QueryExecution vqe = QueryExecutionFactory.create (query, model);
+		ResultSet results = vqe.execSelect();				
+		RDFDataset dataset = new RDFDataset();
+		while(results.hasNext()){			
+			QuerySolution rs = results.next();
+			String datasetId = rs.get("dataset").toString();
+			String metaQuery = "SELECT ?p ?o FROM <"+tempGraph+"> WHERE {" +
+					"<"+datasetId+"> ?p ?o }";
+			QueryExecution metaVqe = QueryExecutionFactory.create (metaQuery, model);
+			ResultSet metaResults = metaVqe.execSelect();
+			ArrayList<String[]> metadata = new ArrayList<String[]>();
+			while(metaResults.hasNext()){			
+				QuerySolution metaRs = metaResults.next();				
+				metadata.add(new String[] {metaRs.get("p").toString(), metaRs.get("o").toString()});
+			}
+			metaVqe.close();			
+			dataset = new RDFDataset();								
+			dataset.setId(datasetId);
+			dataset.setMetadata(metadata);
+			list.add(dataset);
+		}
+		vqe.close();		
+		return list;
+		/*String query = "INSERT INTO <"+RDFDictionary.dictionaryNamedGraph+"> " +
 				"{" +
 					"?dataset ?p ?o ; <"+DiachronOntology.generatedAtTime+"> \""+timestamp+"\"^^xsd:dateTime " +
 				"} " +
@@ -339,8 +495,10 @@ class VirtLoader implements Loader {
 				"WHERE {" +
 					"?dataset a <"+DiachronOntology.dataset+"> ; " +
 							 "?p ?o" +
-						"}";		
-		VirtuosoQueryExecution vqe = VirtuosoQueryExecutionFactory.create (query, graph);		
+						"}";	
+		VirtuosoUpdateRequest vur = VirtuosoUpdateFactory.create(query, graph);
+		vur.exec();*/
+		/*VirtuosoQueryExecution vqe = VirtuosoQueryExecutionFactory.create (query, graph);		
 		vqe.execSelect();
 		String queryDiachronic = "INSERT INTO <"+RDFDictionary.dictionaryNamedGraph+"> " +
 				"{" +
@@ -351,7 +509,7 @@ class VirtLoader implements Loader {
 						 "<"+diachronicDatasetURI+"> ?p ?o" +
 					   "}";
 		VirtuosoQueryExecution vqeDiach = VirtuosoQueryExecutionFactory.create (queryDiachronic, graph);
-		vqeDiach.execSelect();		
+		vqeDiach.execSelect();		*/
 	}
 	
 	/**
@@ -361,7 +519,7 @@ class VirtLoader implements Loader {
 	 * @param diachronicDatasetURI The URI of the diachronic dataset to be validated in the dictionary.
 	 * @return A string containing the fixed URI of the diachronic dataset.
 	 */
-	private String validateDiachronicDatasetURI(VirtGraph graph, String tempGraph, String diachronicDatasetURI){
+	private static String validateDiachronicDatasetURI(Graph graph, String tempGraph, String diachronicDatasetURI){
 		
 		String diachronicQuery = "SELECT ?diachronicDataset " +
 				"WHERE {" +
@@ -375,7 +533,9 @@ class VirtLoader implements Loader {
 							"}" + */
 					  "}";
 		//System.out.println(diachronicQuery);
-		VirtuosoQueryExecution vqe = VirtuosoQueryExecutionFactory.create (diachronicQuery, graph);
+		
+		Model model = StoreConnection.getJenaModel(tempGraph);						
+		QueryExecution vqe = QueryExecutionFactory.create (diachronicQuery, model);
 		ResultSet results = vqe.execSelect();
 		while(results.hasNext()){
 			QuerySolution rs = results.next();
@@ -385,5 +545,16 @@ class VirtLoader implements Loader {
 		}
 		vqe.close();
 		return diachronicDatasetURI;
+	}
+	
+	public static void main (String args[]) {
+		
+		try {
+			@SuppressWarnings("unused")
+			String datasetURI = splitDataset("http://www.diachron-fp7.eu/resource/stageGraph/1417516246097", "http://www.diachron-fp7.eu/resource/diachronicDataset/4e58d4");
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

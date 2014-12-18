@@ -13,7 +13,7 @@ public class RDFRecordSet extends AbstractDiachronEntity  implements RecordSet {
 	public Collection<Record> getRecords() {
 		return records.values();
 	}
-	@Override
+
 	public ArchiveResultSet getRawData() {
 		// TODO Auto-generated method stub
 		return null;

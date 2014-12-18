@@ -1,11 +1,14 @@
 package org.athena.imis.diachron.archive.models;
 
+import java.util.List;
+
 /**
  * This class implements Dataset for RDF Dataset objects.
  *
  */
 public class RDFDataset extends AbstractDiachronEntity implements Dataset  {
 	private RecordSet recSet;
+	private List<String[]> metadataList;
 
 	/**
 	 * Fetches the record set of this RDFDataset.
@@ -23,6 +26,13 @@ public class RDFDataset extends AbstractDiachronEntity implements Dataset  {
 		this.recSet = recSet;
 	}
 
+	public void setMetadata(List<String[]> metadataList){
+		this.metadataList = metadataList;
+	}
+	
+	public List<String[]> getMetadata(){
+		return this.metadataList;
+	}
 
 	
 }

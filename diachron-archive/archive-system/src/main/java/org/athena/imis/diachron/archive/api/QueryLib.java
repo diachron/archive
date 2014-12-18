@@ -4,6 +4,7 @@ import java.net.URL;
 import java.util.Date;
 import java.util.List;
 
+import org.athena.imis.diachron.archive.api.ArchiveResultSet.SerializationFormat;
 import org.athena.imis.diachron.archive.core.dataloader.DictionaryService;
 import org.athena.imis.diachron.archive.core.dataloader.RDFDictionary;
 import org.athena.imis.diachron.archive.core.dataloader.StoreFactory;
@@ -22,6 +23,8 @@ import com.hp.hpl.jena.query.ResultSet;
  *
  */
 public class QueryLib {
+	
+	private SerializationFormat serializationFormat = null;
 	
 	/**
 	 * Lists the diachronic datasets that exist in the DIACHRON archive.
@@ -62,7 +65,8 @@ public class QueryLib {
 		q.setQueryText(queryString);
 		q.setQueryType("CONSTRUCT");
 		ArchiveResultSet res = query.executeQuery(q);		
-		
+		if (getSerializationFormat() != null)
+			res.setSerializationFormat(getSerializationFormat());
 		return res.serializeResults("CONSTRUCT");
 	}
 	
@@ -74,7 +78,8 @@ public class QueryLib {
 	 * @return A RDF/JSON String of SPARQL results containing the list of versions of the input diachronic dataset. 
 	 * @throws Exception
 	 */
-	public String listDatasetVersions(String diachronicDatasetId, List<TimeConditions> time) throws Exception {
+	public String listDatasetVersions(String diachronicDatasetId, List<Condition> time) throws Exception {
+		//TODO aligh with result set serialization
 		Serializer ser = ModelsFactory.getSerializer();
 		DictionaryService dict = StoreFactory.createDictionaryService();
 		
@@ -152,27 +157,267 @@ public class QueryLib {
 		q.setQueryText(queryString);
 		q.setQueryType("SELECT");
 		ArchiveResultSet res = query.executeQuery(q);
+		if (getSerializationFormat() != null)
+			res.setSerializationFormat(getSerializationFormat());
+		
 		String resultString = res.serializeResults(q.getQueryType());
-				
 		return resultString;
 	}
 	
-}
+	public String getDiachronicDatasetMetadata(String diachronicDatasetId) throws Exception {
+		//check for existance of the Diachronic Dataset
+		DictionaryService dict = StoreFactory.createDictionaryService();
+		if (dict.getDiachronicDataset(diachronicDatasetId) == null)
+			throw new Exception("Non-existing Diachronic Dataset");
+		else {
+			QueryStatement query = StatementFactory.createQueryStatement();
+			String queryString = "CONSTRUCT {?s ?p ?o} " +
+						"WHERE {{" +
+						"SELECT ?s ?p ?o FROM <" + diachronicDatasetId +"> WHERE {?s ?p ?o}}}";
+			Query q = new Query();
+			q.setQueryText(queryString);
+			q.setQueryType("CONSTRUCT");
+			ArchiveResultSet res = query.executeQuery(q);		
+			if (getSerializationFormat() != null)
+				res.setSerializationFormat(getSerializationFormat());
+			return res.serializeResults("CONSTRUCT");
+		}
+	}
+	
+	public String getDatasetMetadata(String datasetId) throws Exception {
+		//check for existance of the Dataset
+		DictionaryService dict = StoreFactory.createDictionaryService();
+		if (dict.getDiachronicDataset(datasetId) == null)
+			throw new Exception("Non-existing Dataset");
+		else {
+			QueryStatement query = StatementFactory.createQueryStatement();
+			String queryString = "CONSTRUCT {?s ?p ?o} " +
+									"WHERE {{" +
+									"SELECT ?s ?p ?o FROM <" + datasetId +"> WHERE {?s ?p ?o}}}";
+			Query q = new Query();
+			q.setQueryText(queryString);
+			q.setQueryType("CONSTRUCT");
+			ArchiveResultSet res = query.executeQuery(q);		
+			if (getSerializationFormat() != null)
+				res.setSerializationFormat(getSerializationFormat());
+			return res.serializeResults("CONSTRUCT");
+		}
+	}
+	
+	public String getChangeSetInfo(String changeSetId) {
+		//TODO implement
+		return null;
+	}
+	
+	public String getRecord(String datasetId, List<String[]> parameters) throws Exception{
+		QueryStatement query = StatementFactory.createQueryStatement();
+		DictionaryService dict = StoreFactory.createDictionaryService();
+		if (dict.getDiachronicDataset(datasetId) == null)
+			throw new Exception("Non-existing Dataset");
+		String queryString = "SELECT ?record WHERE {";
+		queryString += "GRAPH <"+RDFDictionary.getDictionaryNamedGraph()+"> { " +
+						"<"+datasetId+"> <"+DiachronOntology.hasRecordSet+"> ?rs .}";
+		queryString += "GRAPH ?rs { ?record a <"+DiachronOntology.record+"> . ";
+		for(String[] param : parameters){
+				String predicate = param[1];
+				String object = param[2];
+				try {
+					predicate = "<"+new URL(predicate)+">";
+			    } catch (Exception e1) {
+			    	throw new Exception("Predicate is not a valid URI");
+			    }
+				try {
+					object = "<"+new URL(object)+">";
+			    } catch (Exception e1) {
+			    	object = "\""+object+"\"";
+			    }
+				queryString += " ?record <"+DiachronOntology.hasRecordAttribute+"> [<"+DiachronOntology.predicate+"> "+predicate+" ; <"+DiachronOntology.object+"> "+object+" ] ."; 					
+		}
+		queryString += "}} ";
+		
+		
+		Query q = new Query();
+		q.setQueryText(queryString);
+		q.setQueryType("SELECT");
+		ArchiveResultSet res = query.executeQuery(q);
+		if (getSerializationFormat() != null)
+			res.setSerializationFormat(getSerializationFormat());
+		
+		String resultString = res.serializeResults(q.getQueryType());
+		return resultString;
+	}
 
+	/**
+	 * @return the serializationFormat
+	 */
+	public SerializationFormat getSerializationFormat() {
+		return serializationFormat;
+	}
+
+	/**
+	 * @param serializationFormat the serializationFormat to set
+	 */
+	public void setSerializationFormat(SerializationFormat serializationFormat) {
+		this.serializationFormat = serializationFormat;
+	}
+}		
 /**
  * 
  * Instances of this class represent time conditions that can limit temporal queries.
  *
  */
-class TimeConditions {
-	public static enum OPERATORS {
-		EQUAL, BEFORE, AFTER 
+abstract class Condition {
+	public static enum OPERATOR {
+		EQUAL, BEFORE, AFTER, BETWEEN 
 	}
+	/*
 	private static enum JOINS {
 		AND, OR
 	}
+	*/
 	
+	private OPERATOR operator = OPERATOR.EQUAL;
+	/**
+	 * @return the operator
+	 */
+	public OPERATOR getOperator() {
+		return operator;
+	}
+	/**
+	 * @param operator the operator to set
+	 */
+	public void setOperator(OPERATOR operator) {
+		this.operator = operator;
+	}
+	
+}
+
+class VersionCondition extends Condition {
+	private String value;
+	private String value2;
+	
+	public VersionCondition(String versionURI) {
+		setVersionURI(versionURI);
+	}
+	
+	public VersionCondition(String versionURI, OPERATOR operator) throws Exception {
+		if (operator == OPERATOR.BETWEEN)
+			throw new Exception("Invalid constructor for this operator");
+		setVersionURI(versionURI);
+		setOperator(operator);
+	}
+
+	public VersionCondition(String from, String to) throws Exception {
+		setVersionURI(from);
+		setValue2(to);
+		setOperator(OPERATOR.BETWEEN);
+	}
+
+	/**
+	 * @return the versionURI
+	 */
+	public String getVersionURI() {
+		return value;
+	}
+
+	/**
+	 * @param versionURI the versionURI to set
+	 */
+	private void setVersionURI(String versionURI) {
+		this.value = versionURI;
+	}
+
+	/**
+	 * @return the value2
+	 */
+	public String getToVersionURI() {
+		return value2;
+	}
+
+	/**
+	 * @param value2 the value2 to set
+	 */
+	private void setValue2(String value2) {
+		this.value2 = value2;
+	}
+}
+
+class TimeCondition extends Condition {
 	private Date value;
-	private OPERATORS operator;
+	private Date value2;
 	
+	public TimeCondition(Date date) {
+		setDate(date);
+	}
+	
+	public TimeCondition(Date date, OPERATOR operator) throws Exception {
+		if (operator == OPERATOR.BETWEEN)
+			throw new Exception("Invalid constructor for this operator");
+		setDate(date);
+		setOperator(operator);
+	}
+	
+	public TimeCondition(Date from, Date to) throws Exception {
+		setDate(from);
+		value2 = to;
+		setOperator(OPERATOR.BETWEEN);
+	}
+
+
+	/**
+	 * @return the date
+	 */
+	public Date getDate() {
+		return value;
+	}
+
+	public Date getToDate() {
+		return value2;
+	}
+
+	
+	/**
+	 * @param date the date to set
+	 */
+	private void setDate(Date date) {
+		this.value = date;
+	}
+}
+
+class ParamCondition extends Condition {
+	private String name;
+	private Object value;
+	
+	public ParamCondition(String paramName, Object paramValue) {
+		setParamValue(paramValue);
+		setParamName(paramName);
+	}
+	
+	/**
+	 * @return the parameter value
+	 */
+	public Object getParamValue() {
+		return value;
+	}
+
+	/**
+	 * @param paramValue the parameter value to set
+	 */
+	private void setParamValue(Object paramValue) {
+		this.value = paramValue;
+	}
+	
+	/**
+	 * @return the parameter name
+	 */
+	public String getParamName() {
+		return name;
+	}
+
+	/**
+	 * @param paramName the parameter name to set
+	 */
+	private void setParamName(String paramName) {
+		this.name = paramName;
+	}
 }

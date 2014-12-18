@@ -4,12 +4,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.Set;
 
 import org.athena.imis.diachron.archive.models.Dataset;
 import org.athena.imis.diachron.archive.models.DiachronicDataset;
+import org.athena.imis.diachron.archive.models.RDFDataset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.hp.hpl.jena.graph.Graph;
 
 /**
  * 
@@ -17,8 +19,14 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class DictionaryCache implements DictionaryService {
+	
+	// diachronic dataset cache
 	private static final Hashtable<String, DiachronicDataset> diachronicDatasets 
 		= new Hashtable<String, DiachronicDataset>();
+
+	// flat cache of all datasets instantiations for easy access
+	private static final Hashtable<String, Dataset> datasetInstantiations 
+		= new Hashtable<String, Dataset>();
 
 	private static final Logger logger = LoggerFactory.getLogger(DictionaryCache.class);
 
@@ -52,8 +60,8 @@ public class DictionaryCache implements DictionaryService {
 				List<Dataset> datasets = store.getListOfDatasets(dds);					
 				dds.setMetaProperties(store.getDiachronicDatasetMetadata(dds.getId()));
 				for (Dataset ds : datasets) {
-					
-					dds.addDatasetInstatiation(ds);					
+					dds.addDatasetInstatiation(ds);
+					datasetInstantiations.put(ds.getId(), ds);
 					//dds.setMetaProperties(store.getDiachronicDatasetMetadata(dds.getId()));
 				}
 				
@@ -86,7 +94,6 @@ public class DictionaryCache implements DictionaryService {
 	 * Gets a list of diachronic datasets from the cache.
 	 * @return A List<DiachronicDataset> from the cache.
 	 */
-	@Override
 	public List<DiachronicDataset> getListOfDiachronicDatasets() {
 		return new ArrayList<DiachronicDataset>(diachronicDatasets.values());
 	}
@@ -97,7 +104,6 @@ public class DictionaryCache implements DictionaryService {
 	 * @param diachronicDataset The DiachronicDataset object whose versions are to be returned.
 	 * @return A List of Dataset objects.
 	 */
-	@Override
 	public List<Dataset> getListOfDatasets(
 			DiachronicDataset diachronicDataset) {		
 		if (diachronicDatasets.contains(diachronicDataset)) {			
@@ -112,7 +118,6 @@ public class DictionaryCache implements DictionaryService {
 	 * @param diachronicDatasetId The diachronic dataset URI whose metadata are to be returned.
 	 * @return A Hashtable with the diachronic dataset's metadata. 
 	 */
-	@Override
 	public Hashtable<String, Object> getDiachronicDatasetMetadata(
 			String diachronicDatasetId) {
 		return getDiachronicDatasetMetadata(diachronicDatasetId);
@@ -122,13 +127,45 @@ public class DictionaryCache implements DictionaryService {
 	/**
 	 * Returns a DiachronicDataset object based on the URI defined in the input parameter.
 	 * @param id The URI of the diachronic dataset to be returned.
-	 * @return A DiachronicDataset object.
+	 * @return A DiachronicDataset object or null if not found.
 	 */
-	@Override
 	public DiachronicDataset getDiachronicDataset(String id) {
 		return diachronicDatasets.get(id);
 	}
 	
+	/**
+	 * Returns a Dataset object based on the URI defined in the input parameter.
+	 * @param id The URI of the dataset to be returned.
+	 * @return A Dataset object or null if not found.
+	 */
+	public Dataset getDataset(String id) {
+		return datasetInstantiations.get(id);
+	}
+
+	@Override
+	public void addDataset(Graph graph, String diachronicDatasetURI, String datasetId) {
+		persistentStorage.addDataset(graph, diachronicDatasetURI, datasetId);
+		Dataset ds = new RDFDataset();			
+		ds.setId(datasetId);
+		datasetInstantiations.put(datasetId, ds);
+		diachronicDatasets.get(diachronicDatasetURI).addDatasetInstatiation(ds);
+	}
+
+	@Override
+	public void addRecordSet(Graph graph, String recordSetURI, String datasetId) {
+		persistentStorage.addRecordSet(graph, recordSetURI, datasetId);
+		/*RecordSet ds = new RDFRecordSet();			
+		ds.setId(recordSetURI);
+		datasetInstantiations.put(datasetId, ds);
+		diachronicDatasets.get(diachronicDatasetURI).addDatasetInstatiation(ds);*/
+	}
 	
+	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, String diachronicDatasetURI){
+			persistentStorage.addDatasetMetadata(graph, list, diachronicDatasetURI);
+			for(RDFDataset dataset : list){
+				datasetInstantiations.put(dataset.getId(), dataset);
+				diachronicDatasets.get(diachronicDatasetURI).addDatasetInstatiation(dataset);
+			}
+	}
 
 }

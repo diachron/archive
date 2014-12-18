@@ -20,7 +20,15 @@ public class StatementFactory {
 	 * @return A new VirtDataStatement object.
 	 */
 	public static DataStatement createDataStatement() {
-		return new VirtDataStatement();
+		return new BasicDataStatement();
+	}
+	
+	public DataStatement getDataStatement() {
+		return createDataStatement();
+	}
+	
+	public QueryStatement getQueryStatement() {
+		return createQueryStatement();
 	}
 
 }

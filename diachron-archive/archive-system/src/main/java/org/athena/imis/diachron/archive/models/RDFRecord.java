@@ -7,22 +7,18 @@ public class RDFRecord extends AbstractDiachronEntity implements Record {
 	private String subject;
 	private HashMap<String, RecordAttribute> attributes = new HashMap<String, RecordAttribute>();
 	
-	@Override
 	public String getSubject() {
 		return subject;
 	}
 
-	@Override
 	public void setSubject(String subject) {
 		this.subject = subject;
 	}
 
-	@Override
 	public void addRecordAttribute(RecordAttribute recAttr) {
 		attributes.put(recAttr.getId(), recAttr);
 	}
 
-	@Override
 	public Collection<RecordAttribute> getRecordAttributes() {
 		return attributes.values();
 	}

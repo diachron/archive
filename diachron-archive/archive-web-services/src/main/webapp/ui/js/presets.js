@@ -1,11 +1,11 @@
 var presets = [ {
-			query : "SELECT ?dataset ?p ?o FROM <efo-datasets-v3> WHERE {?dataset a diachron:DiachronicDataset ; ?p ?o}",
+			query : "SELECT ?dataset ?p ?o FROM <http://www.diachron-fp7.eu/archive/dictionary> WHERE {?dataset a diachron:DiachronicDataset ; ?p ?o}",
 			queryType: "SELECT",
 			title : "preset 1",
 			description : "Retrieve all diachronic datasets in the Dictionary of datasets graph and their triples. "
 		},
 		{
-			query : "SELECT ?dataset ?p ?o FROM <efo-datasets-v3> WHERE {?dataset a diachron:Dataset ; ?p ?o}",
+			query : "SELECT ?dataset ?p ?o FROM <http://www.diachron-fp7.eu/archive/dictionary> WHERE {?dataset a diachron:Dataset ; ?p ?o}",
 			queryType: "SELECT",
 			title : "preset 2",
 			description : "Retrieve all dataset versions in the Dictionary of datasets graph. "

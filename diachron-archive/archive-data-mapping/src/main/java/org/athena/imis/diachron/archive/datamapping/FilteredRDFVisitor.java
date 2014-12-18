@@ -1,12 +1,13 @@
 package org.athena.imis.diachron.archive.datamapping;
 
-import org.coode.owlapi.rdf.model.RDFTranslator;
-import org.semanticweb.owlapi.model.*;
-
 import java.net.URI;
 import java.util.Collection;
 
-import static org.semanticweb.owlapi.vocab.OWLRDFVocabulary.RDF_TYPE;
+import org.coode.owlapi.rdf.model.RDFTranslator;
+import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 
 /**
  * @author Simon Jupp
