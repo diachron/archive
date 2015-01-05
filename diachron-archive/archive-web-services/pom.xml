@@ -10,6 +10,14 @@
 	<packaging>war</packaging>
 	<name>archive-web-services</name>
 
+    <repositories>
+        <repository>
+            <id>aksw</id>
+            <name>Agile Knowledge Engineering and Semantic Web Maven</name>
+            <url>http://maven.aksw.org/repository/internal</url>
+        </repository>
+    </repositories>
+
 	<properties>
 		<spring.version>4.1.2.RELEASE</spring.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -46,7 +54,7 @@
 			<version>${spring.version}</version>
 			<scope>test</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context</artifactId>
@@ -81,8 +89,8 @@
 		</dependency>
 		<dependency>
 			<groupId>com.openlink.virtuoso</groupId>
-			<artifactId>virtjena2</artifactId>
-			<version>1.0.0</version>
+			<artifactId>virt_jena2</artifactId>
+			<version>7.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.servlet</groupId>
@@ -126,7 +134,7 @@
 			<version>1.2.3</version>
 			<scope>test</scope>
 		</dependency>
-				
+
 	</dependencies>
 
 	<build>
