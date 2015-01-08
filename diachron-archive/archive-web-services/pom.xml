@@ -80,11 +80,6 @@
 			<version>1.7.7</version>
 		</dependency>
 		<dependency>
-			<groupId>com.openlink.virtuoso</groupId>
-			<artifactId>virtjena2</artifactId>
-			<version>1.0.0</version>
-		</dependency>
-		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>jstl</artifactId>
 			<version>1.2</version>
