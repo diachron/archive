@@ -78,16 +78,16 @@ public class DictionaryCache implements DictionaryService {
 	 * @param dds The DiachronicDataset entry to be created in the cache.
 	 * @return A String with the URI of the Diachronic Dataset.
 	 */
-	public String createDiachronicDataset(DiachronicDataset dds) {
-		String id = persistentStorage.createDiachronicDataset(dds);
+	public String createDiachronicDataset(DiachronicDataset dds, String datasetName) {
+		String id = persistentStorage.createDiachronicDataset(dds, datasetName);
 		dds.setId(id);
 		diachronicDatasets.put(id, dds);
 		return id;
 		
 	}
 
-	public String createDiachronicDatasetId() {
-		return persistentStorage.createDiachronicDatasetId();
+	public String createDiachronicDatasetId(String datasetName) {
+		return persistentStorage.createDiachronicDatasetId(datasetName);
 	}
 
 	/**

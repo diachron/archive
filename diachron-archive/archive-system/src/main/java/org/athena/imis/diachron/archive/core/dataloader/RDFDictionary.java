@@ -15,6 +15,7 @@ import org.athena.imis.diachron.archive.api.StatementFactory;
 import org.athena.imis.diachron.archive.core.datamanager.StoreConnection;
 import org.athena.imis.diachron.archive.models.Dataset;
 import org.athena.imis.diachron.archive.models.DiachronOntology;
+import org.athena.imis.diachron.archive.models.DiachronURIFactory;
 import org.athena.imis.diachron.archive.models.DiachronicDataset;
 import org.athena.imis.diachron.archive.models.ModelsFactory;
 import org.athena.imis.diachron.archive.models.RDFDataset;
@@ -62,9 +63,9 @@ public class RDFDictionary implements DictionaryService {
 	 * @return A String URI of the created diachronic dataset.
 	 *  
 	 */
-	public String createDiachronicDataset(DiachronicDataset dds) {
+	public String createDiachronicDataset(DiachronicDataset dds, String datasetName) {
 
-		String URI = createDiachronicDatasetId();
+		String URI = createDiachronicDatasetId(datasetName);
 				
 		Model model = StoreConnection.getJenaModel(dictionaryNamedGraph);
 		Resource diachronicDatasetResource = model.createResource(URI, DiachronOntology.diachronicDataset);
@@ -87,14 +88,9 @@ public class RDFDictionary implements DictionaryService {
 	 * Create a URI for a new diachronic dataset.
 	 * @return A string URI.
 	 */
-	public String createDiachronicDatasetId() {
-		// TODO proper URI creation
-		// sequential or random but at least check for conflict with existing 
-		double multi = (double) Math.pow(10, 8);
-		int id = (int)(multi*Math.random());
-		
-		String URI = "http://www.diachron-fp7.eu/resource/diachronicDataset/"+Integer.toHexString(id).toLowerCase();
-		return URI;
+	public String createDiachronicDatasetId(String datasetName) {
+		DiachronURIFactory uriFactory = new DiachronURIFactory(datasetName, "");
+		return uriFactory.generateDiachronicDatasetUri().toString();
 	}
 
 	/**

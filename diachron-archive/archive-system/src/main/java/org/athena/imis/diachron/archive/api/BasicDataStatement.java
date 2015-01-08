@@ -21,7 +21,7 @@ public class BasicDataStatement implements DataStatement {
 	 * Creates a new diachronic dataset and associates it with metadata defined in the input parameter.
 	 * @param metadata A set of metadata to be associated with the new diachronic dataset.
 	 */
-	public String createDiachronicDataset(ArchiveEntityMetadata metadata){
+	public String createDiachronicDataset(ArchiveEntityMetadata metadata, String datasetName){
 		
 		//TODO create with factory
 		DiachronicDataset diachronicDataset = new RDFDiachronicDataset();
@@ -32,7 +32,7 @@ public class BasicDataStatement implements DataStatement {
 			diachronicDataset.setMetaProperty(predicate, metadataMap.get(predicate));
 		}
 		DictionaryService dictService = StoreFactory.createDictionaryService();
-		String URI = dictService.createDiachronicDataset(diachronicDataset);
+		String URI = dictService.createDiachronicDataset(diachronicDataset, datasetName);
 		return URI;
 		
 	}
