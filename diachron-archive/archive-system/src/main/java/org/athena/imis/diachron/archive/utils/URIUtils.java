@@ -1,4 +1,4 @@
-package org.athena.imis.diachron.archive.datamapping.utils;
+package org.athena.imis.diachron.archive.utils;
 
 
 import java.io.UnsupportedEncodingException;
