@@ -6,7 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 import org.athena.imis.diachron.archive.datamapping.MultidimensionalConverter;
-import org.athena.imis.diachron.archive.datamapping.OntologyConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +34,7 @@ public class TestConversionFile {
 				FileOutputStream fos = new FileOutputStream(outputFile);
 				//OntologyConverter converter = new OntologyConverter();
 				MultidimensionalConverter converter = new MultidimensionalConverter();
-				converter.convert(fis, fos, file.getName().substring(file.getName().lastIndexOf(".")+1));
+				converter.convert(fis, fos, file.getName().substring(file.getName().lastIndexOf(".")+1), "test_qb_data");
 				//converter.convert(fis, fos);
 				fis.close();
 				fos.close();

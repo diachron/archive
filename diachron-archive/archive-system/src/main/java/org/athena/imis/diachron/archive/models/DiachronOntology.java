@@ -75,6 +75,7 @@ public class DiachronOntology {
 	public static final Property oldVersion;
 	public static final Property newVersion;
 	public static final Property paramValue;
+	public static final Property hasFactTable;
 	
 	//SPARQL results
 	public static final Property resultVariable;
@@ -149,6 +150,7 @@ public class DiachronOntology {
 		value = ResourceFactory.createProperty(sparqlResultsNamespace+"value");
 		
 		generatedAtTime = ResourceFactory.createProperty(provNamespace+"generatedAtTime");
+		hasFactTable = ResourceFactory.createProperty(provNamespace+"hasFactTable");
 	}
 	
 }
