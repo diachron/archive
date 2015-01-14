@@ -50,7 +50,7 @@ public class DatasetController {
         return data;
     }
 
-    @RequestMapping(method = RequestMethod.POST,  consumes = "application/x-www-form-urlencoded")
+    @RequestMapping(method = RequestMethod.POST,  consumes = {"application/x-www-form-urlencoded" , "multipart/form-data"})
     public @ResponseBody Response createDiachronicDataset(@RequestParam("datasetName") String datasetName, @RequestParam("label") String label, 
     		@RequestParam("creator") String creator) {
 
@@ -124,6 +124,19 @@ public class DatasetController {
 		metadata.setMetadataMap(metadataMap);
 		return metadata;
 	}
+	
+	
+	@RequestMapping(method = RequestMethod.POST)
+    public @ResponseBody Response invalidContentTypeRequest() {
+
+        logger.info("createDiachronicDataset called");
+        Response resp = new Response();
+        
+        resp.setSuccess(false);
+        resp.setMessage("No valid http header for content type");
+        
+        return resp;
+    }
 
     @RequestMapping(method = RequestMethod.DELETE)
     public @ResponseBody Response deleteDiachronicDataset(@RequestBody int[] ids) {

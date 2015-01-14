@@ -83,8 +83,9 @@ public class QueryController {
 		        //String resultString = ars.serializeJenaResultSet();
 		        String resultString = ars.serializeResults(queryType);
 		        data.setSuccess(true);
-		        //data.setData(HtmlUtils.htmlEscape(resultString));		        		      
-		        data.setData("\""+resultString.replaceAll("\n", "").replaceAll("\r", "").replace("\"", "\\\"")+"\"");
+		        //data.setData(HtmlUtils.htmlEscape(resultString));
+		        data.setData(resultString);
+		        //data.setData("\""+resultString.replaceAll("\n", "").replaceAll("\r", "").replace("\"", "\\\"")+"\"");
 		        //data.setData(sb.toString().trim().replace("\n", ""));
 		        
 		        //logger.info(resultString);	        

@@ -82,9 +82,15 @@ public class QueryLib {
 		//TODO aligh with result set serialization
 		Serializer ser = ModelsFactory.getSerializer();
 		DictionaryService dict = StoreFactory.createDictionaryService();
-		
-		List<Dataset> list = dict.getListOfDatasets(dict.getDiachronicDataset(diachronicDatasetId));		
-        return ser.serialize(list);
+		DiachronicDataset diachronicDataset = dict.getDiachronicDataset(diachronicDatasetId);
+		if (diachronicDataset != null) {		
+			List<Dataset> list = dict.getListOfDatasets(diachronicDataset);
+			return ser.serialize(list);
+		} else {
+			return null;
+		}
+			
+        
 	}
 	
 	/**

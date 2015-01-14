@@ -2,8 +2,8 @@ package org.athena.imis.diachron.archive.api;
 
 import java.io.ByteArrayOutputStream;
 import java.io.StringWriter;
-import java.sql.ResultSet;
 
+import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.query.ResultSetFactory;
 import com.hp.hpl.jena.query.ResultSetFormatter;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -27,7 +27,8 @@ public class ArchiveResultSet {
 			}
 		}
 	};
-	private static SerializationFormat defaultSerialize = SerializationFormat.RDFXML;
+	//private static SerializationFormat defaultSerialize = SerializationFormat.RDFXML;
+	private static SerializationFormat defaultSerialize = SerializationFormat.RDFJSON;
 	private SerializationFormat serializationFormat = defaultSerialize;
 	
 	private ResultSet jdbcResult;
@@ -89,10 +90,12 @@ public class ArchiveResultSet {
 	public String serializeJenaResultSet(){
 		
 		if (getSerializationFormat()==SerializationFormat.RDFJSON) {
-			Model model = ModelFactory.createDefaultModel();
+			/*Model model = ModelFactory.createDefaultModel();
 			ResultSetFormatter.asRDF(model, jenaResultSet);		
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			model.write(os, "RDF/JSON");
+			model.write(os, "RDF/JSON");*/
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			ResultSetFormatter.outputAsJSON(os, jenaResultSet);
 			return os.toString();
 		} else if (getSerializationFormat()==SerializationFormat.RDFXML) {
 			return ResultSetFormatter.asXMLString(jenaResultSet);		

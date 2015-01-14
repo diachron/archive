@@ -23,6 +23,20 @@ public interface DataStatement {
 	 */
 	public String loadData(InputStream input, String diachronicDatasetURI) throws Exception;
 	
+	/**
+	 * Updates a diachronic dataset by loading new data to the archive store. 
+	 * Accepts an InputStream object that contains the data to be loaded, and 
+	 * a URI of the diachronic dataset to be updated. An optional (can be null) 
+	 * parameter indicating the serialization format is also available
+	 * 
+	 * @param input The InputStream that contains the data to be loaded.
+	 * @param diachronicDatasetURI The URI of the diachronic dataset to write to.
+	 * @param format The serialization format of the dataset provided by the input stream
+	 * 					For RDF data, allowed values are "RDF/XML" (default), "N-triples" and "Turtle".
+	 * @throws Exception 
+	 */
+	public String loadData(InputStream input, String diachronicDatasetURI, String format) throws Exception;
+	
 	
 	/**
 	 * Creates a new diachronic dataset in the arhive and associates it with metadata.

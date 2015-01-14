@@ -57,16 +57,16 @@ class VirtLoader implements Loader {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.athena.imis.diachron.archive.core.dataloader.Loader#loadData(java.io.InputStream, java.lang.String)
+	 * @see org.athena.imis.diachron.archive.core.dataloader.Loader#loadData(java.io.InputStream, java.lang.String, java.lang.String)
 	 */
-	public String loadData(InputStream stream, String diachronicDatasetURI) throws Exception{
+	public String loadData(InputStream stream, String diachronicDatasetURI, String format) throws Exception{
 		
 		long tStart = System.currentTimeMillis();
 		String tempGraph = DiachronOntology.diachronResourcePrefix+"stageGraph/"+System.currentTimeMillis();
 		
 	    try {
 	    	//TODO this is the only virtuoso dependent method, move to other class 
-	    	bulkLoadRDFDataToGraph(stream, tempGraph);
+	    	bulkLoadRDFDataToGraph(stream, tempGraph, format);
 	    	
 	    	//split the dataset into the corresponding named graphs
 			String datasetURI = splitDataset(tempGraph, diachronicDatasetURI);
@@ -74,7 +74,9 @@ class VirtLoader implements Loader {
 			//add the new dataset to the cache
 			DictionaryService dictService = StoreFactory.createDictionaryService();
 			Graph graph = StoreConnection.getGraph(RDFDictionary.dictionaryNamedGraph);
-			dictService.addDataset(graph, diachronicDatasetURI, datasetURI);
+			if(null != datasetURI) {
+				dictService.addDataset(graph, diachronicDatasetURI, datasetURI);
+			}
 			graph.close();
 			
 			//empty the temp graph
@@ -93,13 +95,22 @@ class VirtLoader implements Loader {
 			throw e;
 		}
 	    finally {
-	    	long tEnd = System.currentTimeMillis();
+	    	/*long tEnd = System.currentTimeMillis();
 	    	long tDelta = tEnd - tStart;
 	    	double elapsedSeconds = tDelta / 1000.0;
-	    	System.out.println(elapsedSeconds);
+	    	System.out.println(elapsedSeconds);*/
 	    }
 		
 	    
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.athena.imis.diachron.archive.core.dataloader.Loader#loadData(java.io.InputStream, java.lang.String)
+	 */
+	public String loadData(InputStream stream, String diachronicDatasetURI) throws Exception{
+		
+		return loadData(stream, diachronicDatasetURI, null);
+		
 	}
 
 	public void loadMetadata(InputStream stream, String diachronicDatasetURI){
@@ -156,6 +167,7 @@ class VirtLoader implements Loader {
 	    remoteModel.close();
 	}
 	
+	
 	/**
 	 * Loads the RDF data to the given named graph. 
 	 * <p>
@@ -164,9 +176,14 @@ class VirtLoader implements Loader {
 	 * </p>
 	 * @param stream	the input stream to read from
 	 * @param graphName	the graph name to be created with the data from the input stream
+	 * @param rdfFormat the RDF serialization format of the data contained in the steam
+	 * @throws Exception 
 	 */
-	private void bulkLoadRDFDataToGraph(InputStream stream, String graphName) {
-		String fileName = "upload_file."+(new Date()).getTime()+".rdf";
+	private void bulkLoadRDFDataToGraph(InputStream stream, String graphName, String rdfFormat) throws Exception {
+		
+		String fileExtension = determineFileExtension(rdfFormat);
+		
+		String fileName = "upload_file."+(new Date()).getTime()+fileExtension;
 		Path path = Paths.get(StoreConnection.getBulkLoadPath()+fileName);
 		
 		try {
@@ -187,6 +204,21 @@ class VirtLoader implements Loader {
 			logger.error(e.getMessage(), e);
 		}
 	}
+
+	private String determineFileExtension(String rdfFormat) throws Exception {
+		String fileExtension;
+		if (rdfFormat == null)
+			fileExtension = ".rdf"; //RDF/XML, the default
+		else if ("RDF/XML".equals(rdfFormat))
+			fileExtension = ".rdf";
+		else if ("N-TRIPLE".equals(rdfFormat))
+			fileExtension = ".nt";
+		else if ("TURTLE".equals(rdfFormat))
+			fileExtension = ".ttl";
+		else 
+			throw new Exception("Unknown RDF format: " + rdfFormat);
+		return fileExtension;
+	}
 	
 	/**
 	 * Processes the RDF triples of a diachron dataset version to be inserted in the archive. 
@@ -201,6 +233,19 @@ class VirtLoader implements Loader {
 		
 		Graph graph = StoreConnection.getGraph(tempGraph);	
 		Model model = StoreConnection.getJenaModel(tempGraph);
+		
+		String query = "SELECT DISTINCT ?dataset FROM <"+tempGraph+"> WHERE {?dataset a <"+DiachronOntology.dataset+">}";
+		QueryExecution vqe = QueryExecutionFactory.create (query, model);
+		ResultSet results = vqe.execSelect();
+		String datasetURI = null;
+		while(results.hasNext()){
+			QuerySolution rs = results.next();
+			RDFNode dataset = rs.get("dataset");
+			datasetURI = dataset.toString();
+		}
+		if(datasetURI == null) 
+			throw new Exception("No dataset instantiation URI in input.");
+		
 		//String createdURI = diachronicDatasetURI;
 		diachronicDatasetURI = validateDiachronicDatasetURI(graph, tempGraph, diachronicDatasetURI);				
 		//System.out.println(diachronicDatasetURI);
@@ -212,9 +257,9 @@ class VirtLoader implements Loader {
 		dict.addDatasetMetadata(graph, newDatasetVersions, diachronicDatasetURI);
 		//This will link the dataset version to its diachronic dataset, if this information exists in the stream.
 				
-		String query = "SELECT DISTINCT ?rs ?ds FROM <"+tempGraph+"> WHERE {?ds <"+DiachronOntology.hasRecordSet+"> ?rs }";//. ?rs a <"+DiachronOntology.recordSet+">}";		
-		QueryExecution vqe = QueryExecutionFactory.create (query, model);
-		ResultSet results = vqe.execSelect();
+		query = "SELECT DISTINCT ?rs ?ds FROM <"+tempGraph+"> WHERE {?ds <"+DiachronOntology.hasRecordSet+"> ?rs }";//. ?rs a <"+DiachronOntology.recordSet+">}";		
+		vqe = QueryExecutionFactory.create (query, model);
+		results = vqe.execSelect();
 		while(results.hasNext()){
 			QuerySolution rs = results.next();
 			RDFNode recordSet = rs.get("rs");
@@ -240,15 +285,7 @@ class VirtLoader implements Loader {
 		
 		insertChangeSetTriples(model, tempGraph);		
 		
-		query = "SELECT DISTINCT ?dataset FROM <"+tempGraph+"> WHERE {?dataset a <"+DiachronOntology.dataset+">}";
-		vqe = QueryExecutionFactory.create (query, model);
-		results = vqe.execSelect();
-		String datasetURI = null;
-		while(results.hasNext()){
-			QuerySolution rs = results.next();
-			RDFNode dataset = rs.get("dataset");
-			datasetURI = dataset.toString();
-		}
+		
 		model.close();	
 		graph.close();
 		return datasetURI;

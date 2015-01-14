@@ -25,6 +25,9 @@ public interface Loader {
 	public String loadData(InputStream stream,
 			String diachronicDatasetURI) throws Exception;
 	
+	public String loadData(InputStream stream,
+			String diachronicDatasetURI, String format) throws Exception;
+	
 	/**
 	 * 
 	 * @param stream

@@ -125,7 +125,7 @@ public class RDFDictionary implements DictionaryService {
 		Query q = new Query();
 		q.setQueryText("SELECT DISTINCT ?o FROM <" + RDFDictionary.getDictionaryNamedGraph() +
 				"> WHERE {  <"+diachronicDataset.getId()+"> <"+DiachronOntology.hasInstantiation+"> ?o . " +
-						"?o <"+DiachronOntology.generatedAtTime+"> ?time} ORDER BY DESC(?time) ");
+						"OPTIONAL {?o <"+DiachronOntology.generatedAtTime+"> ?time}} ORDER BY DESC(?time) ");
 		q.setQueryType("SELECT");		
 		ArchiveResultSet res = query.executeQuery(q);		
 		List<Dataset> datasets = new ArrayList<Dataset>(); 
@@ -200,9 +200,13 @@ public class RDFDictionary implements DictionaryService {
 
 	@Override
 	public void addDataset(Graph graph, String diachronicDatasetURI, String datasetURI) {
-		// TODO Implement creation of dataset in the persistant dictionary
+		Calendar cal = GregorianCalendar.getInstance();
+		String timestamp = ResourceFactory.createTypedLiteral(cal).getString();		
 		String query = "INSERT DATA { GRAPH <"+RDFDictionary.dictionaryNamedGraph+"> " +
-				"{ <"+diachronicDatasetURI+"> <"+DiachronOntology.hasInstantiation+"> <"+datasetURI+"> }}";
+				"{ <"+diachronicDatasetURI+"> <"+DiachronOntology.hasInstantiation+"> <"+datasetURI+"> ."
+				+ "<"+datasetURI+">  <"+DiachronOntology.generatedAtTime+"> \""+timestamp+"\" " 
+				+ "}}";
+		//System.out.println(query);
 		GraphStore gs = GraphStoreFactory.create(graph);
 		gs.addGraph(NodeFactory.createURI(RDFDictionary.getDictionaryNamedGraph()), graph);
 		UpdateRequest queryObj = UpdateFactory.create(query); 
