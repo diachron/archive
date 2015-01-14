@@ -16,7 +16,7 @@ import com.hp.hpl.jena.graph.Graph;
  *
  */
 public interface DictionaryService {
-	public String createDiachronicDataset(DiachronicDataset dds, String datasetName);
+	public String createDiachronicDataset(DiachronicDataset dds, String datasetName) throws Exception;
 	String createDiachronicDatasetId(String datasetName);
 	public List<DiachronicDataset> getListOfDiachronicDatasets();
 	public List<Dataset> getListOfDatasets(DiachronicDataset diachronicDatasetId);

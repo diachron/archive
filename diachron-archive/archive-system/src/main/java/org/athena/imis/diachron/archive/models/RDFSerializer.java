@@ -6,6 +6,9 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.hp.hpl.jena.vocabulary.DCTerms;
+import com.hp.hpl.jena.vocabulary.RDFS;
+
 /**
  * This class implements a serializer for RDF data.
  *
@@ -38,6 +41,11 @@ public class RDFSerializer implements Serializer {
 
 			String variableName = "diachronicDataset";
 			varsArray.put(variableName);
+			varsArray.put("label");
+			varsArray.put("creator");
+			varsArray.put("creationTime");
+			varsArray.put("datasetName");
+			
 			vars.put("vars", varsArray);
 			json.put("head", vars);
 
@@ -50,7 +58,30 @@ public class RDFSerializer implements Serializer {
 				row.put("type", "uri");
 				row.put("value", dd.getId());
 				result.put(variableName, row);
+				
+				row = createMetadataRow(dd, RDFS.label.toString());
+				if (row != null)
+					result.put("label", row); 
+				
+				row = createMetadataRow(dd, DCTerms.creator.toString());
+				if (row != null)
+					result.put("creator", row); 
+				
+				row = createMetadataRow(dd, DCTerms.created.toString());
+				if (row != null)
+					result.put("creationTime", row); 
+				else  {
+					row = createMetadataRow(dd, DiachronOntology.generatedAtTime.toString());
+					if (row != null)
+						result.put("creationTime", row); 
+				}
+				
+				row = createMetadataRow(dd, DCTerms.title.toString());
+				if (row != null)
+					result.put("datasetName", row); 
+				
 				bindingsArray.put(result);
+				
 				/*
 				 * Resource binding =
 				 * resultModel.createResource(AnonId.create("r"
@@ -103,6 +134,18 @@ public class RDFSerializer implements Serializer {
 		// ars.setJenaResultSet(letsee);
 		return json.toString();
 
+	}
+	
+	private JSONObject createMetadataRow(DiachronicDataset dd, String propertyName) {
+		if (dd.getMetaProperty(propertyName) != null) {
+			JSONObject row = new JSONObject();
+			row.put("type", "literal");
+			row.put("value", dd.getMetaProperty(propertyName).toString());
+			return row;
+		} else {
+			return null;
+		}
+		
 	}
 
 }

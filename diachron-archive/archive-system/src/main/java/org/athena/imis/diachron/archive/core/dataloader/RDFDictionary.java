@@ -33,6 +33,7 @@ import com.hp.hpl.jena.update.UpdateExecutionFactory;
 import com.hp.hpl.jena.update.UpdateFactory;
 import com.hp.hpl.jena.update.UpdateProcessor;
 import com.hp.hpl.jena.update.UpdateRequest;
+import com.hp.hpl.jena.vocabulary.DCTerms;
 
 /**
  * 
@@ -61,9 +62,10 @@ public class RDFDictionary implements DictionaryService {
 	 * 
 	 * @param dds The DiachronicDataset to be created.
 	 * @return A String URI of the created diachronic dataset.
+	 * @throws Exception 
 	 *  
 	 */
-	public String createDiachronicDataset(DiachronicDataset dds, String datasetName) {
+	public String createDiachronicDataset(DiachronicDataset dds, String datasetName) throws Exception {
 
 		String URI = createDiachronicDatasetId(datasetName);
 				
@@ -125,7 +127,10 @@ public class RDFDictionary implements DictionaryService {
 		Query q = new Query();
 		q.setQueryText("SELECT DISTINCT ?o FROM <" + RDFDictionary.getDictionaryNamedGraph() +
 				"> WHERE {  <"+diachronicDataset.getId()+"> <"+DiachronOntology.hasInstantiation+"> ?o . " +
-						"OPTIONAL {?o <"+DiachronOntology.generatedAtTime+"> ?time}} ORDER BY DESC(?time) ");
+						"OPTIONAL { {?o <"+DiachronOntology.generatedAtTime+"> ?time} "
+								+ "UNION {?o <"+DCTerms.created.getURI().toString()+"> ?time}"
+								+ "}"
+								+ "} ORDER BY DESC(?time) ");
 		q.setQueryType("SELECT");		
 		ArchiveResultSet res = query.executeQuery(q);		
 		List<Dataset> datasets = new ArrayList<Dataset>(); 
@@ -204,7 +209,8 @@ public class RDFDictionary implements DictionaryService {
 		String timestamp = ResourceFactory.createTypedLiteral(cal).getString();		
 		String query = "INSERT DATA { GRAPH <"+RDFDictionary.dictionaryNamedGraph+"> " +
 				"{ <"+diachronicDatasetURI+"> <"+DiachronOntology.hasInstantiation+"> <"+datasetURI+"> ."
-				+ "<"+datasetURI+">  <"+DiachronOntology.generatedAtTime+"> \""+timestamp+"\" " 
+				//+ "<"+datasetURI+">  <"+DiachronOntology.generatedAtTime+"> \""+timestamp+"\" " 
+				+ "<"+datasetURI+">  <"+DCTerms.created.getURI()+"> \""+timestamp+"\" "
 				+ "}}";
 		//System.out.println(query);
 		GraphStore gs = GraphStoreFactory.create(graph);
@@ -233,7 +239,7 @@ public class RDFDictionary implements DictionaryService {
 		String query = "INSERT DATA { GRAPH <"+RDFDictionary.dictionaryNamedGraph+"> " +
 				"{";
 		for(RDFDataset dataset : list){
-			query += "<"+dataset.getId()+"> <"+DiachronOntology.generatedAtTime+"> \""+timestamp+"\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .";
+			query += "<"+dataset.getId()+"> <"+DCTerms.created.getURI().toString()+"> \""+timestamp+"\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .";
 			ArrayList<String[]> metadata = (ArrayList<String[]>) dataset.getMetadata();
 			for(String[] po : metadata){
 				String object = po[1];

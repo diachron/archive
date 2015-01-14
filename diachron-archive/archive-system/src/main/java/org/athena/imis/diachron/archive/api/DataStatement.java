@@ -43,8 +43,9 @@ public interface DataStatement {
 	 * 
 	 * @param metadata The metadata to be associated with the archive.
 	 * @return A string URI of the created diachronic dataset. 
+	 * @throws Exception 
 	 */
-	public String createDiachronicDataset(ArchiveEntityMetadata metadata, String datasetName);
+	public String createDiachronicDataset(ArchiveEntityMetadata metadata, String datasetName) throws Exception;
 
 	/**
 	 * Attributes metadata to a Diachronic Dataset. 

@@ -26,11 +26,7 @@ import java.util.TimeZone;
 @RequestMapping("/archive/dataset")
 public class DatasetController {
 	
-	private static final DateFormat df;
-	static {
-		df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ"); //ISO 8601 format
-		df.setTimeZone(TimeZone.getTimeZone("UTC"));
-	}
+	
     private static final Logger logger = LoggerFactory.getLogger(DatasetController.class);
 
     @Autowired
@@ -119,8 +115,7 @@ public class DatasetController {
 		if (!"".equals(label))
 			metadataMap.put(RDFS.label.toString(), label);
 		if (!"".equals(creator))
-			metadataMap.put(DCTerms.creator.toString(), creator);
-		metadataMap.put(DCTerms.created.toString(), df.format(new Date()));
+			metadataMap.put(DCTerms.creator.toString(), creator);		
 		metadata.setMetadataMap(metadataMap);
 		return metadata;
 	}

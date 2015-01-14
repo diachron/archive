@@ -1,14 +1,20 @@
 package org.athena.imis.diachron.archive.api;
 
 import java.io.InputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.TimeZone;
 
 import org.athena.imis.diachron.archive.core.dataloader.ArchiveEntityMetadata;
 import org.athena.imis.diachron.archive.core.dataloader.StoreFactory;
 import org.athena.imis.diachron.archive.core.dataloader.DictionaryService;
 import org.athena.imis.diachron.archive.models.DiachronicDataset;
 import org.athena.imis.diachron.archive.models.RDFDiachronicDataset;
+
+import com.hp.hpl.jena.vocabulary.DCTerms;
 
 /**
  * 
@@ -17,11 +23,18 @@ import org.athena.imis.diachron.archive.models.RDFDiachronicDataset;
  */
 public class BasicDataStatement implements DataStatement {
 
+	
+	private static final DateFormat df;
+	static {
+		df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ"); //ISO 8601 format
+		df.setTimeZone(TimeZone.getTimeZone("UTC"));
+	}
 	/**
 	 * Creates a new diachronic dataset and associates it with metadata defined in the input parameter.
 	 * @param metadata A set of metadata to be associated with the new diachronic dataset.
+	 * @throws Exception 
 	 */
-	public String createDiachronicDataset(ArchiveEntityMetadata metadata, String datasetName){
+	public String createDiachronicDataset(ArchiveEntityMetadata metadata, String datasetName) throws Exception{
 		
 		//TODO create with factory
 		DiachronicDataset diachronicDataset = new RDFDiachronicDataset();
@@ -31,6 +44,9 @@ public class BasicDataStatement implements DataStatement {
 		for(String predicate : keySet){
 			diachronicDataset.setMetaProperty(predicate, metadataMap.get(predicate));
 		}
+		diachronicDataset.setMetaProperty(DCTerms.created.toString(), df.format(new Date()));
+		diachronicDataset.setMetaProperty(DCTerms.title.toString(), datasetName);
+		//metadata.setMetadataMap(metadataMap);
 		DictionaryService dictService = StoreFactory.createDictionaryService();
 		String URI = dictService.createDiachronicDataset(diachronicDataset, datasetName);
 		return URI;

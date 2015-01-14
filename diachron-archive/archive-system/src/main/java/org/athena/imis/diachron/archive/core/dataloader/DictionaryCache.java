@@ -77,8 +77,12 @@ public class DictionaryCache implements DictionaryService {
 	 * Creates a new diachronic dataset entry in the cache.
 	 * @param dds The DiachronicDataset entry to be created in the cache.
 	 * @return A String with the URI of the Diachronic Dataset.
+	 * @throws Exception 
 	 */
-	public String createDiachronicDataset(DiachronicDataset dds, String datasetName) {
+	public String createDiachronicDataset(DiachronicDataset dds, String datasetName) throws Exception {
+		String idForCheck = persistentStorage.createDiachronicDatasetId(datasetName);
+		if (getDiachronicDataset(idForCheck)!= null)
+			throw new Exception("A diachronic dataset created from this name already exists");
 		String id = persistentStorage.createDiachronicDataset(dds, datasetName);
 		dds.setId(id);
 		diachronicDatasets.put(id, dds);
