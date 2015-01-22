@@ -141,6 +141,9 @@ public class RDFDictionary implements DictionaryService {
 			//Dataset ds = ModelsFactory.createDataset(diachronicDataset);
 			Dataset ds = new RDFDataset();			
 			ds.setId(datasetId);
+			
+			ds.setMetaProperties(getDatasetMetadata(datasetId));
+			
 			datasets.add(ds);			
 		}				
 		return datasets;	
@@ -154,8 +157,7 @@ public class RDFDictionary implements DictionaryService {
 		Query q = new Query();
 		q.setQueryText("SELECT ?p ?o FROM <" + RDFDictionary.getDictionaryNamedGraph() +
 				"> WHERE {  <"+diachronicDatasetId+"> ?p ?o " +
-						" FILTER (?p!= <"+DiachronOntology.hasInstantiation+">) } " +
-						"");
+						" FILTER (?p!= <"+DiachronOntology.hasInstantiation+">) } ");
 		q.setQueryType("SELECT");
 		ArchiveResultSet res = query.executeQuery(q);
 		
@@ -171,6 +173,29 @@ public class RDFDictionary implements DictionaryService {
 		}
 		return metaProperties;	
 	}
+	
+	private Hashtable<String, Object>  getDatasetMetadata(String datasetId) {
+		QueryStatement query = StatementFactory.createQueryStatement();
+		Query q = new Query();
+		q.setQueryText("SELECT ?p ?o FROM <" + RDFDictionary.getDictionaryNamedGraph() +
+				"> WHERE {  <"+datasetId+"> ?p ?o } ");
+		q.setQueryType("SELECT");
+		ArchiveResultSet res = query.executeQuery(q);
+		
+		Hashtable<String, Object> metaProperties = new Hashtable<String, Object>();
+			
+		ResultSet rs = res.getJenaResultSet();
+		while (rs.hasNext()) {
+			QuerySolution qs = rs.next();
+			String value = qs.get("o").toString();
+			String name = qs.get("p").toString();
+			metaProperties.put(name, value);
+			
+		}
+		return metaProperties;	
+	}
+	
+	
 	
 	/**
 	 * {@inheritDoc}
@@ -240,10 +265,11 @@ public class RDFDictionary implements DictionaryService {
 				"{";
 		for(RDFDataset dataset : list){
 			query += "<"+dataset.getId()+"> <"+DCTerms.created.getURI().toString()+"> \""+timestamp+"\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .";
-			ArrayList<String[]> metadata = (ArrayList<String[]>) dataset.getMetadata();
-			for(String[] po : metadata){
-				String object = po[1];
-				query += "<"+dataset.getId()+"> <"+po[0]+"> ";
+			dataset.setMetaProperty(DCTerms.created.getURI().toString(), timestamp);
+			
+			for(String propertyName : dataset.getMetaPropertiesNames()){
+				String object = (String) dataset.getMetaProperty(propertyName);
+				query += "<"+dataset.getId()+"> <"+propertyName+"> ";
 				try {
 					object = "<"+new URL(object)+">";
 			    } catch (Exception e1) {

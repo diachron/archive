@@ -507,6 +507,9 @@ class VirtLoader implements Loader {
 		while(results.hasNext()){			
 			QuerySolution rs = results.next();
 			String datasetId = rs.get("dataset").toString();
+			dataset = new RDFDataset();								
+			dataset.setId(datasetId);
+			
 			String metaQuery = "SELECT ?p ?o FROM <"+tempGraph+"> WHERE {" +
 					"<"+datasetId+"> ?p ?o }";
 			QueryExecution metaVqe = QueryExecutionFactory.create (metaQuery, model);
@@ -514,12 +517,10 @@ class VirtLoader implements Loader {
 			ArrayList<String[]> metadata = new ArrayList<String[]>();
 			while(metaResults.hasNext()){			
 				QuerySolution metaRs = metaResults.next();				
-				metadata.add(new String[] {metaRs.get("p").toString(), metaRs.get("o").toString()});
+				//metadata.add(new String[] {metaRs.get("p").toString(), metaRs.get("o").toString()});
+				dataset.setMetaProperty(metaRs.get("p").toString(), metaRs.get("o").toString());
 			}
-			metaVqe.close();			
-			dataset = new RDFDataset();								
-			dataset.setId(datasetId);
-			dataset.setMetadata(metadata);
+			metaVqe.close();
 			list.add(dataset);
 		}
 		vqe.close();		
