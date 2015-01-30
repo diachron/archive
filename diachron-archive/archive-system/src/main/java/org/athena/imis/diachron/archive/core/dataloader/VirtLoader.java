@@ -90,16 +90,15 @@ class VirtLoader implements Loader {
 			optimizer.applyStrategy();
 			
 			return datasetURI;
-		} catch (Exception e) {		
-			//TODO error handling
+		} catch (Exception e) {					
 			throw e;
 		}
-	    finally {
-	    	/*long tEnd = System.currentTimeMillis();
+	    /*finally {
+	    	long tEnd = System.currentTimeMillis();
 	    	long tDelta = tEnd - tStart;
 	    	double elapsedSeconds = tDelta / 1000.0;
-	    	System.out.println(elapsedSeconds);*/
-	    }
+	    	System.out.println(elapsedSeconds);
+	    }*/
 		
 	    
 	}
@@ -136,34 +135,43 @@ class VirtLoader implements Loader {
 	 * @param tempGraph the graph name to be emptied
 	 */
 	private void clearStageGraph(String tempGraph) {
-		/*VirtGraph graph = StoreConnection.getVirtGraph(tempGraph);	    
-		graph.clear();
-		graph.close();*/
+		
+		Connection conn = null;
+		Statement stmt = null;
 		try{			
-			Connection conn = StoreConnection.getConnection();											 
-		    Statement stmt = conn.createStatement ();
+			conn = StoreConnection.getConnection();											 
+		    stmt = conn.createStatement ();
 		    stmt.execute ("log_enable(3,1)");
 		    stmt.executeQuery("SPARQL CLEAR GRAPH <"+tempGraph+">");
-		    stmt.close();
+		    
 		}catch(Exception e){
 			logger.error(e.getMessage(), e);
 			Graph graph = StoreConnection.getGraph(tempGraph);	    
 			graph.clear();
 			graph.close();
 		}
+		finally {		    
+		    try { if (stmt != null) stmt.close(); } catch (Exception e) {logger.error(e.getMessage(), e);};
+		    try { if (conn != null) conn.close(); } catch (Exception e) {logger.error(e.getMessage(), e);};
+		}
 		
 	}
 
 	@SuppressWarnings("unused")
 	private void createStageGraphStreaming(InputStream stream, String graphName) {
+		
 		Model remoteModel = StoreConnection.getJenaModel(graphName);
+		
 	    try {
-			//InputStream is = new FileInputStream("C:/Users/Marios/Desktop/datasetGraph.rdf");
+	    	
 			remoteModel.read(stream,null);
-		} catch (Exception e) {
-			//TODO throw above??? 
+		} 
+	    
+	    catch (Exception e) {			
+	    	
 			logger.error(e.getMessage(), e);
 		}
+	    
 	    remoteModel.close();
 	}
 	
@@ -185,24 +193,30 @@ class VirtLoader implements Loader {
 		
 		String fileName = "upload_file."+(new Date()).getTime()+fileExtension;
 		Path path = Paths.get(StoreConnection.getBulkLoadPath()+fileName);
-		
+		Connection conn = null;
+		Statement statement = null;
 		try {
 			Files.copy(stream, path);
 			// do the ISQL stuff
-			Connection conn = StoreConnection.getConnection();		     
-			Statement statement = conn.createStatement();			
+			conn = StoreConnection.getConnection();		     
+			statement = conn.createStatement();			
 			String deletePastUploads = "delete from db.dba.load_list where ll_state='2'";
 			statement.execute(deletePastUploads);
 		    String bulkLoadSetQuery = "ld_dir('"+StoreConnection.getBulkLoadPath()+"', '"+fileName+"', '"+graphName+"')";		    
 		    statement.execute(bulkLoadSetQuery);
 		    String runBulkLoader = "rdf_loader_run()";
 		    statement.execute(runBulkLoader);
-		    statement.close();
+		    //statement.close();
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			logger.error(e.getMessage(), e);
 		}
+		finally {		    
+		    try { if (statement != null) statement.close(); } catch (Exception e) {logger.error(e.getMessage(), e);};
+		    try { if (conn != null) conn.close(); } catch (Exception e) {logger.error(e.getMessage(), e);};
+		}
+		
 	}
 
 	private String determineFileExtension(String rdfFormat) throws Exception {
@@ -247,7 +261,7 @@ class VirtLoader implements Loader {
 			throw new Exception("No dataset instantiation URI in input.");
 		
 		//String createdURI = diachronicDatasetURI;
-		diachronicDatasetURI = validateDiachronicDatasetURI(graph, tempGraph, diachronicDatasetURI);				
+		diachronicDatasetURI = validateDiachronicDatasetURI(tempGraph, diachronicDatasetURI);				
 		//System.out.println(diachronicDatasetURI);
 		ArrayList<RDFDataset> newDatasetVersions = selectDatasetMetadata(model, tempGraph, diachronicDatasetURI);
 		/*for(RDFDataset d : newDatasetVersions)
@@ -260,18 +274,17 @@ class VirtLoader implements Loader {
 		query = "SELECT DISTINCT ?rs ?ds FROM <"+tempGraph+"> WHERE {?ds <"+DiachronOntology.hasRecordSet+"> ?rs }";//. ?rs a <"+DiachronOntology.recordSet+">}";		
 		vqe = QueryExecutionFactory.create (query, model);
 		results = vqe.execSelect();
+		Graph dictGraph = StoreConnection.getGraph(RDFDictionary.getDictionaryNamedGraph());
 		while(results.hasNext()){
 			QuerySolution rs = results.next();
 			RDFNode recordSet = rs.get("rs");
 			RDFNode dataset = rs.get("ds");
-			//System.out.println("Before insert record set");
 			insertRecordSetTriples(graph, recordSet.toString(), tempGraph);	
-			//System.out.println("After insert record set");
 			//register recordset
-			dict.addRecordSet(StoreConnection.getGraph(RDFDictionary.getDictionaryNamedGraph()), recordSet.toString(), dataset.toString());
-			//System.out.println("Before register record set");
+			dict.addRecordSet(dictGraph, recordSet.toString(), dataset.toString());
 		}
-		vqe.close();		
+		vqe.close();	
+		dictGraph.close();
 		
 		query = "SELECT DISTINCT ?ss FROM <"+tempGraph+"> WHERE {?ss a <"+DiachronOntology.schemaSet+">}";
 		vqe = QueryExecutionFactory.create (query, model);
@@ -333,6 +346,7 @@ class VirtLoader implements Loader {
 		/*queryObj = UpdateFactory.create(queryRecordAtts); 
 		qexec = UpdateExecutionFactory.create(queryObj,gs); 
 		qexec.execute(); */
+		virt.close();
 		graph1.close();
 	}
 	
@@ -448,13 +462,19 @@ class VirtLoader implements Loader {
 									"}" +								
 					"}";
 			System.out.println(innerChangesQuery);
+			Connection conn = null;											 
+		    Statement stmt = null;
 			try{
 				//Class.forName("virtuoso.jdbc4.Driver");
-				Connection conn = StoreConnection.getConnection();											 
-			    Statement stmt = conn.createStatement ();
+				conn = StoreConnection.getConnection();											 
+			    stmt = conn.createStatement ();
 			    stmt.executeQuery ("SPARQL " + innerChangesQuery);
 			} catch(Exception e){
 				logger.error(e.getMessage(), e);
+			}
+			finally {		    
+			    try { if (stmt != null) stmt.close(); } catch (Exception e) {logger.error(e.getMessage(), e);};
+			    try { if (conn != null) conn.close(); } catch (Exception e) {logger.error(e.getMessage(), e);};
 			}
 			/*VirtuosoQueryExecution vqeInnerChanges = VirtuosoQueryExecutionFactory.create (innerChangesQuery, graph);
 			ResultSet resultsInnerChanges = vqeInnerChanges.execSelect();*/
@@ -524,6 +544,7 @@ class VirtLoader implements Loader {
 			list.add(dataset);
 		}
 		vqe.close();		
+		//model.close();
 		return list;
 		/*String query = "INSERT INTO <"+RDFDictionary.dictionaryNamedGraph+"> " +
 				"{" +
@@ -552,12 +573,12 @@ class VirtLoader implements Loader {
 	
 	/**
 	 * Validates the provided diachronic dataset URI to see if the dataset exists in the dictionary.
-	 * @param graph The connection's VirtGraph. 
+	 *
 	 * @param tempGraph The URI of the temporary graph where the bulk loading has been performed.
 	 * @param diachronicDatasetURI The URI of the diachronic dataset to be validated in the dictionary.
 	 * @return A string containing the fixed URI of the diachronic dataset.
 	 */
-	private static String validateDiachronicDatasetURI(Graph graph, String tempGraph, String diachronicDatasetURI){
+	private static String validateDiachronicDatasetURI(String tempGraph, String diachronicDatasetURI){
 		
 		String diachronicQuery = "SELECT ?diachronicDataset " +
 				"WHERE {" +
@@ -582,6 +603,7 @@ class VirtLoader implements Loader {
 			diachronicDatasetURI = existingDiachronicDatasetURI;
 		}
 		vqe.close();
+		model.close();
 		return diachronicDatasetURI;
 	}
 	

@@ -248,6 +248,7 @@ public class RDFDictionary implements DictionaryService {
 	
 	@Override
 	public void addRecordSet(Graph graph, String recordSetURI, String datasetId) {
+		//TODO refactor to remove the Graph input param
 		String query = "INSERT DATA { GRAPH <"+RDFDictionary.dictionaryNamedGraph+"> " +
 				"{ <"+datasetId+"> <"+DiachronOntology.hasRecordSet+"> <"+recordSetURI+"> }}";
 		GraphStore gs = GraphStoreFactory.create(graph);

@@ -42,7 +42,10 @@ class VirtQueryStatement implements QueryStatement {
 			graph.close();
 			return ars;
 		}
-		else return null;
+		else {
+			graph.close();
+			return null;
+		}
 		
 	}
 
