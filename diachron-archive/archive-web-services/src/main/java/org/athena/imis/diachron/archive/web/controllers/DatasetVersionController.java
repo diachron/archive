@@ -72,6 +72,7 @@ public class DatasetVersionController {
 	        	
 	        	String diachronicDatasetURI = null;
 	        	String rdfFormat = null;
+	        	String versionNumber = "";
 	        	while (iter.hasNext()) {
 	        	    FileItemStream item = iter.next();
 	        	    String name = item.getFieldName();
@@ -82,6 +83,8 @@ public class DatasetVersionController {
 	        	    		diachronicDatasetURI = Streams.asString(stream);
 	        	    	} else if (name.equals("format")) {
 		        	    	rdfFormat = Streams.asString(stream);
+		        	    } else if (name.equals("versionNumber")) {
+		        	    	versionNumber = Streams.asString(stream);
 		        	    } else {
 		        	    	resp.setSuccess(false);
 	        	        	resp.setMessage("invalid field name");
@@ -93,7 +96,7 @@ public class DatasetVersionController {
 	        	        	// Process the input stream
 	        	        	if (diachronicDatasetURI != null) {
 	        	        		logger.info("loading DatasetVersion started");
-	        	        		String res = dataStatement.loadData(stream, diachronicDatasetURI, rdfFormat);
+	        	        		String res = dataStatement.loadData(stream, diachronicDatasetURI, rdfFormat, versionNumber);
 	        	        		logger.info("loading DatasetVersion finished");
 	        	        		resp.setData(res);
 	        	        		resp.setSuccess(true);

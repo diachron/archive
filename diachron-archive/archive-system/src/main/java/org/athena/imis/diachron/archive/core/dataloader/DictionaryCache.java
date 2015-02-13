@@ -164,6 +164,14 @@ public class DictionaryCache implements DictionaryService {
 		diachronicDatasets.get(diachronicDatasetURI).addDatasetInstatiation(ds);*/
 	}
 	
+	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, String diachronicDatasetURI, String versionNumber){
+		persistentStorage.addDatasetMetadata(graph, list, diachronicDatasetURI, versionNumber);
+		for(RDFDataset dataset : list){
+			datasetInstantiations.put(dataset.getId(), dataset);
+			diachronicDatasets.get(diachronicDatasetURI).addDatasetInstatiation(dataset);
+		}
+	}
+	
 	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, String diachronicDatasetURI){
 			persistentStorage.addDatasetMetadata(graph, list, diachronicDatasetURI);
 			for(RDFDataset dataset : list){

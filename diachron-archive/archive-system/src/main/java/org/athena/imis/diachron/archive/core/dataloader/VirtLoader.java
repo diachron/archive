@@ -69,7 +69,51 @@ class VirtLoader implements Loader {
 	    	bulkLoadRDFDataToGraph(stream, tempGraph, format);
 	    	
 	    	//split the dataset into the corresponding named graphs
-			String datasetURI = splitDataset(tempGraph, diachronicDatasetURI);
+			String datasetURI = splitDataset(tempGraph, diachronicDatasetURI, "");
+			
+			//add the new dataset to the cache
+			DictionaryService dictService = StoreFactory.createDictionaryService();
+			Graph graph = StoreConnection.getGraph(RDFDictionary.dictionaryNamedGraph);
+			if(null != datasetURI) {
+				dictService.addDataset(graph, diachronicDatasetURI, datasetURI);
+			}
+			graph.close();
+			
+			//empty the temp graph
+			clearStageGraph(tempGraph);
+			
+			//update the statistics for this dataset
+			DataStatistics.getInstance().updateStatistics(diachronicDatasetURI);
+			
+			//storage optimization
+			StorageOptimizer optimizer = new StorageOptimizer(diachronicDatasetURI);
+			optimizer.applyStrategy();
+			
+			return datasetURI;
+		} catch (Exception e) {					
+			throw e;
+		}
+	    /*finally {
+	    	long tEnd = System.currentTimeMillis();
+	    	long tDelta = tEnd - tStart;
+	    	double elapsedSeconds = tDelta / 1000.0;
+	    	System.out.println(elapsedSeconds);
+	    }*/
+		
+	    
+	}
+	
+public String loadData(InputStream stream, String diachronicDatasetURI, String format, String versionNumber) throws Exception{
+		
+		long tStart = System.currentTimeMillis();
+		String tempGraph = DiachronOntology.diachronResourcePrefix+"stageGraph/"+System.currentTimeMillis();
+		
+	    try {
+	    	//TODO this is the only virtuoso dependent method, move to other class 
+	    	bulkLoadRDFDataToGraph(stream, tempGraph, format);
+	    	
+	    	//split the dataset into the corresponding named graphs
+			String datasetURI = splitDataset(tempGraph, diachronicDatasetURI, versionNumber);
 			
 			//add the new dataset to the cache
 			DictionaryService dictService = StoreFactory.createDictionaryService();
@@ -243,7 +287,7 @@ class VirtLoader implements Loader {
 	 * @param diachronicDatasetURI	the URI of the diachronic dataset of which a new version is created
 	 * @throws Exception
 	 */
-	private static String splitDataset(String tempGraph, String diachronicDatasetURI) throws Exception{				
+	private static String splitDataset(String tempGraph, String diachronicDatasetURI, String versionNumber) throws Exception{				
 		
 		Graph graph = StoreConnection.getGraph(tempGraph);	
 		Model model = StoreConnection.getJenaModel(tempGraph);
@@ -268,7 +312,10 @@ class VirtLoader implements Loader {
 			System.out.println("xxx " + d.getId());*/
 		DictionaryService dict = StoreFactory.createDictionaryService();
 		
-		dict.addDatasetMetadata(graph, newDatasetVersions, diachronicDatasetURI);
+		if(versionNumber.equals(""))
+			dict.addDatasetMetadata(graph, newDatasetVersions, diachronicDatasetURI);
+		else
+			dict.addDatasetMetadata(graph, newDatasetVersions, diachronicDatasetURI, versionNumber);
 		//This will link the dataset version to its diachronic dataset, if this information exists in the stream.
 				
 		query = "SELECT DISTINCT ?rs ?ds FROM <"+tempGraph+"> WHERE {?ds <"+DiachronOntology.hasRecordSet+"> ?rs }";//. ?rs a <"+DiachronOntology.recordSet+">}";		
@@ -611,7 +658,7 @@ class VirtLoader implements Loader {
 		
 		try {
 			@SuppressWarnings("unused")
-			String datasetURI = splitDataset("http://www.diachron-fp7.eu/resource/stageGraph/1417516246097", "http://www.diachron-fp7.eu/resource/diachronicDataset/4e58d4");
+			String datasetURI = splitDataset("http://www.diachron-fp7.eu/resource/stageGraph/1417516246097", "http://www.diachron-fp7.eu/resource/diachronicDataset/4e58d4", "");
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -26,6 +26,7 @@ public interface DictionaryService {
 	public void addDataset(Graph graph, String diachronicDatasetURI, String datasetURI);
 	public void addRecordSet(Graph graph, String recordSetURI, String datasetURI);
 	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, String diachronicDatasetURI);
+	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, String diachronicDatasetURI, String versionNumber);
 	//public void insertDatasetMetadata(String )
 		
 }

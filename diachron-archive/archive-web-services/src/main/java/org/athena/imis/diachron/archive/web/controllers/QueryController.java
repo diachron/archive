@@ -156,6 +156,8 @@ public class QueryController {
 	        	data = handleGetDiachronicDatasetMetadata(request, isForm, json);
 	        } else if ("getDatasetMetadata".equals(templateName)) {
 	        	data = handleGetDatasetMetadata(request, isForm, json);
+	        } else if ("getResourceData".equals(templateName)) {
+	        	data = handleGetResouceData(request, isForm, json);
 	        } else {
 	        	logger.error("not existing template");
 				data.setSuccess(false);
@@ -235,6 +237,32 @@ public class QueryController {
 		return data;
 	}
 
+	private Response handleGetResouceData(HttpServletRequest request, boolean isForm, JSONObject json) throws Exception {
+		Response data = new Response();
+		QueryLib queryLib = new QueryLib();
+		
+		String datasetId = getStringParam(request, isForm, json, "datasetId");
+		String resourceId = getStringParam(request, isForm, json, "resourceId");
+		
+		if (resourceId != null && datasetId != null) {
+			String resultString = queryLib.getResource(datasetId, resourceId);
+			if (resultString!= null) {
+				//sString resultString = resultSet.serializeResults("SELECT");
+		        data.setSuccess(true);
+				data.setData(resultString);
+			} else {
+				logger.error("null resultString in getResouceData");
+		    	data.setSuccess(false);
+		    	data.setMessage("null resultString in getResouceData");
+			}
+		} else {
+			logger.error("resourceId and datasetId are required");
+			data.setSuccess(false);
+			data.setMessage("resourceId and datasetId are required");
+		}
+		return data;
+	}
+	
 	private Response handleGetChangeSet(HttpServletRequest request, boolean isForm, JSONObject json) {
 		Response data = new Response();
 		QueryLib queryLib = new QueryLib();

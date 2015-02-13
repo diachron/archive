@@ -77,6 +77,31 @@ public class BasicDataStatement implements DataStatement {
 	}
 	
 	/**
+	 * Updates a diachronic dataset by loading new data to the archive store. 
+	 * Accepts an InputStream object that contains the data to be loaded, and 
+	 * a URI of the diachronic dataset to be updated. An optional (can be null) 
+	 * parameter indicating the serialization format is also available
+	 * 
+	 * @param input The InputStream that contains the data to be loaded.
+	 * @param diachronicDatasetURI The URI of the diachronic dataset to write to.
+	 * @param format The serialization format of the dataset provided by the input stream
+	 * 					For RDF data, allowed values are "RDF/XML" (default), "N-triples" and "Turtle".
+	 * @param versionNumber A representative number for the dataset version.
+	 * 
+	 * @throws Exception 
+	 */
+	public String loadData(InputStream stream, String diachronicDatasetURI, String format, String versionNumber) throws Exception {
+		//This uploads directly the rdf file defined in the FileInputStream into namedGraph
+		DictionaryService dict = StoreFactory.createDictionaryService();
+		if (dict.getDiachronicDataset(diachronicDatasetURI) != null) {
+			return StoreFactory.createDataLoader()
+					.loadData(stream, diachronicDatasetURI, format, versionNumber);
+		} else
+			throw new Exception("Non-existing Diachronic Dataset");
+		
+	}
+	
+	/**
 	 * Updates a diachronic dataset by loading new data to a Virtuoso instance associated with the archive store. 
 	 * Accepts an InputStream object that contains the data to be loaded, and 
 	 * a URI of the diachronic dataset to be updated.

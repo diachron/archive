@@ -21,7 +21,9 @@
 			<form method="POST" enctype="multipart/form-data"
 				action="${pageContext.servletContext.contextPath}/archive/dataset/version">
 				<label>Diachronic URI: </label>
-				<input type="text" name="DiachronicDatasetURI"><br />
+				<input type="text" name="diachronicDatasetURI"><br />
+				<label>Version number: </label>
+				<input type="text" name="versionNumber"><br />
 				<label>	File to upload: </label>
 				<input type="file" name="DataFile"><br /> 
 				<br /> 

@@ -67,6 +67,7 @@ public class RDFSerializer implements Serializer {
 		String variableName = "dataset";
 		varsArray.put(variableName);
 		varsArray.put("label");
+		varsArray.put("versionNumber");
 		varsArray.put("creator");
 		varsArray.put("creationTime");
 		varsArray.put("recordSet");
@@ -102,6 +103,10 @@ public class RDFSerializer implements Serializer {
 			row = createMetadataRow(dd, RDFS.label.toString());
 			if (row != null)
 				result.put("label", row); 
+			
+			row = createMetadataRow(dd, DCTerms.hasVersion.toString());
+			if (row != null)
+				result.put("versionNumber", row); 
 			
 			row = createMetadataRow(dd, DCTerms.creator.toString());
 			if (row != null)
