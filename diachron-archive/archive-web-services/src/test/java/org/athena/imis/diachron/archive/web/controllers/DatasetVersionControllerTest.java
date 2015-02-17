@@ -48,7 +48,6 @@ public class DatasetVersionControllerTest {
 	@Autowired
 	private DataStatement dataStatementMock;
 	
-
 	/**
 	 * @throws java.lang.Exception
 	 */
@@ -61,6 +60,7 @@ public class DatasetVersionControllerTest {
 
 		mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
 				.build();
+			
 	}
 
 	/**
@@ -82,8 +82,9 @@ public class DatasetVersionControllerTest {
 		
 		ArgumentCaptor<InputStream> argCaptorInputStream = ArgumentCaptor.forClass(InputStream.class);
 		ArgumentCaptor<String> argCaptorStr = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<String> argCaptorStr1 = ArgumentCaptor.forClass(String.class);
 		
-		when(dataStatementMock.loadData(argCaptorInputStream.capture(), argCaptorStr.capture()))
+		when(dataStatementMock.loadData(argCaptorInputStream.capture(), argCaptorStr.capture(), argCaptorStr1.capture()))
 				.thenReturn("\"testReply\"");		       
 
 		HashMap<String, String> contentTypeParams = new HashMap<String, String>();
@@ -92,13 +93,14 @@ public class DatasetVersionControllerTest {
 	    MediaType mediaType = new MediaType("multipart", "form-data", contentTypeParams);
 	    
 	    String contentValue = prepareContent(diachronicDatasetId);
+	    //MvcResult res = 
         mockMvc.perform(MockMvcRequestBuilders.post("/archive/dataset/version")
         			.contentType(mediaType)
-    	    	    .content(contentValue))
-    	    .andExpect(status().isOk())
-				.andExpect(jsonPath("$.success", is(true)))
-				.andExpect(content().json(jsonContent));
-        
+        			//.contentType("multipart/form-data")
+        			.content(contentValue))
+        			.andExpect(status().isOk())
+        			.andExpect(jsonPath("$.success", is(true)))
+        			.andExpect(content().json(jsonContent)).andReturn();
         
 		assertEquals(argCaptorStr.getValue(), diachronicDatasetId);
 		/*

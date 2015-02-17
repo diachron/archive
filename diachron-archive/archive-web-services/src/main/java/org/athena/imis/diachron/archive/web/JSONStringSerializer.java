@@ -20,8 +20,13 @@ public class JSONStringSerializer extends JsonSerializer<String> {
 	public void serialize(String JSONString, JsonGenerator gen,
 			SerializerProvider provider) throws IOException,
 			JsonProcessingException {
-		
-		gen.writeRawValue(JSONString);
+		if ("".equals(JSONString) || JSONString == null)
+			gen.writeString("");
+		//if (JSONString != null && JSONString)
+		else if (JSONString.startsWith("http"))
+			gen.writeString(JSONString);
+		else 
+			gen.writeRawValue(JSONString);
 		
 	}
 }

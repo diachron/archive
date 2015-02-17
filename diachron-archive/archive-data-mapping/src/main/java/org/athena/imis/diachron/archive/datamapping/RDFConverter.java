@@ -10,4 +10,10 @@ public class RDFConverter implements DataConverter {
 
 	}
 
+	@Override
+	public void convert(InputStream input, OutputStream out, String datasetName) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

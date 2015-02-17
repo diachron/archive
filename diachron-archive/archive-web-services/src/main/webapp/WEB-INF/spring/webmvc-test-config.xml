@@ -23,6 +23,8 @@
 <!-- 	<bean id="queryStatement"  scope="request" factory-bean="statementFactory" factory-method="getQueryStatement"/> --> 
 <!-- 	<bean id="queryStatement"  factory-bean="statementFactory" factory-method="getQueryStatement"/> -->
 	
+	
+	
 	<bean id="queryStatement" name="queryStatement" class="org.mockito.Mockito" factory-method="mock">
         <constructor-arg value="org.athena.imis.diachron.archive.api.QueryStatement"/>
     </bean>

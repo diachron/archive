@@ -1,9 +1,8 @@
-package org.athena.imis.diachron.archive.datamapping;
+package org.athena.imis.diachron.archive.models;
 
 import java.net.URI;
 
-import org.athena.imis.diachron.archive.datamapping.utils.URIUtils;
-import org.athena.imis.diachron.archive.models.DiachronOntology;
+import org.athena.imis.diachron.archive.utils.URIUtils;
 
 /**
  * @author Simon Jupp
@@ -48,6 +47,10 @@ public class DiachronURIFactory {
     public URI generateDiachronRecordSetURI() {
         String recordId = URIUtils.generateHashEncodedID(datasetName, version);
         return URI.create(DiachronOntology.diachronResourcePrefix + "recordset/" + datasetName + "/" + version + "/" + recordId );
+    }
+    public URI generateDiachronSchemaSetURI() {
+        String recordId = URIUtils.generateHashEncodedID(datasetName, version);
+        return URI.create(DiachronOntology.diachronResourcePrefix + "schemaset/" + datasetName + "/" + version + "/" + recordId );
     }
 }
 

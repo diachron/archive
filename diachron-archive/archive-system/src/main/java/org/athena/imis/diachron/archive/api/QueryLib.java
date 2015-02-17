@@ -82,9 +82,15 @@ public class QueryLib {
 		//TODO aligh with result set serialization
 		Serializer ser = ModelsFactory.getSerializer();
 		DictionaryService dict = StoreFactory.createDictionaryService();
-		
-		List<Dataset> list = dict.getListOfDatasets(dict.getDiachronicDataset(diachronicDatasetId));		
-        return ser.serialize(list);
+		DiachronicDataset diachronicDataset = dict.getDiachronicDataset(diachronicDatasetId);
+		if (diachronicDataset != null) {		
+			List<Dataset> list = dict.getListOfDatasets(diachronicDataset);
+			return ser.serialize(list);
+		} else {
+			return null;
+		}
+			
+        
 	}
 	
 	/**
@@ -239,6 +245,49 @@ public class QueryLib {
 		Query q = new Query();
 		q.setQueryText(queryString);
 		q.setQueryType("SELECT");
+		ArchiveResultSet res = query.executeQuery(q);
+		if (getSerializationFormat() != null)
+			res.setSerializationFormat(getSerializationFormat());
+		
+		String resultString = res.serializeResults(q.getQueryType());
+		return resultString;
+	}
+	
+	public String getResource(String datasetId, String resourceId) throws Exception {
+		
+		QueryStatement query = StatementFactory.createQueryStatement();
+		DictionaryService dict = StoreFactory.createDictionaryService();
+		if (dict.getDataset(datasetId) == null)
+			throw new Exception("Non-existing Dataset");
+		String queryString = "CONSTRUCT {<"+resourceId+"> ?p ?o} "
+							+ "WHERE {";
+		queryString += "GRAPH <"+RDFDictionary.getDictionaryNamedGraph()+"> { " +
+						"<"+datasetId+"> <"+DiachronOntology.hasRecordSet+"> ?rs .}";
+		queryString += "GRAPH ?rs { ?record <"+DiachronOntology.subject+"> <"+resourceId+"> ; "
+				+ "<"+DiachronOntology.predicate+"> ?p ; "
+				+ "<"+DiachronOntology.object+"> ?o .";
+		queryString += "}}";
+		/*for(String[] param : parameters){
+				String predicate = param[1];
+				String object = param[2];
+				try {
+					predicate = "<"+new URL(predicate)+">";
+			    } catch (Exception e1) {
+			    	throw new Exception("Predicate is not a valid URI");
+			    }
+				try {
+					object = "<"+new URL(object)+">";
+			    } catch (Exception e1) {
+			    	object = "\""+object+"\"";
+			    }
+				queryString += " ?record <"+DiachronOntology.hasRecordAttribute+"> [<"+DiachronOntology.predicate+"> "+predicate+" ; <"+DiachronOntology.object+"> "+object+" ] ."; 					
+		}
+		queryString += "}} ";*/
+		
+		
+		Query q = new Query();
+		q.setQueryText(queryString);
+		q.setQueryType("CONSTRUCT");
 		ArchiveResultSet res = query.executeQuery(q);
 		if (getSerializationFormat() != null)
 			res.setSerializationFormat(getSerializationFormat());

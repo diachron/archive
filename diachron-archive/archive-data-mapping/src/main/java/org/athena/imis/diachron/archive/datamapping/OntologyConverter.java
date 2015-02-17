@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.athena.imis.diachron.archive.models.Dataset;
 import org.athena.imis.diachron.archive.models.DiachronOntology;
+import org.athena.imis.diachron.archive.models.DiachronURIFactory;
 import org.athena.imis.diachron.archive.models.DiachronicDataset;
 import org.athena.imis.diachron.archive.models.ModelsFactory;
 import org.athena.imis.diachron.archive.models.RDFDataset;
@@ -45,7 +46,7 @@ import com.hp.hpl.jena.rdf.model.impl.ResourceImpl;
 import com.hp.hpl.jena.rdf.model.impl.StatementImpl;
 import com.hp.hpl.jena.vocabulary.RDF;
 
-public class OntologyConverter {
+public class OntologyConverter implements DataConverter {
 	private OWLOntologyManager manager;
 	private Dataset dataset;
 	private DiachronicDataset diachronicDataset;

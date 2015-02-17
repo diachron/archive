@@ -24,6 +24,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -84,13 +85,15 @@ public class DatasetControllerTest {
 	@Test
 	public void testCreateDiachronicDataset() throws Exception {
 		String jsonContent = "{\"message\":\"\",\"data\":\"test\",\"success\":true}";
-		ArgumentCaptor<ArchiveEntityMetadata> argumentCaptor = ArgumentCaptor.forClass(ArchiveEntityMetadata.class);
+		ArgumentCaptor<ArchiveEntityMetadata> metadataArgCaptor = ArgumentCaptor.forClass(ArchiveEntityMetadata.class);
+		ArgumentCaptor<String> datasetNameArgCaptor = ArgumentCaptor.forClass(String.class);
 		
-		when(dataStatementMock.createDiachronicDataset(argumentCaptor.capture()))
+		when(dataStatementMock.createDiachronicDataset(metadataArgCaptor.capture(), datasetNameArgCaptor.capture()))
 				.thenReturn("\"test\"");
 
-		// MvcResult res =
-		mockMvc.perform(post("/archive/dataset")
+		 MvcResult res =
+		mockMvc.perform(post("/archive/dataset").contentType("application/x-www-form-urlencoded")
+					.param("datasetName", "datasetNameMock")
 					.param("label", "labelMock")
 					.param("creator", "creatorMock"))
 				.andExpect(status().isOk())
@@ -100,10 +103,11 @@ public class DatasetControllerTest {
 				// .andExpect(jsonPath("$.description", is("Lorem ipsum")))
 				.andReturn();
 
-		assertEquals(argumentCaptor.getValue().getMetadataMap().get(RDFS.label.toString()), "labelMock");
-		assertEquals(argumentCaptor.getValue().getMetadataMap().get(DCTerms.creator.toString()), "creatorMock");
+		assertEquals(datasetNameArgCaptor.getValue(), "datasetNameMock");
+		assertEquals(metadataArgCaptor.getValue().getMetadataMap().get(RDFS.label.toString()), "labelMock");
+		assertEquals(metadataArgCaptor.getValue().getMetadataMap().get(DCTerms.creator.toString()), "creatorMock");
 		
-		// System.out.println(res.getResponse().getContentAsString());
+		 System.out.println(res.getResponse().getContentAsString());
 
 		// verify(dataStatementMock, times(1)).createDiachronicDataset(null);
 		// verifyNoMoreInteractions(dataStatementMock);

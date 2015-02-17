@@ -55,7 +55,8 @@ public class DatasetVersionController {
         return data;
     }
 
-    @RequestMapping(method = RequestMethod.POST)
+    //@RequestMapping(method = RequestMethod.POST)
+    @RequestMapping(method = RequestMethod.POST,  consumes = "multipart/form-data")
     public @ResponseBody Response createDiachronicDatasetVersion(HttpServletRequest request) {
 
         logger.info("createDatasetVersion called");
@@ -70,31 +71,43 @@ public class DatasetVersionController {
 	        	FileItemIterator iter = upload.getItemIterator(request);
 	        	
 	        	String diachronicDatasetURI = null;
+	        	String rdfFormat = null;
+	        	String versionNumber = "";
 	        	while (iter.hasNext()) {
 	        	    FileItemStream item = iter.next();
 	        	    String name = item.getFieldName();
 	        	    InputStream stream = item.openStream();
 	        	    
 	        	    if (item.isFormField()) {
-	        	    	if (name.equals("DiachronicDatasetURI")) {
+	        	    	if (name.equals("DiachronicDatasetURI") || name.equals("diachronicDatasetURI")) {
 	        	    		diachronicDatasetURI = Streams.asString(stream);
-	        	    	} else {
-	        	    		resp.setSuccess(false);
+	        	    	} else if (name.equals("format")) {
+		        	    	rdfFormat = Streams.asString(stream);
+		        	    } else if (name.equals("versionNumber")) {
+		        	    	versionNumber = Streams.asString(stream);
+		        	    } else {
+		        	    	resp.setSuccess(false);
 	        	        	resp.setMessage("invalid field name");
 	        	        	break;
 	        	    	}
 	        	    } else {
-	        	        if (name.equals("DataFile")) {
+	        	        if (name.equals("DataFile") || name.equals("dataFile")) {
 	        	        	// String filename = item.getName(); // no use for now
 	        	        	// Process the input stream
 	        	        	if (diachronicDatasetURI != null) {
-	        	        		String res = dataStatement.loadData(stream, diachronicDatasetURI);
+	        	        		logger.info("loading DatasetVersion started");
+	        	        		String res = dataStatement.loadData(stream, diachronicDatasetURI, rdfFormat, versionNumber);
+	        	        		logger.info("loading DatasetVersion finished");
 	        	        		resp.setData(res);
+	        	        		resp.setSuccess(true);
 	        	        	} else {
 		        	        	// TODO asynchronous upload, file received before Diachronic Dataset URI
 		        	        	// options: a) upload to temp graph and then assign
 		        	        	// b) do not stream, save to file and then push to archive
 		        	        	// c) reject the upload
+	        	        		resp.setSuccess(false);
+		        	        	resp.setMessage("no diachronicDatasetURI provided");
+		        	        	break;
 		        	        	
 		        	        }
 		        	        /*
@@ -110,7 +123,6 @@ public class DatasetVersionController {
 	        	        }
 	        	    }
 	        	}
-	        	resp.setSuccess(true);
 	        } else {
 	        	//request body upload with json
 	        	resp.setSuccess(false);
@@ -123,6 +135,18 @@ public class DatasetVersionController {
         	resp.setSuccess(false);
         	resp.setMessage(e.getMessage());
         }
+        
+        return resp;
+    }
+    
+    @RequestMapping(method = RequestMethod.POST)
+    public @ResponseBody Response invalidContentTypeRequest() {
+
+        logger.info("createDatasetVersion called");
+        Response resp = new Response();
+        
+        resp.setSuccess(false);
+        resp.setMessage("No valid http header for content type");
         
         return resp;
     }

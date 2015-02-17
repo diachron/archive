@@ -6,7 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 import org.athena.imis.diachron.archive.datamapping.MultidimensionalConverter;
-import org.athena.imis.diachron.archive.datamapping.OntologyConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,17 +25,18 @@ public class TestConversionFile {
 		for(File file : files){
 			
 			System.out.println("Converting file " + file.getName());
+			if(!file.getName().equals("1bu4_v0.rdf")) continue;
 			File inputFile = new File(dir+file.getName());
 			FileInputStream fis = null;
-			File outputFile = new File(dir+"_diachron_"+file.getName()+".rdf");
+			File outputFile = new File(dir+"d_diachron_"+file.getName()+".rdf");
 			
 			try {
 				fis = new FileInputStream(inputFile);
 				FileOutputStream fos = new FileOutputStream(outputFile);
 				//OntologyConverter converter = new OntologyConverter();
 				MultidimensionalConverter converter = new MultidimensionalConverter();
-				converter.convert(fis, fos, file.getName().substring(file.getName().lastIndexOf(".")+1));
-				//converter.convert(fis, fos);
+				converter.convert(fis, fos, file.getName().substring(file.getName().lastIndexOf(".")+1), "test_qb_data");
+				//converter.convert(fis, fos, "sdsd");
 				fis.close();
 				fos.close();
 	 

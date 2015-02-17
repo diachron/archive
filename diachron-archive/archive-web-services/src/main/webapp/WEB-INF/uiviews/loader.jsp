@@ -6,7 +6,10 @@
 		<div id="content">
 			<h2>Dataset Loader</h2>
 			<h3>Create Diachronic Dataset</h3>
-			<form method="POST" action="${pageContext.servletContext.contextPath}/archive/dataset">
+			<form method="POST" action="${pageContext.servletContext.contextPath}/archive/dataset" 
+				enctype="application/x-www-form-urlencoded">
+				 <label>Dataset Name: </label>
+				 <input type="text" name="datasetName"><br /> 
 				 <label>Label: </label>
 				 <input type="text" name="label"><br /> 
 				 <label>Creator: </label>
@@ -18,7 +21,9 @@
 			<form method="POST" enctype="multipart/form-data"
 				action="${pageContext.servletContext.contextPath}/archive/dataset/version">
 				<label>Diachronic URI: </label>
-				<input type="text" name="DiachronicDatasetURI"><br />
+				<input type="text" name="diachronicDatasetURI"><br />
+				<label>Version number: </label>
+				<input type="text" name="versionNumber"><br />
 				<label>	File to upload: </label>
 				<input type="file" name="DataFile"><br /> 
 				<br /> 

@@ -15,6 +15,7 @@ import org.athena.imis.diachron.archive.api.StatementFactory;
 import org.athena.imis.diachron.archive.core.datamanager.StoreConnection;
 import org.athena.imis.diachron.archive.models.Dataset;
 import org.athena.imis.diachron.archive.models.DiachronOntology;
+import org.athena.imis.diachron.archive.models.DiachronURIFactory;
 import org.athena.imis.diachron.archive.models.DiachronicDataset;
 import org.athena.imis.diachron.archive.models.ModelsFactory;
 import org.athena.imis.diachron.archive.models.RDFDataset;
@@ -32,6 +33,7 @@ import com.hp.hpl.jena.update.UpdateExecutionFactory;
 import com.hp.hpl.jena.update.UpdateFactory;
 import com.hp.hpl.jena.update.UpdateProcessor;
 import com.hp.hpl.jena.update.UpdateRequest;
+import com.hp.hpl.jena.vocabulary.DCTerms;
 
 /**
  * 
@@ -60,11 +62,12 @@ public class RDFDictionary implements DictionaryService {
 	 * 
 	 * @param dds The DiachronicDataset to be created.
 	 * @return A String URI of the created diachronic dataset.
+	 * @throws Exception 
 	 *  
 	 */
-	public String createDiachronicDataset(DiachronicDataset dds) {
+	public String createDiachronicDataset(DiachronicDataset dds, String datasetName) throws Exception {
 
-		String URI = createDiachronicDatasetId();
+		String URI = createDiachronicDatasetId(datasetName);
 				
 		Model model = StoreConnection.getJenaModel(dictionaryNamedGraph);
 		Resource diachronicDatasetResource = model.createResource(URI, DiachronOntology.diachronicDataset);
@@ -87,14 +90,9 @@ public class RDFDictionary implements DictionaryService {
 	 * Create a URI for a new diachronic dataset.
 	 * @return A string URI.
 	 */
-	public String createDiachronicDatasetId() {
-		// TODO proper URI creation
-		// sequential or random but at least check for conflict with existing 
-		double multi = (double) Math.pow(10, 8);
-		int id = (int)(multi*Math.random());
-		
-		String URI = "http://www.diachron-fp7.eu/resource/diachronicDataset/"+Integer.toHexString(id).toLowerCase();
-		return URI;
+	public String createDiachronicDatasetId(String datasetName) {
+		DiachronURIFactory uriFactory = new DiachronURIFactory(datasetName, "");
+		return uriFactory.generateDiachronicDatasetUri().toString();
 	}
 
 	/**
@@ -129,7 +127,10 @@ public class RDFDictionary implements DictionaryService {
 		Query q = new Query();
 		q.setQueryText("SELECT DISTINCT ?o FROM <" + RDFDictionary.getDictionaryNamedGraph() +
 				"> WHERE {  <"+diachronicDataset.getId()+"> <"+DiachronOntology.hasInstantiation+"> ?o . " +
-						"?o <"+DiachronOntology.generatedAtTime+"> ?time} ORDER BY DESC(?time) ");
+						"OPTIONAL { {?o <"+DiachronOntology.generatedAtTime+"> ?time} "
+								+ "UNION {?o <"+DCTerms.created.getURI().toString()+"> ?time}"
+								+ "}"
+								+ "} ORDER BY DESC(?time) ");
 		q.setQueryType("SELECT");		
 		ArchiveResultSet res = query.executeQuery(q);		
 		List<Dataset> datasets = new ArrayList<Dataset>(); 
@@ -140,6 +141,9 @@ public class RDFDictionary implements DictionaryService {
 			//Dataset ds = ModelsFactory.createDataset(diachronicDataset);
 			Dataset ds = new RDFDataset();			
 			ds.setId(datasetId);
+			
+			ds.setMetaProperties(getDatasetMetadata(datasetId));
+			
 			datasets.add(ds);			
 		}				
 		return datasets;	
@@ -153,8 +157,7 @@ public class RDFDictionary implements DictionaryService {
 		Query q = new Query();
 		q.setQueryText("SELECT ?p ?o FROM <" + RDFDictionary.getDictionaryNamedGraph() +
 				"> WHERE {  <"+diachronicDatasetId+"> ?p ?o " +
-						" FILTER (?p!= <"+DiachronOntology.hasInstantiation+">) } " +
-						"");
+						" FILTER (?p!= <"+DiachronOntology.hasInstantiation+">) } ");
 		q.setQueryType("SELECT");
 		ArchiveResultSet res = query.executeQuery(q);
 		
@@ -170,6 +173,29 @@ public class RDFDictionary implements DictionaryService {
 		}
 		return metaProperties;	
 	}
+	
+	private Hashtable<String, Object>  getDatasetMetadata(String datasetId) {
+		QueryStatement query = StatementFactory.createQueryStatement();
+		Query q = new Query();
+		q.setQueryText("SELECT ?p ?o FROM <" + RDFDictionary.getDictionaryNamedGraph() +
+				"> WHERE {  <"+datasetId+"> ?p ?o } ");
+		q.setQueryType("SELECT");
+		ArchiveResultSet res = query.executeQuery(q);
+		
+		Hashtable<String, Object> metaProperties = new Hashtable<String, Object>();
+			
+		ResultSet rs = res.getJenaResultSet();
+		while (rs.hasNext()) {
+			QuerySolution qs = rs.next();
+			String value = qs.get("o").toString();
+			String name = qs.get("p").toString();
+			metaProperties.put(name, value);
+			
+		}
+		return metaProperties;	
+	}
+	
+	
 	
 	/**
 	 * {@inheritDoc}
@@ -204,9 +230,14 @@ public class RDFDictionary implements DictionaryService {
 
 	@Override
 	public void addDataset(Graph graph, String diachronicDatasetURI, String datasetURI) {
-		// TODO Implement creation of dataset in the persistant dictionary
+		Calendar cal = GregorianCalendar.getInstance();
+		String timestamp = ResourceFactory.createTypedLiteral(cal).getString();		
 		String query = "INSERT DATA { GRAPH <"+RDFDictionary.dictionaryNamedGraph+"> " +
-				"{ <"+diachronicDatasetURI+"> <"+DiachronOntology.hasInstantiation+"> <"+datasetURI+"> }}";
+				"{ <"+diachronicDatasetURI+"> <"+DiachronOntology.hasInstantiation+"> <"+datasetURI+"> ."
+				//+ "<"+datasetURI+">  <"+DiachronOntology.generatedAtTime+"> \""+timestamp+"\" " 
+				+ "<"+datasetURI+">  <"+DCTerms.created.getURI()+"> \""+timestamp+"\" "
+				+ "}}";
+		//System.out.println(query);
 		GraphStore gs = GraphStoreFactory.create(graph);
 		gs.addGraph(NodeFactory.createURI(RDFDictionary.getDictionaryNamedGraph()), graph);
 		UpdateRequest queryObj = UpdateFactory.create(query); 
@@ -217,6 +248,7 @@ public class RDFDictionary implements DictionaryService {
 	
 	@Override
 	public void addRecordSet(Graph graph, String recordSetURI, String datasetId) {
+		//TODO refactor to remove the Graph input param
 		String query = "INSERT DATA { GRAPH <"+RDFDictionary.dictionaryNamedGraph+"> " +
 				"{ <"+datasetId+"> <"+DiachronOntology.hasRecordSet+"> <"+recordSetURI+"> }}";
 		GraphStore gs = GraphStoreFactory.create(graph);
@@ -226,18 +258,25 @@ public class RDFDictionary implements DictionaryService {
 		qexec.execute(); 
 	}
 	
-	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, String diachronicDatasetURI){
+	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, String diachronicDatasetURI, String versionNumber){
 				
 		Calendar cal = GregorianCalendar.getInstance();
 		String timestamp = ResourceFactory.createTypedLiteral(cal).getString();
 		String query = "INSERT DATA { GRAPH <"+RDFDictionary.dictionaryNamedGraph+"> " +
 				"{";
 		for(RDFDataset dataset : list){
-			query += "<"+dataset.getId()+"> <"+DiachronOntology.generatedAtTime+"> \""+timestamp+"\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .";
-			ArrayList<String[]> metadata = (ArrayList<String[]>) dataset.getMetadata();
-			for(String[] po : metadata){
-				String object = po[1];
-				query += "<"+dataset.getId()+"> <"+po[0]+"> ";
+			query += "<"+dataset.getId()+"> <"+DCTerms.created.getURI().toString()+"> \""+timestamp+"\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .";
+			dataset.setMetaProperty(DCTerms.created.getURI().toString(), timestamp);
+			if(!versionNumber.equals("")){
+				
+				query += "<"+dataset.getId()+"> <"+DCTerms.hasVersion.getURI().toString()+"> \""+versionNumber+"\" .";
+				dataset.setMetaProperty(DCTerms.hasVersion.getURI().toString(), versionNumber);
+			}
+			
+			
+			for(String propertyName : dataset.getMetaPropertiesNames()){
+				String object = (String) dataset.getMetaProperty(propertyName);
+				query += "<"+dataset.getId()+"> <"+propertyName+"> ";
 				try {
 					object = "<"+new URL(object)+">";
 			    } catch (Exception e1) {
@@ -258,5 +297,41 @@ public class RDFDictionary implements DictionaryService {
 		//vur.exec();
 		
 	}
+	
+	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, String diachronicDatasetURI){
+		
+		Calendar cal = GregorianCalendar.getInstance();
+		String timestamp = ResourceFactory.createTypedLiteral(cal).getString();
+		String query = "INSERT DATA { GRAPH <"+RDFDictionary.dictionaryNamedGraph+"> " +
+				"{";
+		for(RDFDataset dataset : list){
+			query += "<"+dataset.getId()+"> <"+DCTerms.created.getURI().toString()+"> \""+timestamp+"\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .";
+			dataset.setMetaProperty(DCTerms.created.getURI().toString(), timestamp);					
+			
+			for(String propertyName : dataset.getMetaPropertiesNames()){
+				String object = (String) dataset.getMetaProperty(propertyName);
+				query += "<"+dataset.getId()+"> <"+propertyName+"> ";
+				try {
+					object = "<"+new URL(object)+">";
+			    } catch (Exception e1) {
+			    	object = "\""+object+"\"";
+			    }
+				query += object + " . ";
+			}		
+		}
+		query += " } }";						
+		GraphStore gs = GraphStoreFactory.create(graph);
+		gs.addGraph(NodeFactory.createURI(RDFDictionary.getDictionaryNamedGraph()), graph);
+		UpdateRequest queryObj = UpdateFactory.create(query); 
+		UpdateProcessor qexec = UpdateExecutionFactory.create(queryObj,gs); 
+		qexec.execute(); 
+		//UpdateAction.parseExecute( query, graph);
+		
+		//VirtuosoUpdateRequest vur = VirtuosoUpdateFactory.create(query, graph);
+		//vur.exec();
+		
+	}
+	
+	
 	
 }

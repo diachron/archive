@@ -31,12 +31,12 @@
 	<listener>
 		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
 	</listener>
-
+	
 	<listener>
-        <listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>
+       <listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>
 	</listener>
 
-	<servlet>
+ 	<servlet>
 		<servlet-name>starter</servlet-name>
 		<servlet-class>org.athena.imis.diachron.archive.web.AppStarter</servlet-class>
         <load-on-startup>1</load-on-startup>
@@ -61,17 +61,6 @@
 		<servlet-name>spring</servlet-name>
 		<url-pattern>/</url-pattern>
 	</servlet-mapping>
-	
-<!--	<servlet>
-		<servlet-name>test</servlet-name>
-		<servlet-class>org.athena.imis.diachron.archive.web.services.TestServlet</servlet-class>
-        
-	</servlet>
-
-	<servlet-mapping>
-		<servlet-name>test</servlet-name>
-		<url-pattern>/testup</url-pattern>
-	</servlet-mapping>-->
 	
 	<!-- <filter>
 	    <filter-name>MultipartFilter</filter-name>

@@ -77,17 +77,21 @@ public class DictionaryCache implements DictionaryService {
 	 * Creates a new diachronic dataset entry in the cache.
 	 * @param dds The DiachronicDataset entry to be created in the cache.
 	 * @return A String with the URI of the Diachronic Dataset.
+	 * @throws Exception 
 	 */
-	public String createDiachronicDataset(DiachronicDataset dds) {
-		String id = persistentStorage.createDiachronicDataset(dds);
+	public String createDiachronicDataset(DiachronicDataset dds, String datasetName) throws Exception {
+		String idForCheck = persistentStorage.createDiachronicDatasetId(datasetName);
+		if (getDiachronicDataset(idForCheck)!= null)
+			throw new Exception("A diachronic dataset created from this name already exists");
+		String id = persistentStorage.createDiachronicDataset(dds, datasetName);
 		dds.setId(id);
 		diachronicDatasets.put(id, dds);
 		return id;
 		
 	}
 
-	public String createDiachronicDatasetId() {
-		return persistentStorage.createDiachronicDatasetId();
+	public String createDiachronicDatasetId(String datasetName) {
+		return persistentStorage.createDiachronicDatasetId(datasetName);
 	}
 
 	/**
@@ -158,6 +162,14 @@ public class DictionaryCache implements DictionaryService {
 		ds.setId(recordSetURI);
 		datasetInstantiations.put(datasetId, ds);
 		diachronicDatasets.get(diachronicDatasetURI).addDatasetInstatiation(ds);*/
+	}
+	
+	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, String diachronicDatasetURI, String versionNumber){
+		persistentStorage.addDatasetMetadata(graph, list, diachronicDatasetURI, versionNumber);
+		for(RDFDataset dataset : list){
+			datasetInstantiations.put(dataset.getId(), dataset);
+			diachronicDatasets.get(diachronicDatasetURI).addDatasetInstatiation(dataset);
+		}
 	}
 	
 	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, String diachronicDatasetURI){
