@@ -213,7 +213,7 @@ public class MultidimensionalConverter {
 	 * This method converts data in the dataset other than schema and observations, and appends them in the converted jena model.
 	 */
 	public Model diachronizeRestData(VirtGraph graph, String fullGraph, Model diachronModel, Resource recordSet){
-		
+
 		String allQuery = "SELECT ?s ?p ?o FROM <" + fullGraph + "> WHERE {"
 				+ "?s a ?type ; ?p ?o FILTER(?type!=qb:Observation)" + "}";
 		VirtuosoQueryExecution vqe = VirtuosoQueryExecutionFactory.create(allQuery, graph);
@@ -273,7 +273,7 @@ public class MultidimensionalConverter {
 		vqeD.close();*/
 
 		diachronizeObservations(graph, fullGraph, diachronModel, recordSet);
-		diachronizeRestData(graph, fullGraph, diachronModel, recordSet);
+		//diachronizeRestData(graph, fullGraph, diachronModel, recordSet);
 
 		graph.close();
 		return recordSetURI;

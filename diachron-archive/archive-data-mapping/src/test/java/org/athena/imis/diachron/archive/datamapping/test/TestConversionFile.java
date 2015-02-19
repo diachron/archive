@@ -20,7 +20,7 @@ public class TestConversionFile {
     public static void main(String[] args) {
         MultidimensionalConverter converter = new MultidimensionalConverter();
 
-        File inputFile = new File("/tmp/medailles.slice.ttl");
+        File inputFile = new File("/tmp/geo.ttl");
         File outputFile = new File(inputFile.getAbsolutePath() + ".converted");
         System.out.println("Converting file " + inputFile.getName());
 

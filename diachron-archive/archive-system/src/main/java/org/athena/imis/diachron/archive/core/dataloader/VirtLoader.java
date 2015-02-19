@@ -339,8 +339,7 @@ public String loadData(InputStream stream, String diachronicDatasetURI, String f
 		while(results.hasNext()){
 			QuerySolution rs = results.next();
 			RDFNode schemaSet = rs.get("ss");
-            String ss = schemaSet.toString();
-            insertSchemaSetTriples(graph, ss, tempGraph);
+            insertSchemaSetTriples(graph, schemaSet.toString(), tempGraph);
 		}
 		vqe.close();		
 		
@@ -408,22 +407,15 @@ public String loadData(InputStream stream, String diachronicDatasetURI, String f
         Graph graph1 = StoreConnection.getGraph(schemaSet);
         GraphStore gs = GraphStoreFactory.create(graph1);
         gs.addGraph(NodeFactory.createURI(schemaSet.toString()), graph1);
-        String query = "INSERT { GRAPH <"+schemaSet.toString()+"> {" +
+        String query = "INSERT INTO <"+schemaSet.toString()+"> {" +
                 "<"+schemaSet.toString()+"> ?p ?o" +
-                "} } WHERE { GRAPH <"+tempGraph+">  " +
-                "{<"+schemaSet.toString()+"> ?p ?o}}";
-        //System.out.println(query);
+                "} FROM <"+tempGraph+">  WHERE " +
+                "{<"+schemaSet.toString()+"> ?p ?o}";
+
         VirtGraph virt = StoreConnection.getVirtGraph();
         VirtuosoUpdateRequest vur = VirtuosoUpdateFactory.create(query, virt);
         vur.exec();
-                             /*
-		String query = "INSERT { GRAPH <"+schemaSet.toString()+"> {" +
-							"<"+schemaSet.toString()+"> ?p ?o" +
-						"} } WHERE { GRAPH <"+tempGraph+"> " +
-								"{<"+schemaSet.toString()+"> ?p ?o} }";
-        System.out.println(query);
-        UpdateAction.parseExecute( query, graph);
-		                            */
+
 		query = "INSERT INTO <"+schemaSet.toString()+"> {" +
 				"?o ?p2 ?o2" +
 			"} FROM <"+tempGraph+"> WHERE " +
@@ -437,10 +429,20 @@ public String loadData(InputStream stream, String diachronicDatasetURI, String f
 				"?o ?p3 ?o3" +
 			"} FROM <"+tempGraph+"> WHERE " +
 					"{<"+schemaSet.toString()+"> ?p1 [ ?p2 ?o ]. ?o ?p3 ?o3.}";
-        System.out.println(query);
+
         vur = VirtuosoUpdateFactory.create(query, virt);
         vur.exec();
-	}
+
+        // Previous query fetches component-like definition
+        // But some may reference it using patterns like skos:inScheme (see datacube code list)
+        query = "INSERT INTO <"+schemaSet.toString()+"> {" +
+                "?s ?p5 ?o5" +
+                "} FROM <"+tempGraph+"> WHERE " +
+                "{<"+schemaSet.toString()+"> ?p1 [ ?p2 ?o ]. ?o ?p3 ?o3. ?s ?p4 ?o3. ?s ?p5 ?o5}";
+
+        vur = VirtuosoUpdateFactory.create(query, virt);
+        vur.exec();
+    }
 	
 	/**
 	 * Inserts the triples associated with the change set defined in the input temporary graph.
