@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.athena.imis.diachron.archive.core.datamanager.StoreConnection;
@@ -50,78 +52,110 @@ public class MultidimensionalConverter {
 	 * This method is given an input stream with the input dataset which converts and serializes into the given output stream. 
 	 */
 	public void convert(InputStream in, OutputStream out, String ext, String datasetName) {
-
-		StoreConnection.init();
-		String version = (new Date()).getTime() + "";
-		uriFactory = new DiachronURIFactory(datasetName, version);
-		//Long lDateTime = new Date().getTime();
-		//String tempName = lDateTime.toString().trim();		
-		if (BulkLoader.bulkLoadRDFDataToGraph(in, version, ext)) {
-			//System.out.println("Converting temp graph " + tempName);
-			try{
-				logger.debug("Converting temp graph " + version);
-				convertFromGraph(version, out, datasetName);
-			} catch(IOException e){
-				logger.error("Could not convert from graph.");
-			}
-			
-			logger.debug("Clearing temp graph.");
-			BulkLoader.clearStageGraph(version);
-			
-			logger.debug("Uploading and housekeeping done.");
-		} else
-			logger.error("Something went wrong.");
-
+        Model model = convert(in, ext, datasetName);
+        try {
+            model.write(out, "N3");
+        } catch (Exception e) {
+            logger.error("Could not write metadata into jena model.");
+        } finally {
+            model.close();
+            try {
+                out.close();
+            } catch (IOException ignored) {
+            }
+        }
 	}
 
-	/**
-	 * 
-	 * @param fullGraph The temp graph used to bulk load the data into the Virtuoso store.
-	 * @param out The output stream object passed along from the calling method.
-	 * @param datasetName The unique identifier name of the dataset.
-	 * @throws IOException
-	 */
-	public void convertFromGraph(String fullGraph, OutputStream out, String datasetName) throws IOException {
-		
-		String schemaSetURI = diachronizeDataCubeSchema(out, fullGraph);
-		String recordSetURI = diachronizeDataCubeObservations(out, fullGraph, datasetName);
-		handleDatasetMetadata(out, datasetName, schemaSetURI, recordSetURI);
-		out.close();
-		
-	}
 
-	/**
-	 * 
-	 * @param out The output stream object passed along from the calling method.
-	 * @param datasetName The unique identifier name of the dataset.
-	 * @param schemaSetURI URI of the created schema set
-	 * @param recordSetURI URI of the created record set
-	 * 
-	 * This method creates metadata specific to the Dictionary of datasets within the archive.
-	 */
-	public void handleDatasetMetadata(OutputStream out, String datasetName, String schemaSetURI, String recordSetURI){
+    public Model convert(InputStream in, String ext, String datasetName) {
+        StoreConnection.init();
+        String version = (new Date()).getTime() + "";
+        uriFactory = new DiachronURIFactory(datasetName, version);
+        //Long lDateTime = new Date().getTime();
+        //String tempName = lDateTime.toString().trim();
+        try {
+            if (BulkLoader.bulkLoadRDFDataToGraph(in, version, ext)) {
+                //System.out.println("Converting temp graph " + tempName);
+                logger.debug("Converting temp graph " + version);
+                Model model = convertModel(version, datasetName);
+                logger.debug("Uploading and housekeeping done.");
+                return model;
+            } else
+                logger.error("Something went wrong.");
+
+        } catch (Exception e) {
+            logger.error("Could not convert from graph.", e);
+        } finally {
+            logger.debug("Clearing temp graph.");
+            BulkLoader.clearStageGraph(version);
+        }
+        return null;
+    }
+
+    private Model convertModel(String fullGraph, String datasetName) {
+        Model model = getDefaultModel();
+        String schemaSetURI = diachronizeDataCubeSchema(model, fullGraph);
+        String recordSetURI = diachronizeDataCubeObservations(model, fullGraph, datasetName);
+        handleDatasetMetadata(model, datasetName, schemaSetURI, recordSetURI);
+        return model;
+    }
+
+    /**
+     *
+     * @param diachronModel
+     * @param datasetName The unique identifier name of the dataset.
+     * @param schemaSetURI URI of the created schema set
+     * @param recordSetURI URI of the created record set
+     *
+     */
+	public void handleDatasetMetadata(Model diachronModel, String datasetName, String schemaSetURI, String recordSetURI){
 		
 		VirtGraph graph = StoreConnection.getVirtGraph();
 		
 		DiachronURIFactory uriFactory = new DiachronURIFactory(datasetName, "");
 		String diachronicDatasetURI = uriFactory.generateDiachronicDatasetUri().toString();
-		Model diachronModel = ModelFactory.createDefaultModel();
 		Resource diachronicDataset = diachronModel.createResource(diachronicDatasetURI, DiachronOntology.diachronicDataset);
 		Resource datasetInstance = diachronModel.createResource(uriFactory.generateDatasetUri().toString(), DiachronOntology.dataset);		
 		datasetInstance.addProperty(DiachronOntology.hasRecordSet, diachronModel.createResource(recordSetURI));
 		datasetInstance.addProperty(DiachronOntology.hasSchemaSet, diachronModel.createResource(schemaSetURI));
 		diachronicDataset.addProperty(DiachronOntology.hasInstantiation, datasetInstance);
-		
-		try {
-			diachronModel.write(out, "RDF/XML-ABBREV");
-		} catch (Exception e) {
-			logger.error("Could not write metadata into jena model.");
-		}
-		diachronModel.close();
+
 		graph.close();
 	}
-	
-	/**
+
+
+
+    public static Map<String, String> prefixes = new HashMap<>();
+    public static final String QB = "http://purl.org/linked-data/cube#";
+    public static final String SKOS = "http://www.w3.org/2004/02/skos/core#";
+    public static final String DIACHRON = "http://www.diachron-fp7.eu/resource/";
+    public static final String DIACHRON_RECORD_ATTRIBUTE = "http://www.diachron-fp7.eu/resource/RecordAttribute/";
+    public static final String DIACHRON_RECORD = "http://www.diachron-fp7.eu/resource/Record/";
+    public static final String WSG84 = "http://www.w3.org/2003/01/geo/wgs84_pos#";
+
+    public static final String BASE_PUBLICATION_URI = "http://www.data-publica.com/lod/publication/";
+
+    static {
+        prefixes.put("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
+        prefixes.put("rdfs", "http://www.w3.org/2000/01/rdf-schema#");
+        prefixes.put("xsd", "http://www.w3.org/2001/XMLSchema#");
+        prefixes.put("owl", "http://www.w3.org/2002/07/owl#");
+        prefixes.put("dp", BASE_PUBLICATION_URI);
+        prefixes.put("wsg84", WSG84);
+        prefixes.put("diachron", DIACHRON);
+        prefixes.put("drca", DIACHRON_RECORD_ATTRIBUTE);
+        prefixes.put("drc", DIACHRON_RECORD);
+        prefixes.put("skos", SKOS);
+        prefixes.put("qb", QB);
+    }
+
+    private Model getDefaultModel() {
+        Model model = ModelFactory.createDefaultModel();
+        model.setNsPrefixes(prefixes);
+        return model;
+    }
+
+    /**
 	 * 
 	 * @param graph VirtGraph jdbc connection to the archive.
 	 * @param fullGraph Temp graph name.
@@ -216,11 +250,10 @@ public class MultidimensionalConverter {
 	 * 
 	 * Caller class for converting data objects (records).
 	 */
-	public String diachronizeDataCubeObservations(OutputStream out,
-			String fullGraph, String datasetName) {
+	public String diachronizeDataCubeObservations(Model diachronModel,
+                                                  String fullGraph, String datasetName) {
 
 		VirtGraph graph = StoreConnection.getVirtGraph();
-		Model diachronModel = ModelFactory.createDefaultModel();
 		
 		String recordSetURI = uriFactory.generateDiachronRecordSetURI().toString();
 		Resource recordSet = diachronModel.createResource(recordSetURI, DiachronOntology.recordSet);
@@ -239,15 +272,9 @@ public class MultidimensionalConverter {
 		}
 		vqeD.close();*/
 
-		diachronModel = diachronizeObservations(graph, fullGraph, diachronModel, recordSet);
-		diachronModel = diachronizeRestData(graph, fullGraph, diachronModel, recordSet);
-		
-		try {
-			diachronModel.write(out, "RDF/XML-ABBREV");
-		} catch (Exception e) {
-			logger.error("Could not write Observations model in output stream.");
-		}
-		diachronModel.close();
+		diachronizeObservations(graph, fullGraph, diachronModel, recordSet);
+		diachronizeRestData(graph, fullGraph, diachronModel, recordSet);
+
 		graph.close();
 		return recordSetURI;
 	}
@@ -280,12 +307,11 @@ public class MultidimensionalConverter {
 	 * 
 	 * Caller class for converting schema objects.
 	 */
-	public String diachronizeDataCubeSchema(OutputStream out,
-			String fullGraph) {
+	public String diachronizeDataCubeSchema(Model diachronModel,
+                                            String fullGraph) {
 
 		VirtGraph graph = StoreConnection.getVirtGraph();
-		
-		Model diachronModel = ModelFactory.createDefaultModel();
+
 		String schemaSetURI = uriFactory.generateDiachronSchemaSetURI().toString();
 		Resource schemaSet = diachronModel.createResource(schemaSetURI, DiachronOntology.schemaSet);
 		
@@ -368,12 +394,6 @@ public class MultidimensionalConverter {
 
 		}
 		vqe.close();
-		try {
-			diachronModel.write(out, "RDF/XML-ABBREV");
-		} catch (Exception e) {
-			logger.error("Could not write Observations model in output stream.");
-		}
-		diachronModel.close();
 		graph.close();
 		return schemaSetURI;
 	}

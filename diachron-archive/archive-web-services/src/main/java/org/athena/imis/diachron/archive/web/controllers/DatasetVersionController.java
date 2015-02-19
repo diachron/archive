@@ -69,9 +69,9 @@ public class DatasetVersionController {
 	
 	        	// Parse the request
 	        	FileItemIterator iter = upload.getItemIterator(request);
-	        	
+
 	        	String diachronicDatasetURI = null;
-	        	String rdfFormat = null;
+	        	String rdfFormat = "TURTLE";
 	        	String versionNumber = "";
 	        	while (iter.hasNext()) {
 	        	    FileItemStream item = iter.next();
@@ -82,7 +82,7 @@ public class DatasetVersionController {
 	        	    	if (name.equals("DiachronicDatasetURI") || name.equals("diachronicDatasetURI")) {
 	        	    		diachronicDatasetURI = Streams.asString(stream);
 	        	    	} else if (name.equals("format")) {
-		        	    	rdfFormat = Streams.asString(stream);
+		        	    	rdfFormat = "TURTLE";
 		        	    } else if (name.equals("versionNumber")) {
 		        	    	versionNumber = Streams.asString(stream);
 		        	    } else {

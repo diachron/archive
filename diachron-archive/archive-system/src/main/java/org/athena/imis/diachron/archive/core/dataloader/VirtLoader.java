@@ -339,7 +339,8 @@ public String loadData(InputStream stream, String diachronicDatasetURI, String f
 		while(results.hasNext()){
 			QuerySolution rs = results.next();
 			RDFNode schemaSet = rs.get("ss");
-			insertSchemaSetTriples(graph, schemaSet.toString(), tempGraph);													
+            String ss = schemaSet.toString();
+            insertSchemaSetTriples(graph, ss, tempGraph);
 		}
 		vqe.close();		
 		
@@ -404,24 +405,41 @@ public String loadData(InputStream stream, String diachronicDatasetURI, String f
 	 * @param tempGraph The URI of the temporary graph where the bulk loading has been performed.
 	 */
 	private static void insertSchemaSetTriples(Graph graph, String schemaSet, String tempGraph){
-		
-		String query = "INSERT INTO <"+schemaSet.toString()+"> {" +
+        Graph graph1 = StoreConnection.getGraph(schemaSet);
+        GraphStore gs = GraphStoreFactory.create(graph1);
+        gs.addGraph(NodeFactory.createURI(schemaSet.toString()), graph1);
+        String query = "INSERT { GRAPH <"+schemaSet.toString()+"> {" +
+                "<"+schemaSet.toString()+"> ?p ?o" +
+                "} } WHERE { GRAPH <"+tempGraph+">  " +
+                "{<"+schemaSet.toString()+"> ?p ?o}}";
+        //System.out.println(query);
+        VirtGraph virt = StoreConnection.getVirtGraph();
+        VirtuosoUpdateRequest vur = VirtuosoUpdateFactory.create(query, virt);
+        vur.exec();
+                             /*
+		String query = "INSERT { GRAPH <"+schemaSet.toString()+"> {" +
 							"<"+schemaSet.toString()+"> ?p ?o" +
-						"} FROM <"+tempGraph+"> WHERE " +
-								"{<"+schemaSet.toString()+"> ?p ?o}";
-		UpdateAction.parseExecute( query, graph);
-		
+						"} } WHERE { GRAPH <"+tempGraph+"> " +
+								"{<"+schemaSet.toString()+"> ?p ?o} }";
+        System.out.println(query);
+        UpdateAction.parseExecute( query, graph);
+		                            */
 		query = "INSERT INTO <"+schemaSet.toString()+"> {" +
 				"?o ?p2 ?o2" +
 			"} FROM <"+tempGraph+"> WHERE " +
 					"{<"+schemaSet.toString()+"> ?p ?o . ?o ?p2 ?o2}";
-		UpdateAction.parseExecute( query, graph);
-		
-		query = "INSERT INTO <"+schemaSet.toString()+"> {" +
+        System.out.println(query);
+        vur = VirtuosoUpdateFactory.create(query, virt);
+        vur.exec();
+
+
+        query = "INSERT INTO <"+schemaSet.toString()+"> {" +
 				"?o ?p3 ?o3" +
 			"} FROM <"+tempGraph+"> WHERE " +
 					"{<"+schemaSet.toString()+"> ?p1 [ ?p2 ?o ]. ?o ?p3 ?o3.}";
-		UpdateAction.parseExecute( query, graph);
+        System.out.println(query);
+        vur = VirtuosoUpdateFactory.create(query, virt);
+        vur.exec();
 	}
 	
 	/**
