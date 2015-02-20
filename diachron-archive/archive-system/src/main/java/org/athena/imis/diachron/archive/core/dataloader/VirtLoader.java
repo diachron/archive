@@ -339,9 +339,9 @@ public String loadData(InputStream stream, String diachronicDatasetURI, String f
 		while(results.hasNext()){
 			QuerySolution rs = results.next();
 			RDFNode schemaSet = rs.get("ss");
-            insertSchemaSetTriples(graph, schemaSet.toString(), tempGraph);
+            insertSchemaSetTriples(graph, schemaSet.toString(), tempGraph, datasetURI);
 		}
-		vqe.close();		
+		vqe.close();
 		
 		insertChangeSetTriples(model, tempGraph);		
 		
@@ -402,12 +402,13 @@ public String loadData(InputStream stream, String diachronicDatasetURI, String f
 	 * @param graph The connection VirtGraph to the archive.
 	 * @param schemaSet The URI of the schema set to upload.
 	 * @param tempGraph The URI of the temporary graph where the bulk loading has been performed.
+     * @param datasetURI
 	 */
-	private static void insertSchemaSetTriples(Graph graph, String schemaSet, String tempGraph){
-        Graph graph1 = StoreConnection.getGraph(schemaSet);
+	private static void insertSchemaSetTriples(Graph graph, String schemaSet, String tempGraph, String datasetURI){
+        Graph graph1 = StoreConnection.getGraph(datasetURI);
         GraphStore gs = GraphStoreFactory.create(graph1);
-        gs.addGraph(NodeFactory.createURI(schemaSet.toString()), graph1);
-        String query = "INSERT INTO <"+schemaSet.toString()+"> {" +
+        gs.addGraph(NodeFactory.createURI(datasetURI), graph1);
+        String query = "INSERT INTO <"+datasetURI+"> {" +
                 "<"+schemaSet.toString()+"> ?p ?o" +
                 "} FROM <"+tempGraph+">  WHERE " +
                 "{<"+schemaSet.toString()+"> ?p ?o}";
@@ -416,7 +417,7 @@ public String loadData(InputStream stream, String diachronicDatasetURI, String f
         VirtuosoUpdateRequest vur = VirtuosoUpdateFactory.create(query, virt);
         vur.exec();
 
-		query = "INSERT INTO <"+schemaSet.toString()+"> {" +
+		query = "INSERT INTO <"+datasetURI+"> {" +
 				"?o ?p2 ?o2" +
 			"} FROM <"+tempGraph+"> WHERE " +
 					"{<"+schemaSet.toString()+"> ?p ?o . ?o ?p2 ?o2}";
@@ -425,7 +426,7 @@ public String loadData(InputStream stream, String diachronicDatasetURI, String f
         vur.exec();
 
 
-        query = "INSERT INTO <"+schemaSet.toString()+"> {" +
+        query = "INSERT INTO <"+datasetURI+"> {" +
 				"?o ?p3 ?o3" +
 			"} FROM <"+tempGraph+"> WHERE " +
 					"{<"+schemaSet.toString()+"> ?p1 [ ?p2 ?o ]. ?o ?p3 ?o3.}";
@@ -435,7 +436,7 @@ public String loadData(InputStream stream, String diachronicDatasetURI, String f
 
         // Previous query fetches component-like definition
         // But some may reference it using patterns like skos:inScheme (see datacube code list)
-        query = "INSERT INTO <"+schemaSet.toString()+"> {" +
+        query = "INSERT INTO <"+datasetURI+"> {" +
                 "?s ?p5 ?o5" +
                 "} FROM <"+tempGraph+"> WHERE " +
                 "{<"+schemaSet.toString()+"> ?p1 [ ?p2 ?o ]. ?o ?p3 ?o3. ?s ?p4 ?o3. ?s ?p5 ?o5}";
