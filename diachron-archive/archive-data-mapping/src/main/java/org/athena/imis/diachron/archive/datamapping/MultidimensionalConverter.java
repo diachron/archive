@@ -96,23 +96,20 @@ public class MultidimensionalConverter {
         Model model = getDefaultModel();
         String schemaSetURI = diachronizeDataCubeSchema(model, fullGraph);
         String recordSetURI = diachronizeDataCubeObservations(model, fullGraph, datasetName);
-        handleDatasetMetadata(model, datasetName, schemaSetURI, recordSetURI);
+        handleDatasetMetadata(model, schemaSetURI, recordSetURI);
         return model;
     }
 
     /**
-     *
-     * @param diachronModel
-     * @param datasetName The unique identifier name of the dataset.
+     *  @param diachronModel
      * @param schemaSetURI URI of the created schema set
      * @param recordSetURI URI of the created record set
      *
      */
-	public void handleDatasetMetadata(Model diachronModel, String datasetName, String schemaSetURI, String recordSetURI){
+	public void handleDatasetMetadata(Model diachronModel, String schemaSetURI, String recordSetURI){
 		
 		VirtGraph graph = StoreConnection.getVirtGraph();
-		
-		DiachronURIFactory uriFactory = new DiachronURIFactory(datasetName, "");
+
 		String diachronicDatasetURI = uriFactory.generateDiachronicDatasetUri().toString();
 		Resource diachronicDataset = diachronModel.createResource(diachronicDatasetURI, DiachronOntology.diachronicDataset);
 		Resource datasetInstance = diachronModel.createResource(uriFactory.generateDatasetUri().toString(), DiachronOntology.dataset);		
