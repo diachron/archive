@@ -81,10 +81,12 @@ public class DatasetVersionControllerTest {
 		String jsonContent = "{\"message\":\"\",\"data\":\"testReply\",\"success\":true}";
 		
 		ArgumentCaptor<InputStream> argCaptorInputStream = ArgumentCaptor.forClass(InputStream.class);
-		ArgumentCaptor<String> argCaptorStr = ArgumentCaptor.forClass(String.class);
-		ArgumentCaptor<String> argCaptorStr1 = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<String> argCaptorDDURIStr = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<String> argCaptorRdfFormat = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<String> argCaptorVersion = ArgumentCaptor.forClass(String.class);
 		
-		when(dataStatementMock.loadData(argCaptorInputStream.capture(), argCaptorStr.capture(), argCaptorStr1.capture()))
+		when(dataStatementMock.loadData(argCaptorInputStream.capture(), 
+				argCaptorDDURIStr.capture(), argCaptorRdfFormat.capture(), argCaptorVersion.capture()))
 				.thenReturn("\"testReply\"");		       
 
 		HashMap<String, String> contentTypeParams = new HashMap<String, String>();
@@ -102,7 +104,7 @@ public class DatasetVersionControllerTest {
         			.andExpect(jsonPath("$.success", is(true)))
         			.andExpect(content().json(jsonContent)).andReturn();
         
-		assertEquals(argCaptorStr.getValue(), diachronicDatasetId);
+		assertEquals(argCaptorDDURIStr.getValue(), diachronicDatasetId);
 		/*
 		byte[] bytesArray = new byte[1000] ; 
 		argCaptorInputStream.getValue().read(bytesArray);
