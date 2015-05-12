@@ -96,7 +96,7 @@ public class DatasetVersionController {
 	        	        	// Process the input stream
 	        	        	if (diachronicDatasetURI != null) {
 	        	        		logger.info("loading DatasetVersion started");
-	        	        		String res = dataStatement.loadData(stream, diachronicDatasetURI, rdfFormat, versionNumber);
+	        	        		String res = dataStatement.loadData(stream, diachronicDatasetURI, rdfFormat, versionNumber);	        	        		
 	        	        		logger.info("loading DatasetVersion finished");
 	        	        		resp.setData(res);
 	        	        		resp.setSuccess(true);

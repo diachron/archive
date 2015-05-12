@@ -311,17 +311,17 @@ public String loadData(InputStream stream, String diachronicDatasetURI, String f
 		/*for(RDFDataset d : newDatasetVersions)
 			System.out.println("xxx " + d.getId());*/
 		DictionaryService dict = StoreFactory.createDictionaryService();
-		
+		Graph dictGraph = StoreConnection.getGraph(RDFDictionary.getDictionaryNamedGraph());
 		if(versionNumber.equals(""))
-			dict.addDatasetMetadata(graph, newDatasetVersions, diachronicDatasetURI);
+			dict.addDatasetMetadata(dictGraph, newDatasetVersions, diachronicDatasetURI);
 		else
-			dict.addDatasetMetadata(graph, newDatasetVersions, diachronicDatasetURI, versionNumber);
+			dict.addDatasetMetadata(dictGraph, newDatasetVersions, diachronicDatasetURI, versionNumber);
 		//This will link the dataset version to its diachronic dataset, if this information exists in the stream.
 				
 		query = "SELECT DISTINCT ?rs ?ds FROM <"+tempGraph+"> WHERE {?ds <"+DiachronOntology.hasRecordSet+"> ?rs }";//. ?rs a <"+DiachronOntology.recordSet+">}";		
 		vqe = QueryExecutionFactory.create (query, model);
 		results = vqe.execSelect();
-		Graph dictGraph = StoreConnection.getGraph(RDFDictionary.getDictionaryNamedGraph());
+		
 		while(results.hasNext()){
 			QuerySolution rs = results.next();
 			RDFNode recordSet = rs.get("rs");

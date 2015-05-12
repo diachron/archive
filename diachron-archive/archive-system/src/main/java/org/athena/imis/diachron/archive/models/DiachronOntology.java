@@ -1,8 +1,11 @@
 package org.athena.imis.diachron.archive.models;
 
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.vocabulary.RDF;
 
 /**
  * 
@@ -88,7 +91,7 @@ public class DiachronOntology {
 	public static final Property generatedAtTime;
 	
 	static {
-		diachronicDataset = ResourceFactory.createResource(diachronResourcePrefix + "DiachronicDataset");
+		diachronicDataset = ResourceFactory.createResource(diachronResourcePrefix + "DiachronicDataset");		
 		dataset = ResourceFactory.createResource(diachronResourcePrefix + "Dataset");
 		record = ResourceFactory.createResource(diachronResourcePrefix + "Record");
 		recordAttribute = ResourceFactory.createResource(diachronResourcePrefix + "RecordAttribute");

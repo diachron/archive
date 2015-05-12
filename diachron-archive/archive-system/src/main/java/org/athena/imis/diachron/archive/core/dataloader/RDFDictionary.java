@@ -259,23 +259,39 @@ public class RDFDictionary implements DictionaryService {
 	}
 	
 	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, String diachronicDatasetURI, String versionNumber){
-				
+			
+		
+		GraphStore gs = GraphStoreFactory.create(graph);
+		gs.addGraph(NodeFactory.createURI(RDFDictionary.getDictionaryNamedGraph()), graph);
 		Calendar cal = GregorianCalendar.getInstance();
 		String timestamp = ResourceFactory.createTypedLiteral(cal).getString();
 		String query = "INSERT DATA { GRAPH <"+RDFDictionary.dictionaryNamedGraph+"> " +
 				"{";
+		UpdateRequest queryObj;
+		UpdateProcessor qexec;
 		for(RDFDataset dataset : list){
-			query += "<"+dataset.getId()+"> <"+DCTerms.created.getURI().toString()+"> \""+timestamp+"\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .";
-			dataset.setMetaProperty(DCTerms.created.getURI().toString(), timestamp);
+			query = "INSERT DATA { GRAPH <"+RDFDictionary.dictionaryNamedGraph+"> {" ;					
+			query += "<"+dataset.getId()+"> <"+DCTerms.created.getURI().toString()+"> \""+timestamp+"\" .";
+			query += " } }";
+			//System.out.println(query);
+			
+			queryObj = UpdateFactory.create(query); 
+			qexec = UpdateExecutionFactory.create(queryObj,gs); 
+			qexec.execute(); 
+			
 			if(!versionNumber.equals("")){
-				
+				query = "INSERT DATA { GRAPH <"+RDFDictionary.dictionaryNamedGraph+"> {" ;
 				query += "<"+dataset.getId()+"> <"+DCTerms.hasVersion.getURI().toString()+"> \""+versionNumber+"\" .";
-				dataset.setMetaProperty(DCTerms.hasVersion.getURI().toString(), versionNumber);
+				query += " } }";
+				queryObj = UpdateFactory.create(query); 
+				qexec = UpdateExecutionFactory.create(queryObj,gs); 
+				qexec.execute(); 				
 			}
 			
 			
 			for(String propertyName : dataset.getMetaPropertiesNames()){
 				String object = (String) dataset.getMetaProperty(propertyName);
+				query = "INSERT DATA { GRAPH <"+RDFDictionary.dictionaryNamedGraph+"> {" ;
 				query += "<"+dataset.getId()+"> <"+propertyName+"> ";
 				try {
 					object = "<"+new URL(object)+">";
@@ -283,14 +299,23 @@ public class RDFDictionary implements DictionaryService {
 			    	object = "\""+object+"\"";
 			    }
 				query += object + " . ";
-			}		
+				query += " } }";
+				queryObj = UpdateFactory.create(query); 
+				qexec = UpdateExecutionFactory.create(queryObj,gs); 
+				qexec.execute();
+			}	
+			dataset.setMetaProperty(DCTerms.created.getURI().toString(), timestamp);
+			if(!versionNumber.equals("")){								
+				dataset.setMetaProperty(DCTerms.hasVersion.getURI().toString(), versionNumber);
+			}
 		}
-		query += " } }";						
+		/*query += " } }";
+		//System.out.println(query);
 		GraphStore gs = GraphStoreFactory.create(graph);
 		gs.addGraph(NodeFactory.createURI(RDFDictionary.getDictionaryNamedGraph()), graph);
 		UpdateRequest queryObj = UpdateFactory.create(query); 
 		UpdateProcessor qexec = UpdateExecutionFactory.create(queryObj,gs); 
-		qexec.execute(); 
+		qexec.execute();*/ 
 		//UpdateAction.parseExecute( query, graph);
 		
 		//VirtuosoUpdateRequest vur = VirtuosoUpdateFactory.create(query, graph);
