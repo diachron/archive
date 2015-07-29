@@ -146,11 +146,13 @@ public class DictionaryCache implements DictionaryService {
 		return datasetInstantiations.get(id);
 	}
 
-	@Override
-	public void addDataset(Graph graph, String diachronicDatasetURI, String datasetId) {
-		persistentStorage.addDataset(graph, diachronicDatasetURI, datasetId);
+	//@Override
+	public void addDataset(Graph graph, String diachronicDatasetURI, String datasetId, boolean fullyMaterialized) {
+				
+		persistentStorage.addDataset(graph, diachronicDatasetURI, datasetId, fullyMaterialized);
 		Dataset ds = new RDFDataset();			
 		ds.setId(datasetId);
+		ds.setFullyMaterialized(fullyMaterialized);
 		datasetInstantiations.put(datasetId, ds);
 		diachronicDatasets.get(diachronicDatasetURI).addDatasetInstatiation(ds);
 	}
@@ -158,6 +160,15 @@ public class DictionaryCache implements DictionaryService {
 	@Override
 	public void addRecordSet(Graph graph, String recordSetURI, String datasetId) {
 		persistentStorage.addRecordSet(graph, recordSetURI, datasetId);
+		/*RecordSet ds = new RDFRecordSet();			
+		ds.setId(recordSetURI);
+		datasetInstantiations.put(datasetId, ds);
+		diachronicDatasets.get(diachronicDatasetURI).addDatasetInstatiation(ds);*/
+	}
+	
+	@Override
+	public void addSchemaSet(Graph graph, String schemaSetURI, String datasetId) {
+		persistentStorage.addSchemaSet(graph, schemaSetURI, datasetId);
 		/*RecordSet ds = new RDFRecordSet();			
 		ds.setId(recordSetURI);
 		datasetInstantiations.put(datasetId, ds);

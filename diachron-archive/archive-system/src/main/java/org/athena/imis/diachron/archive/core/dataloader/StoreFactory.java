@@ -9,6 +9,10 @@ public class StoreFactory {
 		return new VirtLoader();
 	}
 	
+	public static Remover createDataRemover() {
+		return new VirtRemover();
+	}
+	
 	static DictionaryService createPersDictionaryService() {
 		return new RDFDictionary();
 	}

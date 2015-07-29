@@ -80,7 +80,8 @@ public class RDFConverter implements DataConverter {
 		String obsID = obs.toString().substring(obs.toString().lastIndexOf("/")+1);
 		obsID = uriFactory.generateRecordUri(new URI(obsID)).toString();	
 		Resource record = diachronModel.createResource(obsID, DiachronOntology.record);
-		record.addProperty(DiachronOntology.subject, obs.toString());
+		record.addProperty(DiachronOntology.subject, diachronModel.createResource(obs.toString()));
+		System.out.println(diachronModel.createResource(obs.toString()));
 		RDFNode p = rs.get("p");
 		RDFNode o = rs.get("o");
 		String rattID = DigestUtils.md5Hex(p.toString() + o.toString());

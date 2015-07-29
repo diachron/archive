@@ -29,6 +29,8 @@ import com.hp.hpl.jena.update.* ;
 import com.hp.hpl.jena.sparql.modify.request.* ;
 import java.util.ArrayList;
 import com.hp.hpl.jena.sparql.lang.SPARQLParserBase;
+import com.hp.hpl.jena.sparql.core.TriplePath;
+import org.athena.imis.diachron.archive.utils.DiachronQueryUtils;
 
 //public class SPARQLParser11 extends SPARQLParser11Diachron
 public class DiachronSPARQLParser11 extends SPARQLParserBase implements DiachronSPARQLParser11Constants {
@@ -688,7 +690,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       jj_la1[27] = jj_gen;
       ;
     }
-        iriVar = getDiachronQuery().getCleanNode(iriVar);
+        iriVar = DiachronQueryUtils.getCleanNode(iriVar);
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case AT_VERSION:
     case BEFORE:
@@ -736,29 +738,32 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       jj_la1[29] = jj_gen;
       ;
     }
+        //if(list==null)
+        //{
+        //  list = new ArrayList<Node>();
+        //  list.add(NodeFactory.createVariable(DiachronQueryUtils.getNextVariable()));
+        //  getDiachronQuery().addDiachronicDatasetInPattern(iriVar, list, "at") ;
+        //}
     {if (true) return iriVar ;}
     throw new Error("Missing return statement in function");
   }
 
-  final public String DiachronChangesInPattern() throws ParseException {
-                                      Var iriVar; Var v1Var; Var v2Var; String iriString = ""; String v1String = ""; String v2String = ""; ArrayList<String> list = null;
+  final public Node DiachronChangesInPattern() throws ParseException {
+                                     Node iriVar = null; Node v1Var; Node v2Var; ArrayList<Node> list = null;
     jj_consume_token(CHANGES);
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-    case VAR1:
-    case VAR2:
-      iriVar = Var();
-           iriString = "_var_"+ iriVar.toString();
-      break;
     case IRIref:
     case PNAME_NS:
     case PNAME_LN:
-      iriString = iri();
+    case VAR1:
+    case VAR2:
+      iriVar = VarOrIri();
       break;
     default:
       jj_la1[30] = jj_gen;
-      jj_consume_token(-1);
-      throw new ParseException();
+      ;
     }
+        iriVar = DiachronQueryUtils.getCleanNode(iriVar);
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case BEFORE:
     case AFTER:
@@ -766,99 +771,45 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case BEFORE:
         jj_consume_token(BEFORE);
-        switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-        case VAR1:
-        case VAR2:
-          v1Var = Var();
-                                      v1String = "_var_"+ v1Var.toString();
-          break;
-        case IRIref:
-        case PNAME_NS:
-        case PNAME_LN:
-          v1String = iri();
-          break;
-        default:
-          jj_la1[31] = jj_gen;
-          jj_consume_token(-1);
-          throw new ParseException();
-        }
-                    list = new ArrayList<String>();
-                    list.add(v1String);
-                    getDiachronQuery().addDiachronicChangesInPattern(iriString, list, "before") ;
+        v1Var = VarOrIri();
+                    list = new ArrayList<Node>();
+                    list.add(v1Var);
+                    getDiachronQuery().addDiachronicChangesetInPattern(iriVar, list, "before") ;
         break;
       case AFTER:
         jj_consume_token(AFTER);
-        switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-        case VAR1:
-        case VAR2:
-          v1Var = Var();
-                                      v1String = "_var_"+ v1Var.toString();
-          break;
-        case IRIref:
-        case PNAME_NS:
-        case PNAME_LN:
-          v1String = iri();
-          break;
-        default:
-          jj_la1[32] = jj_gen;
-          jj_consume_token(-1);
-          throw new ParseException();
-        }
-                    list = new ArrayList<String>();
-                    list.add(v1String);
-                    getDiachronQuery().addDiachronicChangesInPattern(iriString, list, "after") ;
+        v1Var = VarOrIri();
+                    list = new ArrayList<Node>();
+                    list.add(v1Var);
+                    getDiachronQuery().addDiachronicChangesetInPattern(iriVar, list, "after") ;
         break;
       case BETWEEN:
         jj_consume_token(BETWEEN);
-        switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-        case VAR1:
-        case VAR2:
-          v1Var = Var();
-                                      v1String = "_var_"+ v1Var.toString();
-          break;
-        case IRIref:
-        case PNAME_NS:
-        case PNAME_LN:
-          v1String = iri();
-          break;
-        default:
-          jj_la1[33] = jj_gen;
-          jj_consume_token(-1);
-          throw new ParseException();
-        }
+        v1Var = VarOrIri();
         jj_consume_token(AND);
-        switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-        case VAR1:
-        case VAR2:
-          v2Var = Var();
-                                      v2String = "_var_"+ v2Var.toString();
-          break;
-        case IRIref:
-        case PNAME_NS:
-        case PNAME_LN:
-          v2String = iri();
-          break;
-        default:
-          jj_la1[34] = jj_gen;
-          jj_consume_token(-1);
-          throw new ParseException();
-        }
-                    list = new ArrayList<String>();
-                    list.add(v1String);
-                    list.add(v2String);
-                    getDiachronQuery().addDiachronicChangesInPattern(iriString, list, "between") ;
+        v2Var = VarOrIri();
+                    list = new ArrayList<Node>();
+                    list.add(v1Var);
+                    list.add(v2Var);
+                    getDiachronQuery().addDiachronicChangesetInPattern(iriVar, list, "between") ;
         break;
       default:
-        jj_la1[35] = jj_gen;
+        jj_la1[31] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
       break;
     default:
-      jj_la1[36] = jj_gen;
+      jj_la1[32] = jj_gen;
       ;
     }
-    {if (true) return iriString ;}
+        if(list==null)
+        {
+          list = new ArrayList<Node>();
+          list.add(NodeFactory.createVariable(DiachronQueryUtils.getNextVariable()));
+          getDiachronQuery().addDiachronicChangesetInPattern(iriVar, list, "at") ;
+        }
+    {if (true) return iriVar ;}
     throw new Error("Missing return statement in function");
   }
 
@@ -874,7 +825,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       iriVar = VarOrIri();
       break;
     default:
-      jj_la1[37] = jj_gen;
+      jj_la1[33] = jj_gen;
       ;
     }
     {if (true) return iriVar ;}
@@ -893,7 +844,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       iriVar = VarOrIri();
       break;
     default:
-      jj_la1[38] = jj_gen;
+      jj_la1[34] = jj_gen;
       ;
     }
        {if (true) return iriVar ;}
@@ -906,7 +857,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       GroupClause();
       break;
     default:
-      jj_la1[39] = jj_gen;
+      jj_la1[35] = jj_gen;
       ;
     }
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -914,7 +865,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       HavingClause();
       break;
     default:
-      jj_la1[40] = jj_gen;
+      jj_la1[36] = jj_gen;
       ;
     }
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -922,7 +873,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       OrderClause();
       break;
     default:
-      jj_la1[41] = jj_gen;
+      jj_la1[37] = jj_gen;
       ;
     }
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -931,7 +882,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       LimitOffsetClauses();
       break;
     default:
-      jj_la1[42] = jj_gen;
+      jj_la1[38] = jj_gen;
       ;
     }
   }
@@ -1013,7 +964,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         ;
         break;
       default:
-        jj_la1[43] = jj_gen;
+        jj_la1[39] = jj_gen;
         break label_9;
       }
     }
@@ -1101,7 +1052,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         v = Var();
         break;
       default:
-        jj_la1[44] = jj_gen;
+        jj_la1[40] = jj_gen;
         ;
       }
       jj_consume_token(RPAREN);
@@ -1113,7 +1064,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       getQuery().addGroupBy(v) ;
       break;
     default:
-      jj_la1[45] = jj_gen;
+      jj_la1[41] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -1194,7 +1145,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         ;
         break;
       default:
-        jj_la1[46] = jj_gen;
+        jj_la1[42] = jj_gen;
         break label_10;
       }
     }
@@ -1287,7 +1238,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         ;
         break;
       default:
-        jj_la1[47] = jj_gen;
+        jj_la1[43] = jj_gen;
         break label_11;
       }
     }
@@ -1310,7 +1261,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                  direction = Query.ORDER_DESCENDING ;
         break;
       default:
-        jj_la1[48] = jj_gen;
+        jj_la1[44] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -1456,13 +1407,13 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         v = Var();
         break;
       default:
-        jj_la1[49] = jj_gen;
+        jj_la1[45] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
       break;
     default:
-      jj_la1[50] = jj_gen;
+      jj_la1[46] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -1481,7 +1432,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         OffsetClause();
         break;
       default:
-        jj_la1[51] = jj_gen;
+        jj_la1[47] = jj_gen;
         ;
       }
       break;
@@ -1492,12 +1443,12 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         LimitClause();
         break;
       default:
-        jj_la1[52] = jj_gen;
+        jj_la1[48] = jj_gen;
         ;
       }
       break;
     default:
-      jj_la1[53] = jj_gen;
+      jj_la1[49] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -1527,7 +1478,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       finishValuesClause(t.beginLine, t.beginColumn) ;
       break;
     default:
-      jj_la1[54] = jj_gen;
+      jj_la1[50] = jj_gen;
       ;
     }
   }
@@ -1558,12 +1509,12 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         Update();
         break;
       default:
-        jj_la1[55] = jj_gen;
+        jj_la1[51] = jj_gen;
         ;
       }
       break;
     default:
-      jj_la1[56] = jj_gen;
+      jj_la1[52] = jj_gen;
       ;
     }
   }
@@ -1608,7 +1559,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       DeleteData();
       break;
     default:
-      jj_la1[57] = jj_gen;
+      jj_la1[53] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -1625,7 +1576,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                        silent = true ;
       break;
     default:
-      jj_la1[58] = jj_gen;
+      jj_la1[54] = jj_gen;
       ;
     }
     url = iri();
@@ -1635,7 +1586,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       dest = GraphRef();
       break;
     default:
-      jj_la1[59] = jj_gen;
+      jj_la1[55] = jj_gen;
       ;
     }
       {if (true) return new UpdateLoad(url, dest, silent) ;}
@@ -1651,7 +1602,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                        silent = true ;
       break;
     default:
-      jj_la1[60] = jj_gen;
+      jj_la1[56] = jj_gen;
       ;
     }
     target = GraphRefAll();
@@ -1668,7 +1619,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                       silent = true ;
       break;
     default:
-      jj_la1[61] = jj_gen;
+      jj_la1[57] = jj_gen;
       ;
     }
     target = GraphRefAll();
@@ -1685,7 +1636,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                         silent=true ;
       break;
     default:
-      jj_la1[62] = jj_gen;
+      jj_la1[58] = jj_gen;
       ;
     }
     iri = GraphRef();
@@ -1702,7 +1653,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                     silent=true ;
       break;
     default:
-      jj_la1[63] = jj_gen;
+      jj_la1[59] = jj_gen;
       ;
     }
     src = GraphOrDefault();
@@ -1721,7 +1672,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                      silent=true ;
       break;
     default:
-      jj_la1[64] = jj_gen;
+      jj_la1[60] = jj_gen;
       ;
     }
     src = GraphOrDefault();
@@ -1740,7 +1691,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                      silent=true ;
       break;
     default:
-      jj_la1[65] = jj_gen;
+      jj_la1[61] = jj_gen;
       ;
     }
     src = GraphOrDefault();
@@ -1799,7 +1750,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                          Node n = createNode(iri) ; up.setWithIRI(n) ;
       break;
     default:
-      jj_la1[66] = jj_gen;
+      jj_la1[62] = jj_gen;
       ;
     }
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -1810,7 +1761,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         InsertClause(up);
         break;
       default:
-        jj_la1[67] = jj_gen;
+        jj_la1[63] = jj_gen;
         ;
       }
       break;
@@ -1818,7 +1769,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       InsertClause(up);
       break;
     default:
-      jj_la1[68] = jj_gen;
+      jj_la1[64] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -1829,7 +1780,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         ;
         break;
       default:
-        jj_la1[69] = jj_gen;
+        jj_la1[65] = jj_gen;
         break label_12;
       }
       UsingClause(up);
@@ -1880,7 +1831,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       n = createNode(iri) ; update.addUsingNamed(n) ;
       break;
     default:
-      jj_la1[70] = jj_gen;
+      jj_la1[66] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -1902,14 +1853,14 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         jj_consume_token(GRAPH);
         break;
       default:
-        jj_la1[71] = jj_gen;
+        jj_la1[67] = jj_gen;
         ;
       }
       iri = iri();
        {if (true) return Target.create(createNode(iri)) ;}
       break;
     default:
-      jj_la1[72] = jj_gen;
+      jj_la1[68] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -1944,7 +1895,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
              {if (true) return Target.ALL ;}
       break;
     default:
-      jj_la1[73] = jj_gen;
+      jj_la1[69] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -1994,7 +1945,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       TriplesTemplate(acc);
       break;
     default:
-      jj_la1[74] = jj_gen;
+      jj_la1[70] = jj_gen;
       ;
     }
     label_13:
@@ -2004,7 +1955,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         ;
         break;
       default:
-        jj_la1[75] = jj_gen;
+        jj_la1[71] = jj_gen;
         break label_13;
       }
       QuadsNotTriples(acc);
@@ -2013,7 +1964,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         jj_consume_token(DOT);
         break;
       default:
-        jj_la1[76] = jj_gen;
+        jj_la1[72] = jj_gen;
         ;
       }
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -2045,7 +1996,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         TriplesTemplate(acc);
         break;
       default:
-        jj_la1[77] = jj_gen;
+        jj_la1[73] = jj_gen;
         ;
       }
     }
@@ -2086,7 +2037,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       TriplesTemplate(acc);
       break;
     default:
-      jj_la1[78] = jj_gen;
+      jj_la1[74] = jj_gen;
       ;
     }
     jj_consume_token(RBRACE);
@@ -2127,12 +2078,12 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         TriplesTemplate(acc);
         break;
       default:
-        jj_la1[79] = jj_gen;
+        jj_la1[75] = jj_gen;
         ;
       }
       break;
     default:
-      jj_la1[80] = jj_gen;
+      jj_la1[76] = jj_gen;
       ;
     }
   }
@@ -2150,7 +2101,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       el = new ElementSubQuery(q) ;
       break;
     default:
-      jj_la1[81] = jj_gen;
+      jj_la1[77] = jj_gen;
       el = GroupGraphPatternSub();
     }
     jj_consume_token(RBRACE);
@@ -2192,9 +2143,11 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       el = TriplesBlock(null);
       endTriplesBlock() ;
       elg.addElement(el) ;
+      //System.out.println("First add " + el.toString());
+
       break;
     default:
-      jj_la1[82] = jj_gen;
+      jj_la1[78] = jj_gen;
       ;
     }
     label_14:
@@ -2214,17 +2167,18 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         ;
         break;
       default:
-        jj_la1[83] = jj_gen;
+        jj_la1[79] = jj_gen;
         break label_14;
       }
       el = GraphPatternNotTriples();
-      elg.addElement(el) ;
+      //System.out.println("Second add " + el.toString());
+       elg.addElement(el) ;
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case DOT:
         jj_consume_token(DOT);
         break;
       default:
-        jj_la1[84] = jj_gen;
+        jj_la1[80] = jj_gen;
         ;
       }
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -2257,9 +2211,11 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         el = TriplesBlock(null);
         endTriplesBlock() ;
         elg.addElement(el) ;
+                //System.out.println("Third add " + el.toString());
+
         break;
       default:
-        jj_la1[85] = jj_gen;
+        jj_la1[81] = jj_gen;
         ;
       }
     }
@@ -2304,12 +2260,12 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         TriplesBlock(acc);
         break;
       default:
-        jj_la1[86] = jj_gen;
+        jj_la1[82] = jj_gen;
         ;
       }
       break;
     default:
-      jj_la1[87] = jj_gen;
+      jj_la1[83] = jj_gen;
       ;
     }
       {if (true) return acc ;}
@@ -2354,7 +2310,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       el = DiachronRecordPattern();
       break;
     default:
-      jj_la1[88] = jj_gen;
+      jj_la1[84] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -2372,10 +2328,10 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
   }
 
   final public Element DiachronChangesPattern() throws ParseException {
-                                     Element el ; String datasetIRI ;
+                                     Element el ; Node datasetIRI ;
     datasetIRI = DiachronChangesInPattern();
     el = GroupGraphPattern();
-      {if (true) return getDiachronQuery().createDiachronChangesInPatternElement(datasetIRI, el) ;}
+      {if (true) return getDiachronQuery().createDiachronChangesetInPatternElement(datasetIRI, el) ;}
     throw new Error("Missing return statement in function");
   }
 
@@ -2388,7 +2344,9 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
   }
 
   final public Element GroupRecordPattern(Node recordNode) throws ParseException {
-                                                Element el ; ElementPathBlock epb = null; Node recattNode ;Triple t; Node p; Node o; ArrayList<Node[]> poPairs ;
+                                                Element el ; Element elatt; ElementPathBlock epb = null; ElementPathBlock epbtemp; Node recattNode ;Triple t; Node s = null; Node p; Node o; ArrayList<Node[]> poPairs ;
+          epbtemp = new ElementPathBlock();
+          epb = new ElementPathBlock();
     jj_consume_token(LBRACE);
     label_15:
     while (true) {
@@ -2419,49 +2377,30 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       case LBRACKET:
       case ANON:
         el = TriplesBlock(null);
-      epb = (ElementPathBlock) el;
-      System.out.println(el.toString());
+              epbtemp = (ElementPathBlock) el;
+              //System.out.println(el.toString());
+
+
+                        for(TriplePath triplePath : epbtemp.getPattern().getList())
+                            {
+                                        epb.addTriplePath(triplePath);
+                            }
         break;
       case RECATT:
         recattNode = DiachronRecattInPattern();
-          poPairs = new ArrayList<Node[]>();
+                          poPairs = new ArrayList<Node[]>();
         jj_consume_token(LBRACE);
-        p = VarOrIri();
-        o = VarOrIri();
-        label_16:
-        while (true) {
-          switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-          case SEMICOLON:
-            ;
-            break;
-          default:
-            jj_la1[89] = jj_gen;
-            break label_16;
-          }
-          jj_consume_token(SEMICOLON);
-          p = VarOrIri();
-          o = VarOrIri();
-            poPairs.add(new Node[]{p, o});
-        }
-        switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-        case DOT:
-          jj_consume_token(DOT);
-          break;
-        default:
-          jj_la1[90] = jj_gen;
-          ;
-        }
-            poPairs.add(new Node[]{p, o});
+        elatt = TriplesBlock(null);
+                            epbtemp = (ElementPathBlock) elatt;
         jj_consume_token(RBRACE);
-          //el = new ElementTriplesBlock();
-          for(Node[] po : poPairs)
-          {
-                t = new Triple(recordNode, po[0], po[1]);
-                epb.addTriple(t);
-          }
+        for(TriplePath triplePath : epbtemp.getPattern().getList())
+            {
+                        epb.addTriplePath(triplePath);
+                        getDiachronQuery().addAttribute(triplePath, recattNode);
+            }
         break;
       default:
-        jj_la1[91] = jj_gen;
+        jj_la1[85] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -2495,7 +2434,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         ;
         break;
       default:
-        jj_la1[92] = jj_gen;
+        jj_la1[86] = jj_gen;
         break label_15;
       }
     }
@@ -2530,7 +2469,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
      silent=true;
       break;
     default:
-      jj_la1[93] = jj_gen;
+      jj_la1[87] = jj_gen;
       ;
     }
     n = VarOrIri();
@@ -2574,7 +2513,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       InlineDataFull();
       break;
     default:
-      jj_la1[94] = jj_gen;
+      jj_la1[88] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -2585,7 +2524,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
     v = Var();
     emitDataBlockVariable(v) ;
     t = jj_consume_token(LBRACE);
-    label_17:
+    label_16:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case IRIref:
@@ -2610,8 +2549,8 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         ;
         break;
       default:
-        jj_la1[95] = jj_gen;
-        break label_17;
+        jj_la1[89] = jj_gen;
+        break label_16;
       }
       n = DataBlockValue();
       startDataBlockValueRow(-1, -1) ;
@@ -2629,7 +2568,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       break;
     case LPAREN:
       jj_consume_token(LPAREN);
-      label_18:
+      label_17:
       while (true) {
         switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
         case VAR1:
@@ -2637,8 +2576,8 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
           ;
           break;
         default:
-          jj_la1[96] = jj_gen;
-          break label_18;
+          jj_la1[90] = jj_gen;
+          break label_17;
         }
         v = Var();
                  emitDataBlockVariable(v) ;
@@ -2646,12 +2585,12 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       jj_consume_token(RPAREN);
       break;
     default:
-      jj_la1[97] = jj_gen;
+      jj_la1[91] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
     jj_consume_token(LBRACE);
-    label_19:
+    label_18:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case LPAREN:
@@ -2659,15 +2598,15 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         ;
         break;
       default:
-        jj_la1[98] = jj_gen;
-        break label_19;
+        jj_la1[92] = jj_gen;
+        break label_18;
       }
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case LPAREN:
         t = jj_consume_token(LPAREN);
       beginLine = t.beginLine; beginColumn = t.beginColumn; t = null;
       startDataBlockValueRow(beginLine, beginColumn) ;
-        label_20:
+        label_19:
         while (true) {
           switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
           case IRIref:
@@ -2692,8 +2631,8 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
             ;
             break;
           default:
-            jj_la1[99] = jj_gen;
-            break label_20;
+            jj_la1[93] = jj_gen;
+            break label_19;
           }
           n = DataBlockValue();
           emitDataBlockValue(n, beginLine, beginColumn) ;
@@ -2709,7 +2648,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         finishDataBlockValueRow(beginLine, beginColumn) ;
         break;
       default:
-        jj_la1[100] = jj_gen;
+        jj_la1[94] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -2755,7 +2694,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
             {if (true) return null ;}
       break;
     default:
-      jj_la1[101] = jj_gen;
+      jj_la1[95] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -2783,15 +2722,15 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
   final public Element GroupOrUnionGraphPattern() throws ParseException {
       Element el = null ; ElementUnion el2 = null ;
     el = GroupGraphPattern();
-    label_21:
+    label_20:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case UNION:
         ;
         break;
       default:
-        jj_la1[102] = jj_gen;
-        break label_21;
+        jj_la1[96] = jj_gen;
+        break label_20;
       }
       jj_consume_token(UNION);
       if ( el2 == null )
@@ -2889,7 +2828,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       c = FunctionCall();
       break;
     default:
-      jj_la1[103] = jj_gen;
+      jj_la1[97] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -2924,20 +2863,20 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                                  beginLine, beginColumn) ;
         break;
       default:
-        jj_la1[104] = jj_gen;
+        jj_la1[98] = jj_gen;
         ;
       }
       expr = Expression();
                             args.add(expr) ;
-      label_22:
+      label_21:
       while (true) {
         switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
         case COMMA:
           ;
           break;
         default:
-          jj_la1[105] = jj_gen;
-          break label_22;
+          jj_la1[99] = jj_gen;
+          break label_21;
         }
         jj_consume_token(COMMA);
         expr = Expression();
@@ -2946,7 +2885,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       jj_consume_token(RPAREN);
       break;
     default:
-      jj_la1[106] = jj_gen;
+      jj_la1[100] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -2964,15 +2903,15 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       jj_consume_token(LPAREN);
       expr = Expression();
                           args.add(expr) ;
-      label_23:
+      label_22:
       while (true) {
         switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
         case COMMA:
           ;
           break;
         default:
-          jj_la1[107] = jj_gen;
-          break label_23;
+          jj_la1[101] = jj_gen;
+          break label_22;
         }
         jj_consume_token(COMMA);
         expr = Expression();
@@ -2981,7 +2920,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       jj_consume_token(RPAREN);
       break;
     default:
-      jj_la1[108] = jj_gen;
+      jj_la1[102] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -3024,7 +2963,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       ConstructTriples(acc);
       break;
     default:
-      jj_la1[109] = jj_gen;
+      jj_la1[103] = jj_gen;
       ;
     }
     jj_consume_token(RBRACE);
@@ -3067,12 +3006,12 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         ConstructTriples(acc);
         break;
       default:
-        jj_la1[110] = jj_gen;
+        jj_la1[104] = jj_gen;
         ;
       }
       break;
     default:
-      jj_la1[111] = jj_gen;
+      jj_la1[105] = jj_gen;
       ;
     }
   }
@@ -3116,7 +3055,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
     insert(acc, tempAcc) ;
       break;
     default:
-      jj_la1[112] = jj_gen;
+      jj_la1[106] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -3133,7 +3072,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       PropertyListNotEmpty(s, acc);
       break;
     default:
-      jj_la1[113] = jj_gen;
+      jj_la1[107] = jj_gen;
       ;
     }
   }
@@ -3142,15 +3081,15 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       Node p = null ;
     p = Verb();
     ObjectList(s, p, null, acc);
-    label_24:
+    label_23:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case SEMICOLON:
         ;
         break;
       default:
-        jj_la1[114] = jj_gen;
-        break label_24;
+        jj_la1[108] = jj_gen;
+        break label_23;
       }
       jj_consume_token(SEMICOLON);
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -3164,7 +3103,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         ObjectList(s, p, null, acc);
         break;
       default:
-        jj_la1[115] = jj_gen;
+        jj_la1[109] = jj_gen;
         ;
       }
     }
@@ -3185,7 +3124,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                               p = nRDFtype ;
       break;
     default:
-      jj_la1[116] = jj_gen;
+      jj_la1[110] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -3196,15 +3135,15 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
   final public void ObjectList(Node s, Node p, Path path, TripleCollector acc) throws ParseException {
                                                                    Node o ;
     Object(s, p, path, acc);
-    label_25:
+    label_24:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case COMMA:
         ;
         break;
       default:
-        jj_la1[117] = jj_gen;
-        break label_25;
+        jj_la1[111] = jj_gen;
+        break label_24;
       }
       jj_consume_token(COMMA);
       Object(s, p, path, acc);
@@ -3257,7 +3196,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
     insert(acc, tempAcc) ;
       break;
     default:
-      jj_la1[118] = jj_gen;
+      jj_la1[112] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -3277,7 +3216,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       PropertyListPathNotEmpty(s, acc);
       break;
     default:
-      jj_la1[119] = jj_gen;
+      jj_la1[113] = jj_gen;
       ;
     }
   }
@@ -3299,20 +3238,20 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       p = VerbSimple();
       break;
     default:
-      jj_la1[120] = jj_gen;
+      jj_la1[114] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
     ObjectListPath(s, p, path, acc);
-    label_26:
+    label_25:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case SEMICOLON:
         ;
         break;
       default:
-        jj_la1[121] = jj_gen;
-        break label_26;
+        jj_la1[115] = jj_gen;
+        break label_25;
       }
       jj_consume_token(SEMICOLON);
       path = null ; p = null ;
@@ -3341,14 +3280,14 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
           p = VerbSimple();
           break;
         default:
-          jj_la1[122] = jj_gen;
+          jj_la1[116] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
         ObjectListPath(s, p, path, acc);
         break;
       default:
-        jj_la1[123] = jj_gen;
+        jj_la1[117] = jj_gen;
         ;
       }
     }
@@ -3373,15 +3312,15 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
   final public void ObjectListPath(Node s, Node p, Path path, TripleCollector acc) throws ParseException {
                                                                        Node o ;
     ObjectPath(s, p, path, acc);
-    label_27:
+    label_26:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case COMMA:
         ;
         break;
       default:
-        jj_la1[124] = jj_gen;
-        break label_27;
+        jj_la1[118] = jj_gen;
+        break label_26;
       }
       jj_consume_token(COMMA);
       ObjectPath(s, p, path, acc);
@@ -3408,15 +3347,15 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
   final public Path PathAlternative() throws ParseException {
                            Path p1 , p2 ;
     p1 = PathSequence();
-    label_28:
+    label_27:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case VBAR:
         ;
         break;
       default:
-        jj_la1[125] = jj_gen;
-        break label_28;
+        jj_la1[119] = jj_gen;
+        break label_27;
       }
       jj_consume_token(VBAR);
       p2 = PathSequence();
@@ -3429,15 +3368,15 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
   final public Path PathSequence() throws ParseException {
                         Path p1 , p2 ;
     p1 = PathEltOrInverse();
-    label_29:
+    label_28:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case SLASH:
         ;
         break;
       default:
-        jj_la1[126] = jj_gen;
-        break label_29;
+        jj_la1[120] = jj_gen;
+        break label_28;
       }
       jj_consume_token(SLASH);
       p2 = PathEltOrInverse();
@@ -3458,7 +3397,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       p = PathMod(p);
       break;
     default:
-      jj_la1[127] = jj_gen;
+      jj_la1[121] = jj_gen;
       ;
     }
      {if (true) return p ;}
@@ -3483,7 +3422,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
        p = PathFactory.pathInverse(p) ;
       break;
     default:
-      jj_la1[128] = jj_gen;
+      jj_la1[122] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -3507,7 +3446,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
               {if (true) return PathFactory.pathOneOrMore1(p) ;}
       break;
     default:
-      jj_la1[129] = jj_gen;
+      jj_la1[123] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -3537,7 +3476,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       jj_consume_token(RPAREN);
       break;
     default:
-      jj_la1[130] = jj_gen;
+      jj_la1[124] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -3567,15 +3506,15 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       case CARAT:
         p = PathOneInPropertySet();
                                    pNegSet.add(p) ;
-        label_30:
+        label_29:
         while (true) {
           switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
           case VBAR:
             ;
             break;
           default:
-            jj_la1[131] = jj_gen;
-            break label_30;
+            jj_la1[125] = jj_gen;
+            break label_29;
           }
           jj_consume_token(VBAR);
           p = PathOneInPropertySet();
@@ -3583,13 +3522,13 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         }
         break;
       default:
-        jj_la1[132] = jj_gen;
+        jj_la1[126] = jj_gen;
         ;
       }
       jj_consume_token(RPAREN);
       break;
     default:
-      jj_la1[133] = jj_gen;
+      jj_la1[127] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -3624,13 +3563,13 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                {if (true) return new P_ReverseLink(nRDFtype) ;}
         break;
       default:
-        jj_la1[134] = jj_gen;
+        jj_la1[128] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
       break;
     default:
-      jj_la1[135] = jj_gen;
+      jj_la1[129] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -3659,7 +3598,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                                    {if (true) return n ;}
       break;
     default:
-      jj_la1[136] = jj_gen;
+      jj_la1[130] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -3688,7 +3627,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                                        {if (true) return n ;}
       break;
     default:
-      jj_la1[137] = jj_gen;
+      jj_la1[131] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -3710,7 +3649,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       Node listHead = nRDFnil ; Node lastCell = null ; int mark ; Node n ; Token t ;
     t = jj_consume_token(LPAREN);
     int beginLine = t.beginLine; int beginColumn = t.beginColumn; t = null;
-    label_31:
+    label_30:
     while (true) {
       Node cell = createListNode( beginLine, beginColumn) ;
       if ( listHead == nRDFnil )
@@ -3750,8 +3689,8 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         ;
         break;
       default:
-        jj_la1[138] = jj_gen;
-        break label_31;
+        jj_la1[132] = jj_gen;
+        break label_30;
       }
     }
     jj_consume_token(RPAREN);
@@ -3765,7 +3704,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       Node listHead = nRDFnil ; Node lastCell = null ; int mark ; Node n ; Token t ;
     t = jj_consume_token(LPAREN);
     int beginLine = t.beginLine; int beginColumn = t.beginColumn; t = null;
-    label_32:
+    label_31:
     while (true) {
       Node cell = createListNode( beginLine, beginColumn) ;
       if ( listHead == nRDFnil )
@@ -3805,8 +3744,8 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         ;
         break;
       default:
-        jj_la1[139] = jj_gen;
-        break label_32;
+        jj_la1[133] = jj_gen;
+        break label_31;
       }
     }
     jj_consume_token(RPAREN);
@@ -3852,7 +3791,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                          {if (true) return n ;}
       break;
     default:
-      jj_la1[140] = jj_gen;
+      jj_la1[134] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -3894,7 +3833,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                              {if (true) return n ;}
       break;
     default:
-      jj_la1[141] = jj_gen;
+      jj_la1[135] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -3932,7 +3871,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       n = GraphTerm();
       break;
     default:
-      jj_la1[142] = jj_gen;
+      jj_la1[136] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -3955,7 +3894,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                               n = createNode(iri) ;
       break;
     default:
-      jj_la1[143] = jj_gen;
+      jj_la1[137] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -3973,7 +3912,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       t = jj_consume_token(VAR2);
       break;
     default:
-      jj_la1[144] = jj_gen;
+      jj_la1[138] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -4024,7 +3963,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
           {if (true) return nRDFnil ;}
       break;
     default:
-      jj_la1[145] = jj_gen;
+      jj_la1[139] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -4042,15 +3981,15 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
   final public Expr ConditionalOrExpression() throws ParseException {
                                    Expr expr1, expr2 ;
     expr1 = ConditionalAndExpression();
-    label_33:
+    label_32:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case SC_OR:
         ;
         break;
       default:
-        jj_la1[146] = jj_gen;
-        break label_33;
+        jj_la1[140] = jj_gen;
+        break label_32;
       }
       jj_consume_token(SC_OR);
       expr2 = ConditionalAndExpression();
@@ -4063,15 +4002,15 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
   final public Expr ConditionalAndExpression() throws ParseException {
                                     Expr expr1, expr2 ;
     expr1 = ValueLogical();
-    label_34:
+    label_33:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case SC_AND:
         ;
         break;
       default:
-        jj_la1[147] = jj_gen;
-        break label_34;
+        jj_la1[141] = jj_gen;
+        break label_33;
       }
       jj_consume_token(SC_AND);
       expr2 = ValueLogical();
@@ -4143,13 +4082,13 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         expr1 = new E_NotOneOf(expr1, a) ;
         break;
       default:
-        jj_la1[148] = jj_gen;
+        jj_la1[142] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
       break;
     default:
-      jj_la1[149] = jj_gen;
+      jj_la1[143] = jj_gen;
       ;
     }
       {if (true) return expr1 ;}
@@ -4166,7 +4105,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
   final public Expr AdditiveExpression() throws ParseException {
                               Expr expr1, expr2, expr3 ; boolean addition ; Node n ;
     expr1 = MultiplicativeExpression();
-    label_35:
+    label_34:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case INTEGER_POSITIVE:
@@ -4180,8 +4119,8 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         ;
         break;
       default:
-        jj_la1[150] = jj_gen;
-        break label_35;
+        jj_la1[144] = jj_gen;
+        break label_34;
       }
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case PLUS:
@@ -4218,11 +4157,11 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
          addition = false ;
           break;
         default:
-          jj_la1[151] = jj_gen;
+          jj_la1[145] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
-        label_36:
+        label_35:
         while (true) {
           switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
           case STAR:
@@ -4230,8 +4169,8 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
             ;
             break;
           default:
-            jj_la1[152] = jj_gen;
-            break label_36;
+            jj_la1[146] = jj_gen;
+            break label_35;
           }
           switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
           case STAR:
@@ -4245,7 +4184,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                                             expr2 = new E_Divide(expr2, expr3) ;
             break;
           default:
-            jj_la1[153] = jj_gen;
+            jj_la1[147] = jj_gen;
             jj_consume_token(-1);
             throw new ParseException();
           }
@@ -4256,7 +4195,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
          expr1 = new E_Subtract(expr1, expr2) ;
         break;
       default:
-        jj_la1[154] = jj_gen;
+        jj_la1[148] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -4268,7 +4207,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
   final public Expr MultiplicativeExpression() throws ParseException {
                                     Expr expr1, expr2 ;
     expr1 = UnaryExpression();
-    label_37:
+    label_36:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case STAR:
@@ -4276,8 +4215,8 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         ;
         break;
       default:
-        jj_la1[155] = jj_gen;
-        break label_37;
+        jj_la1[149] = jj_gen;
+        break label_36;
       }
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case STAR:
@@ -4291,7 +4230,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       expr1 = new E_Divide(expr1, expr2) ;
         break;
       default:
-        jj_la1[156] = jj_gen;
+        jj_la1[150] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -4404,7 +4343,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                                  {if (true) return expr ;}
       break;
     default:
-      jj_la1[157] = jj_gen;
+      jj_la1[151] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -4518,7 +4457,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                  {if (true) return asExpr(gn) ;}
       break;
     default:
-      jj_la1[158] = jj_gen;
+      jj_la1[152] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -4613,7 +4552,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
               {if (true) return new E_BNode() ;}
         break;
       default:
-        jj_la1[159] = jj_gen;
+        jj_la1[153] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -4935,7 +4874,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                              {if (true) return expr ;}
       break;
     default:
-      jj_la1[160] = jj_gen;
+      jj_la1[154] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -4955,7 +4894,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       flagsExpr = Expression();
       break;
     default:
-      jj_la1[161] = jj_gen;
+      jj_la1[155] = jj_gen;
       ;
     }
     jj_consume_token(RPAREN);
@@ -4976,7 +4915,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       expr3 = Expression();
       break;
     default:
-      jj_la1[162] = jj_gen;
+      jj_la1[156] = jj_gen;
       ;
     }
     jj_consume_token(RPAREN);
@@ -4999,7 +4938,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       expr4 = Expression();
       break;
     default:
-      jj_la1[163] = jj_gen;
+      jj_la1[157] = jj_gen;
       ;
     }
     jj_consume_token(RPAREN);
@@ -5041,7 +4980,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                    distinct = true ;
         break;
       default:
-        jj_la1[164] = jj_gen;
+        jj_la1[158] = jj_gen;
         ;
       }
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -5136,7 +5075,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         expr = Expression();
         break;
       default:
-        jj_la1[165] = jj_gen;
+        jj_la1[159] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -5153,7 +5092,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                                       distinct = true ;
         break;
       default:
-        jj_la1[166] = jj_gen;
+        jj_la1[160] = jj_gen;
         ;
       }
       expr = Expression();
@@ -5169,7 +5108,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                                       distinct = true ;
         break;
       default:
-        jj_la1[167] = jj_gen;
+        jj_la1[161] = jj_gen;
         ;
       }
       expr = Expression();
@@ -5185,7 +5124,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                                       distinct = true ;
         break;
       default:
-        jj_la1[168] = jj_gen;
+        jj_la1[162] = jj_gen;
         ;
       }
       expr = Expression();
@@ -5201,7 +5140,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                                       distinct = true ;
         break;
       default:
-        jj_la1[169] = jj_gen;
+        jj_la1[163] = jj_gen;
         ;
       }
       expr = Expression();
@@ -5217,7 +5156,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                                          distinct = true ;
         break;
       default:
-        jj_la1[170] = jj_gen;
+        jj_la1[164] = jj_gen;
         ;
       }
       expr = Expression();
@@ -5233,7 +5172,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                       distinct = true ;
         break;
       default:
-        jj_la1[171] = jj_gen;
+        jj_la1[165] = jj_gen;
         ;
       }
       expr = Expression();
@@ -5246,14 +5185,14 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         sep = String();
         break;
       default:
-        jj_la1[172] = jj_gen;
+        jj_la1[166] = jj_gen;
         ;
       }
       jj_consume_token(RPAREN);
       agg = AggregatorFactory.createGroupConcat(distinct, expr, sep, ordered) ;
       break;
     default:
-      jj_la1[173] = jj_gen;
+      jj_la1[167] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -5279,7 +5218,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       a = ArgList();
       break;
     default:
-      jj_la1[174] = jj_gen;
+      jj_la1[168] = jj_gen;
       ;
     }
     if ( a == null )
@@ -5305,13 +5244,13 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
         uri = iri();
         break;
       default:
-        jj_la1[175] = jj_gen;
+        jj_la1[169] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
       break;
     default:
-      jj_la1[176] = jj_gen;
+      jj_la1[170] = jj_gen;
       ;
     }
       {if (true) return createLiteral(lex, lang, uri) ;}
@@ -5337,7 +5276,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       n = NumericLiteralNegative();
       break;
     default:
-      jj_la1[177] = jj_gen;
+      jj_la1[171] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -5361,7 +5300,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                  {if (true) return createLiteralDouble(t.image) ;}
       break;
     default:
-      jj_la1[178] = jj_gen;
+      jj_la1[172] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -5384,7 +5323,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                           {if (true) return createLiteralDouble(t.image) ;}
       break;
     default:
-      jj_la1[179] = jj_gen;
+      jj_la1[173] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -5407,7 +5346,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                           {if (true) return createLiteralDouble(t.image) ;}
       break;
     default:
-      jj_la1[180] = jj_gen;
+      jj_la1[174] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -5425,7 +5364,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
             {if (true) return XSD_FALSE ;}
       break;
     default:
-      jj_la1[181] = jj_gen;
+      jj_la1[175] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -5452,7 +5391,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                                  lex = stripQuotes3(t.image) ;
       break;
     default:
-      jj_la1[182] = jj_gen;
+      jj_la1[176] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -5474,7 +5413,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                          {if (true) return iri ;}
       break;
     default:
-      jj_la1[183] = jj_gen;
+      jj_la1[177] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -5493,7 +5432,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       {if (true) return resolvePName(t.image, t.beginLine, t.beginColumn) ;}
       break;
     default:
-      jj_la1[184] = jj_gen;
+      jj_la1[178] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -5513,7 +5452,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
                {if (true) return createBNode(t.beginLine, t.beginColumn) ;}
       break;
     default:
-      jj_la1[185] = jj_gen;
+      jj_la1[179] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -5536,7 +5475,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
   public Token jj_nt;
   private int jj_ntk;
   private int jj_gen;
-  final private int[] jj_la1 = new int[186];
+  final private int[] jj_la1 = new int[180];
   static private int[] jj_la1_0;
   static private int[] jj_la1_1;
   static private int[] jj_la1_2;
@@ -5554,25 +5493,25 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       jj_la1_init_6();
    }
    private static void jj_la1_init_0() {
-      jj_la1_0 = new int[] {0x7380000,0x7200000,0x0,0x180000,0x180000,0x0,0xc00000,0xc00000,0x6000,0x6000,0x6000,0x0,0x0,0x7e00,0x0,0x6e00,0x6e00,0x0,0x0,0x0,0xe00,0x0,0x0,0x0,0x0,0x0,0x0,0x6e00,0x0,0x0,0x6e00,0x6e00,0x6e00,0x6e00,0x6e00,0x0,0x0,0x6e00,0x6e00,0x0,0x0,0x20000000,0x18000000,0x6e00,0x0,0x6e00,0xe00,0x6e00,0x0,0x6e00,0x6e00,0x10000000,0x8000000,0x18000000,0x80000000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0xe00,0x0,0xe00,0x0,0x7e00,0x0,0x0,0x7e00,0x7e00,0x7e00,0x0,0x200000,0x7e00,0x80000000,0x0,0x7e00,0x7e00,0x0,0x80000000,0x0,0x0,0x7e00,0x7e00,0x0,0x6000,0xe00,0x6000,0x0,0x0,0xe00,0x0,0xe00,0x0,0xe00,0x400000,0x0,0x0,0x0,0x0,0x7e00,0x7e00,0x0,0x7e00,0x46e00,0x0,0x46e00,0x46e00,0x0,0x7e00,0x46e00,0x46e00,0x0,0x46e00,0x46e00,0x0,0x0,0x0,0x0,0x40e00,0x0,0x40e00,0x0,0x40e00,0x40e00,0x40e00,0x40e00,0x0,0x0,0x7e00,0x7e00,0x7e00,0x7e00,0x7e00,0x6e00,0x6000,0x1e00,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x6e00,0x6e00,0x0,0x0,0x0,0x0,0x0,0x400000,0x6e00,0x400000,0x400000,0x400000,0x400000,0x400000,0x400000,0x0,0x0,0x0,0x8000,0x8000,0x0,0x0,0x0,0x0,0x0,0x0,0xe00,0xc00,0x1000,};
+      jj_la1_0 = new int[] {0x7380000,0x7200000,0x0,0x180000,0x180000,0x0,0xc00000,0xc00000,0x6000,0x6000,0x6000,0x0,0x0,0x7e00,0x0,0x6e00,0x6e00,0x0,0x0,0x0,0xe00,0x0,0x0,0x0,0x0,0x0,0x0,0x6e00,0x0,0x0,0x6e00,0x0,0x0,0x6e00,0x6e00,0x0,0x0,0x20000000,0x18000000,0x6e00,0x0,0x6e00,0xe00,0x6e00,0x0,0x6e00,0x6e00,0x10000000,0x8000000,0x18000000,0x80000000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0xe00,0x0,0xe00,0x0,0x7e00,0x0,0x0,0x7e00,0x7e00,0x7e00,0x0,0x200000,0x7e00,0x80000000,0x0,0x7e00,0x7e00,0x0,0x80000000,0x7e00,0x7e00,0x0,0x6000,0xe00,0x6000,0x0,0x0,0xe00,0x0,0xe00,0x0,0xe00,0x400000,0x0,0x0,0x0,0x0,0x7e00,0x7e00,0x0,0x7e00,0x46e00,0x0,0x46e00,0x46e00,0x0,0x7e00,0x46e00,0x46e00,0x0,0x46e00,0x46e00,0x0,0x0,0x0,0x0,0x40e00,0x0,0x40e00,0x0,0x40e00,0x40e00,0x40e00,0x40e00,0x0,0x0,0x7e00,0x7e00,0x7e00,0x7e00,0x7e00,0x6e00,0x6000,0x1e00,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x6e00,0x6e00,0x0,0x0,0x0,0x0,0x0,0x400000,0x6e00,0x400000,0x400000,0x400000,0x400000,0x400000,0x400000,0x0,0x0,0x0,0x8000,0x8000,0x0,0x0,0x0,0x0,0x0,0x0,0xe00,0xc00,0x1000,};
    }
    private static void jj_la1_init_1() {
-      jj_la1_1 = new int[] {0x20,0x0,0x1000,0x0,0x0,0x10,0x0,0x0,0x0,0x0,0x0,0x10,0x10,0x0,0x8010,0x0,0x0,0x10,0x8000,0x10,0xc8,0xc0,0xf00,0xf00,0xf00,0xf00,0x8000,0x0,0xf00,0xf00,0x0,0x0,0x0,0x0,0x0,0xe00,0xe00,0x0,0x0,0x4000000,0x8000000,0x0,0x0,0xc1800000,0x2000000,0xc1800000,0xc1800000,0xc1800006,0x6,0xc1800000,0xc1800006,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x8,0x20000,0x20000,0x20008,0x0,0x20000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x7620c0,0x0,0x0,0x0,0x0,0x7620c0,0x0,0x0,0x4000,0x4000,0x0,0x0,0x1,0x0,0x0,0x0,0x1,0x0,0x1,0x80000,0xc1800000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x1000000,0x1000000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0xc1800000,0xc1800000,0x0,0xc1800000,0x0,0x0,0x0,0x0,0xc1800000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0xc0000000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,};
+      jj_la1_1 = new int[] {0x20,0x0,0x1000,0x0,0x0,0x10,0x0,0x0,0x0,0x0,0x0,0x10,0x10,0x0,0x8010,0x0,0x0,0x10,0x8000,0x10,0xc8,0xc0,0xf00,0xf00,0xf00,0xf00,0x8000,0x0,0xf00,0xf00,0x0,0xe00,0xe00,0x0,0x0,0x4000000,0x8000000,0x0,0x0,0xc1800000,0x2000000,0xc1800000,0xc1800000,0xc1800006,0x6,0xc1800000,0xc1800006,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x8,0x20000,0x20000,0x20008,0x0,0x20000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x7620c0,0x0,0x0,0x0,0x0,0x7620c0,0x4000,0x4000,0x0,0x0,0x1,0x0,0x0,0x0,0x1,0x0,0x1,0x80000,0xc1800000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x1000000,0x1000000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0xc1800000,0xc1800000,0x0,0xc1800000,0x0,0x0,0x0,0x0,0xc1800000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0xc0000000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,};
    }
    private static void jj_la1_init_2() {
-      jj_la1_2 = new int[] {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0xfffffdb7,0x0,0xfffffdb7,0xfffffdb7,0xfffffdb7,0x0,0xfffffdb7,0xfffffdb7,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x40,0x0,0x0,0x0,0x0,0x40,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0xfffffdb7,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x200,0x200,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0xfffffdb7,0xfffffdb7,0x0,0xfffffdb7,0x0,0x0,0x0,0x0,0xfffffdb7,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x37,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,};
+      jj_la1_2 = new int[] {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0xfffffdb7,0x0,0xfffffdb7,0xfffffdb7,0xfffffdb7,0x0,0xfffffdb7,0xfffffdb7,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x40,0x0,0x0,0x0,0x0,0x40,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0xfffffdb7,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x200,0x200,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0xfffffdb7,0xfffffdb7,0x0,0xfffffdb7,0x0,0x0,0x0,0x0,0xfffffdb7,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x37,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,};
    }
    private static void jj_la1_init_3() {
-      jj_la1_3 = new int[] {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x60000000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x1dffffff,0x0,0x1dffffff,0x1dffffff,0x1dffffff,0x0,0x1dffffff,0x1dffffff,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x60000000,0x0,0x0,0x60000000,0x60000000,0x60000000,0x0,0x0,0x60000000,0x0,0x0,0x60000000,0x60000000,0x0,0x0,0x0,0x0,0x60000000,0x60000000,0x0,0x0,0x60000000,0x0,0x0,0x0,0x60000000,0x0,0x60000000,0x0,0x1dffffff,0x0,0x0,0x0,0x0,0x0,0x60000000,0x60000000,0x0,0x60000000,0x0,0x0,0x0,0x0,0x0,0x60000000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x60000000,0x60000000,0x60000000,0x60000000,0x60000000,0x0,0x0,0x60000000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x7dffffff,0x7dffffff,0x0,0x1dffffff,0x0,0x0,0x0,0x0,0x7dffffff,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x60000000,0x0,0x0,0x0,0x0,};
+      jj_la1_3 = new int[] {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x60000000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x1dffffff,0x0,0x1dffffff,0x1dffffff,0x1dffffff,0x0,0x1dffffff,0x1dffffff,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x60000000,0x0,0x0,0x60000000,0x60000000,0x60000000,0x0,0x0,0x60000000,0x0,0x0,0x60000000,0x60000000,0x0,0x0,0x60000000,0x60000000,0x0,0x0,0x60000000,0x0,0x0,0x0,0x60000000,0x0,0x60000000,0x0,0x1dffffff,0x0,0x0,0x0,0x0,0x0,0x60000000,0x60000000,0x0,0x60000000,0x0,0x0,0x0,0x0,0x0,0x60000000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x60000000,0x60000000,0x60000000,0x60000000,0x60000000,0x0,0x0,0x60000000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x7dffffff,0x7dffffff,0x0,0x1dffffff,0x0,0x0,0x0,0x0,0x7dffffff,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x60000000,0x0,0x0,0x0,0x0,};
    }
    private static void jj_la1_init_4() {
-      jj_la1_4 = new int[] {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x3fe00000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x427ff,0x427ff,0x1000,0x4000,0x1000,0x1000,0x1000,0x1000,0x1000,0x1000,0x40000,0x1,0x3,0x80000,0x0,0x0,0x10000,0x30000,0x3fe00000,0x0,0x0,0x3fe00000,0x3fe00000,0x3fe00000,0x0,0x0,0x3fe00000,0x0,0x0,0x3fe00000,0x3fe00000,0x0,0x0,0x0,0x0,0x3fe00000,0x3fe00000,0x1000,0x0,0x3fe00000,0x0,0x0,0x0,0x3fe00000,0x0,0x3fe00000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x3fe00000,0x3fe00000,0x0,0x3fe00000,0x0,0x0,0x0,0x0,0x0,0x3fe00000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x3fe00000,0x3fe00000,0x3fe00000,0x3fe00000,0x3fe00000,0x0,0x0,0x3fe00000,0x0,0x0,0x0,0x0,0x3f000000,0x3f000000,0x0,0x0,0x3f000000,0x0,0x0,0x3fe00000,0x3fe00000,0x0,0x0,0x0,0x0,0x0,0x0,0x3fe00000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x3fe00000,0xe00000,0x7000000,0x38000000,0x0,0x0,0x0,0x0,0x0,};
+      jj_la1_4 = new int[] {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x3fe00000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x427ff,0x427ff,0x1000,0x4000,0x1000,0x1000,0x1000,0x1000,0x1000,0x1000,0x40000,0x1,0x3,0x80000,0x0,0x0,0x10000,0x30000,0x3fe00000,0x0,0x0,0x3fe00000,0x3fe00000,0x3fe00000,0x0,0x0,0x3fe00000,0x0,0x0,0x3fe00000,0x3fe00000,0x0,0x0,0x3fe00000,0x3fe00000,0x1000,0x0,0x3fe00000,0x0,0x0,0x0,0x3fe00000,0x0,0x3fe00000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x3fe00000,0x3fe00000,0x0,0x3fe00000,0x0,0x0,0x0,0x0,0x0,0x3fe00000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x3fe00000,0x3fe00000,0x3fe00000,0x3fe00000,0x3fe00000,0x0,0x0,0x3fe00000,0x0,0x0,0x0,0x0,0x3f000000,0x3f000000,0x0,0x0,0x3f000000,0x0,0x0,0x3fe00000,0x3fe00000,0x0,0x0,0x0,0x0,0x0,0x0,0x3fe00000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x3fe00000,0xe00000,0x7000000,0x38000000,0x0,0x0,0x0,0x0,0x0,};
    }
    private static void jj_la1_init_5() {
-      jj_la1_5 = new int[] {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x40,0x40,0x40000040,0x0,0x0,0x297c,0x200,0x0,0x40000000,0x0,0x200,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x40,0x0,0x40,0x40,0x40,0x0,0x40,0x40,0x0,0x0,0x0,0x0,0x4000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x297c,0x0,0x10000,0x297c,0x297c,0x297c,0x10000,0x0,0x297c,0x200,0x10000,0x297c,0x297c,0x10000,0x200,0x4000,0x10000,0x297c,0x297c,0x0,0x140,0x3c,0x0,0x140,0x140,0x3c,0x140,0x3c,0x0,0x40,0x0,0x8000,0x140,0x8000,0x140,0x297c,0x297c,0x10000,0x297c,0x0,0x4000,0x0,0x0,0x8000,0x297c,0x800040,0x800040,0x4000,0x800040,0x800040,0x8000,0x0,0x80000000,0x50000000,0x800040,0x50000000,0x800040,0x0,0x0,0x40,0x0,0x0,0x840,0x840,0x297c,0x297c,0x297c,0x297c,0x213c,0x0,0x0,0x213c,0x4000000,0x8000000,0x7e0000,0x7e0000,0x30000000,0x0,0xc0000000,0xc0000000,0x30000000,0xc0000000,0xc0000000,0x3080007c,0x7c,0x140,0x0,0x8000,0x8000,0x8000,0x0,0x7080007c,0x0,0x0,0x0,0x0,0x0,0x0,0x4000,0x0,0x140,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x3c,0x0,0x0,0x2000,};
+      jj_la1_5 = new int[] {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x40,0x40,0x40000040,0x0,0x0,0x297c,0x200,0x0,0x40000000,0x0,0x200,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x40,0x0,0x40,0x40,0x40,0x0,0x40,0x40,0x0,0x0,0x0,0x0,0x4000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x297c,0x0,0x10000,0x297c,0x297c,0x297c,0x10000,0x0,0x297c,0x200,0x10000,0x297c,0x297c,0x10000,0x200,0x297c,0x297c,0x0,0x140,0x3c,0x0,0x140,0x140,0x3c,0x140,0x3c,0x0,0x40,0x0,0x8000,0x140,0x8000,0x140,0x297c,0x297c,0x10000,0x297c,0x0,0x4000,0x0,0x0,0x8000,0x297c,0x800040,0x800040,0x4000,0x800040,0x800040,0x8000,0x0,0x80000000,0x50000000,0x800040,0x50000000,0x800040,0x0,0x0,0x40,0x0,0x0,0x840,0x840,0x297c,0x297c,0x297c,0x297c,0x213c,0x0,0x0,0x213c,0x4000000,0x8000000,0x7e0000,0x7e0000,0x30000000,0x0,0xc0000000,0xc0000000,0x30000000,0xc0000000,0xc0000000,0x3080007c,0x7c,0x140,0x0,0x8000,0x8000,0x8000,0x0,0x7080007c,0x0,0x0,0x0,0x0,0x0,0x0,0x4000,0x0,0x140,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x3c,0x0,0x0,0x2000,};
    }
    private static void jj_la1_init_6() {
-      jj_la1_6 = new int[] {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x8,0x8,0x0,0x8,0x8,0x0,0x4,0x0,0x40,0x8,0x40,0x0,0x4,0x8,0x8,0x0,0x8,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x1,0x1,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,};
+      jj_la1_6 = new int[] {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x8,0x8,0x0,0x8,0x8,0x0,0x4,0x0,0x40,0x8,0x40,0x0,0x4,0x8,0x8,0x0,0x8,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x1,0x1,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,};
    }
 
   /** Constructor with InputStream. */
@@ -5586,7 +5525,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 186; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 180; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -5600,7 +5539,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 186; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 180; i++) jj_la1[i] = -1;
   }
 
   /** Constructor. */
@@ -5610,7 +5549,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 186; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 180; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -5620,7 +5559,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 186; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 180; i++) jj_la1[i] = -1;
   }
 
   /** Constructor with generated Token Manager. */
@@ -5629,7 +5568,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 186; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 180; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -5638,7 +5577,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 186; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 180; i++) jj_la1[i] = -1;
   }
 
   private Token jj_consume_token(int kind) throws ParseException {
@@ -5694,7 +5633,7 @@ public class DiachronSPARQLParser11 extends SPARQLParserBase implements Diachron
       la1tokens[jj_kind] = true;
       jj_kind = -1;
     }
-    for (int i = 0; i < 186; i++) {
+    for (int i = 0; i < 180; i++) {
       if (jj_la1[i] == jj_gen) {
         for (int j = 0; j < 32; j++) {
           if ((jj_la1_0[i] & (1<<j)) != 0) {

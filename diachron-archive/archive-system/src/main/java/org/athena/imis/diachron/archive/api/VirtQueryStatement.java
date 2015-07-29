@@ -30,22 +30,42 @@ class VirtQueryStatement implements QueryStatement {
 	public ArchiveResultSet executeQuery(Query query) {
 		
 		ArchiveResultSet ars = new ArchiveResultSet();		
-	    //VirtGraph graph =  StoreConnection.getVirtGraph();			
-		VirtGraph graph =  (VirtGraph) StoreConnection.getGraph(RDFDictionary.getDictionaryNamedGraph());
-	    String queryType = query.getQueryType();
+		
+		//VirtGraph graph =  (VirtGraph) StoreConnection.getGraph(RDFDictionary.getDictionaryNamedGraph());
+		
+		VirtGraph graph =  (VirtGraph) StoreConnection.getVirtGraph();//
+		
+		graph.setReadFromAllGraphs(true);
+	    
+		String queryType = query.getQueryType();
+		
 		if(queryType.equals("SELECT")){	
+		
 			// DiachronQuery is extending com.hp.hpl.jena.query.Query
+			
 			DiachronQuery dq = new DiachronQuery();
+			
 			SPARQLParser parser = new DiachronParserSPARQL11();
-
+		
 			dq = (DiachronQuery) parser.parse(dq, query.getQueryText());
-			String serializedQuery = dq.serialize();
+			
+			String serializedQuery = dq.serialize().replaceAll("\\. \\.", "\\. ");
+			
 			System.out.println(serializedQuery);
+			
 			VirtuosoQueryExecution vqe = VirtuosoQueryExecutionFactory.create (serializedQuery, graph);
-		    ResultSet results = vqe.execSelect();		    
+		    
+			ResultSet results = vqe.execSelect();
+		    //System.out.println(results.getRowNumber());
+			
 			ars.setJenaResultSet(results);
+			
+			//asynchronousCleanUp(dq);
+			
 			vqe.close();
+			
 			graph.close();
+			
 			return ars;
 		}
 		else if (queryType.equals("CONSTRUCT")){			
@@ -60,6 +80,18 @@ class VirtQueryStatement implements QueryStatement {
 			graph.close();
 			return null;
 		}
+		
+	}
+	
+	public void asynchronousCleanUp(DiachronQuery dq){
+		
+		final DiachronQuery finaldq = dq; 
+		
+		new Thread(new Runnable() {
+		    public void run() {
+		        finaldq.cleanUp();
+		    }
+		}).start();
 		
 	}
 

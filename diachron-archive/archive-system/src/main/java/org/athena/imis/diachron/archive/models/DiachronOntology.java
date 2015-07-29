@@ -5,6 +5,7 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.vocabulary.DCTerms;
 import com.hp.hpl.jena.vocabulary.RDF;
 
 /**
@@ -64,6 +65,7 @@ public class DiachronOntology {
 	public static final Property hasRecord;
 	public static final Property hasRecordAttribute;
 	public static final Property hasRecordSet;
+	public static final Property hasTempRecordSet;
 	public static final Property hasRelationalColumn;
 	public static final Property hasResourceSet;
 	public static final Property hasSchemaObject;
@@ -79,6 +81,10 @@ public class DiachronOntology {
 	public static final Property newVersion;
 	public static final Property paramValue;
 	public static final Property hasFactTable;
+	public static final Property isFullyMaterialized;
+	public static final Property addedGraph;
+	public static final Property deletedGraph;
+	public static final Property creationTime;
 	
 	//SPARQL results
 	public static final Property resultVariable;
@@ -89,6 +95,7 @@ public class DiachronOntology {
 	
 	//PROV
 	public static final Property generatedAtTime;
+	public static final Property hasChangeSet;
 	
 	static {
 		diachronicDataset = ResourceFactory.createResource(diachronResourcePrefix + "DiachronicDataset");		
@@ -131,6 +138,8 @@ public class DiachronOntology {
 		hasRecord = ResourceFactory.createProperty(diachronResourcePrefix + "hasRecord");
 		hasRecordAttribute = ResourceFactory.createProperty(diachronResourcePrefix + "hasRecordAttribute");
 		hasRecordSet = ResourceFactory.createProperty(diachronResourcePrefix + "hasRecordSet");
+		hasChangeSet = ResourceFactory.createProperty(diachronResourcePrefix + "hasChangeSet");
+		hasTempRecordSet = ResourceFactory.createProperty(diachronResourcePrefix + "hasTempRecordSet");
 		hasRelationalColumn = ResourceFactory.createProperty(diachronResourcePrefix + "hasRelationalColumn");
 		hasResourceSet = ResourceFactory.createProperty(diachronResourcePrefix + "hasResourceSet");
 		hasSchemaObject = ResourceFactory.createProperty(diachronResourcePrefix + "hasSchemaObject");
@@ -151,9 +160,13 @@ public class DiachronOntology {
 		binding = ResourceFactory.createProperty(sparqlResultsNamespace+"binding");
 		variable = ResourceFactory.createProperty(sparqlResultsNamespace+"variable");
 		value = ResourceFactory.createProperty(sparqlResultsNamespace+"value");
+		creationTime = DCTerms.created; 
 		
 		generatedAtTime = ResourceFactory.createProperty(provNamespace+"generatedAtTime");
 		hasFactTable = ResourceFactory.createProperty(provNamespace+"hasFactTable");
+		isFullyMaterialized = ResourceFactory.createProperty(diachronResourcePrefix+"isFullyMaterialized");
+		addedGraph = ResourceFactory.createProperty(diachronResourcePrefix+"addedGraph"); 
+		deletedGraph = ResourceFactory.createProperty(diachronResourcePrefix+"deletedGraph"); 
 	}
 	
 }

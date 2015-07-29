@@ -85,4 +85,11 @@ public interface DataStatement {
 	 * @throws Exception when the Dataset Instatiation URI doesn't exist in the archive
 	 */
 	public void loadDatasetMetadata(InputStream stream, String datasetURI) throws Exception;
+	
+	/**
+	 * Deletes a dataset instantiation.
+	 * @param datasetURI The URI of the dataset instantiation to be removed from the archive.
+	 * @throws Exception
+	 */
+	public void removeDataset(String datasetURI) throws Exception;
 }

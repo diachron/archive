@@ -20,12 +20,12 @@ public class TestConversionFile {
 	public static void main(String[] args) {
 		
 		//String dir = "C:/Users/Marios/Documents/Projects/DIACHRON/EBI/v6/efo-last-15-owl/toConvert/";
-		String dir = "C:/Users/Marios/Desktop/";
+		String dir = args[0];
 		File[] files = new File(dir).listFiles();
 		for(File file : files){
 			
 			System.out.println("Converting file " + file.getName());
-			if(!file.getName().equals("tzotzolis.rdf")) continue;
+			
 			File inputFile = new File(dir+file.getName());
 			FileInputStream fis = null;
 			File outputFile = new File(dir+"d_diachron_"+file.getName()+".rdf");

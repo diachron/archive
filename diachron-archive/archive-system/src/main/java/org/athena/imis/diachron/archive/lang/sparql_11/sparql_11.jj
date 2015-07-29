@@ -62,6 +62,8 @@ import com.hp.hpl.jena.update.* ;
 import com.hp.hpl.jena.sparql.modify.request.* ;
 import java.util.ArrayList;
 import com.hp.hpl.jena.sparql.lang.SPARQLParserBase;
+import com.hp.hpl.jena.sparql.core.TriplePath;
+import org.athena.imis.diachron.archive.utils.DiachronQueryUtils;
 
 //public class SPARQLParser11 extends SPARQLParser11Diachron
 public class DiachronSPARQLParser11 extends SPARQLParserBase
@@ -445,7 +447,7 @@ void WhereClause() : { Element el ; }
    { startWherePattern() ; }
      ( el = GroupGraphPattern() {
 		 if(getDiachronQuery().isDiachronQuery())
-		{
+		{		    
        		getDiachronQuery().setDiachronQueryBody((ElementGroup) el) ;
        	}
        	else
@@ -463,7 +465,7 @@ Node DiachronSourceInPattern() : { Node iriVar = null; Node v1Var; Node v2Var; A
         iriVar = VarOrIri()                    
       )?
       {
-        iriVar = getDiachronQuery().getCleanNode(iriVar);
+        iriVar = DiachronQueryUtils.getCleanNode(iriVar);
       }
   (
 	    [
@@ -522,92 +524,80 @@ Node DiachronSourceInPattern() : { Node iriVar = null; Node v1Var; Node v2Var; A
 		)
 	  ]
   )
-  { return iriVar ; }
+  {
+	//if(list==null)	//{
+	//  list = new ArrayList<Node>();	//  list.add(NodeFactory.createVariable(DiachronQueryUtils.getNextVariable()));
+	//  getDiachronQuery().addDiachronicDatasetInPattern(iriVar, list, "at") ;
+	//}
+    return iriVar ;
+
+    }
  }
 
-String DiachronChangesInPattern() : { Var iriVar; Var v1Var; Var v2Var; String iriString = ""; String v1String = ""; String v2String = ""; ArrayList<String> list = null;}
+Node DiachronChangesInPattern() : {  Node iriVar = null; Node v1Var; Node v2Var; ArrayList<Node> list = null;}
 {
  	<CHANGES>
-      (
-        (
-        iriVar = Var()
-         {
-           iriString = "_var_"+ iriVar.toString();
-         }
-      )
-
-      |
-
-      (
-        iriString = iri() 
-//		{
-//			iriString = NodeFactory.createURI(iriString);
-//		}
-      )
-    )
+      (        
+        iriVar = VarOrIri()                    
+      )?
+      {
+        iriVar = DiachronQueryUtils.getCleanNode(iriVar);
+      }
   (
-	    [
-   	     
+	    [   	     
 	(	  
    	      <BEFORE> 
 	  	 (
-	  	    ( v1Var = Var() { v1String = "_var_"+ v1Var.toString();} )
-	  	    |
-	  	    ( v1String = iri()
-	  	    //{ v1String = NodeFactory.createURI(v1String); }
-	  	    )
+	  	    v1Var = VarOrIri()	  	    
 	  	  )
 		  {
-		    list = new ArrayList<String>();
-		    list.add(v1String);
-		    getDiachronQuery().addDiachronicChangesInPattern(iriString, list, "before") ;
+		    list = new ArrayList<Node>();
+		    list.add(v1Var);
+		    getDiachronQuery().addDiachronicChangesetInPattern(iriVar, list, "before") ;
 		  }
 		)
 		|
 	(	  
    	      <AFTER> 
 	  	  (
-	  	    ( v1Var = Var() { v1String = "_var_"+ v1Var.toString();} )
-	  	    |
-	  	    ( v1String = iri()
-	  	    //{ v1String = NodeFactory.createURI(v1String); }
-	  	    )
+	  	     v1Var = VarOrIri()	  	    	  	    
 	  	  )
 		  {
-		    list = new ArrayList<String>();
-		    list.add(v1String);
-		    getDiachronQuery().addDiachronicChangesInPattern(iriString, list, "after") ;
+		    list = new ArrayList<Node>();
+		    list.add(v1Var);
+		    getDiachronQuery().addDiachronicChangesetInPattern(iriVar, list, "after") ;
 		  }
 		)
 		| 
 	(	  
    	      <BETWEEN> 
 	  	   (
-	  	    ( v1Var = Var() { v1String = "_var_"+ v1Var.toString();} )
-	  	    |
-	  	    ( v1String = iri()
-	  	    //{ v1String = NodeFactory.createURI(v1String); }
-	  	    )
+	  	    v1Var = VarOrIri()  	  	    	  	  	  	   
 	  	  )
 	  	  <AND>
-	  	   (
-	  	    ( v2Var = Var() { v2String = "_var_"+ v2Var.toString();} )
-	  	    |
-	  	    ( v2String = iri()
-	  	    //{ v2String = NodeFactory.createURI(v2String); }
-	  	    )
+	  	  (
+	  	    v2Var = VarOrIri()  	  	    	  	  	  	   
 	  	  )
 	  	 
 		  {
-		    list = new ArrayList<String>();
-		    list.add(v1String);
-		    list.add(v2String);
-		    getDiachronQuery().addDiachronicChangesInPattern(iriString, list, "between") ;
+		    list = new ArrayList<Node>();
+		    list.add(v1Var);
+		    list.add(v2Var);
+		    getDiachronQuery().addDiachronicChangesetInPattern(iriVar, list, "between") ;
 		  }
 		)
 	  ]
   )
-  { return iriString ; }
+  {
+	if(list==null)
+	{
+	  list = new ArrayList<Node>();
+	  list.add(NodeFactory.createVariable(DiachronQueryUtils.getNextVariable()));
+	  getDiachronQuery().addDiachronicChangesetInPattern(iriVar, list, "at") ;
+	}
+    return iriVar ;
+
+    }
  }
 Node DiachronRecordInPattern() : { Node iriVar = null; String iriString = ""; }
 {
@@ -946,9 +936,9 @@ Element GroupGraphPattern() : { Element el = null ; Token t ; }
     SubSelect()
     {
       Query q = endSubSelect(beginLine, beginColumn) ;
-      el = new ElementSubQuery(q) ;
+      el = new ElementSubQuery(q) ;      
     }
-  | el = GroupGraphPatternSub()
+  | el = GroupGraphPatternSub()  
   )
   <RBRACE>
     { return el ; }
@@ -964,17 +954,23 @@ Element GroupGraphPatternSub() : { Element el = null ; }
     { startTriplesBlock() ; }
     el = TriplesBlock(null)
     { endTriplesBlock() ;
-      elg.addElement(el) ; }
+      elg.addElement(el) ;
+      //System.out.println("First add " + el.toString());
+      }
   )?
   (
     el = GraphPatternNotTriples()
-    { elg.addElement(el) ; }
+    {
+      //System.out.println("Second add " + el.toString());
+       elg.addElement(el) ; }
     (<DOT>)?
     (
       { startTriplesBlock() ; }
       el = TriplesBlock(null)
       { endTriplesBlock() ;
-        elg.addElement(el) ; }
+        elg.addElement(el) ;
+		//System.out.println("Third add " + el.toString());
+         }
     )?
   )*
       { endGroup(elg) ; }
@@ -1025,11 +1021,11 @@ Element DiachronDatasetPattern() : { Element el ; Node datasetIRI ; }
     el = GroupGraphPattern()
     { return getDiachronQuery().createDiachronDatasetInPatternElement(datasetIRI, el) ; }
 }
-Element DiachronChangesPattern() : { Element el ; String datasetIRI ; }
+Element DiachronChangesPattern() : { Element el ; Node datasetIRI ; }
 {
     datasetIRI = DiachronChangesInPattern()
     el = GroupGraphPattern()
-    { return getDiachronQuery().createDiachronChangesInPatternElement(datasetIRI, el) ; }
+    { return getDiachronQuery().createDiachronChangesetInPatternElement(datasetIRI, el) ; }
 }
 
 Element DiachronRecordPattern() : { Element el ; Node recordIRI ; }
@@ -1037,62 +1033,57 @@ Element DiachronRecordPattern() : { Element el ; Node recordIRI ; }
     recordIRI = DiachronRecordInPattern()
     el = GroupRecordPattern(recordIRI)
     
-    //el = GroupGraphPattern()
-//    (      
-//      el = GroupGraphPattern()
-//    )
     { return getDiachronQuery().createDiachronRecordInPatternElement(recordIRI, el) ; }
 }
 
-Element GroupRecordPattern(Node recordNode) : { Element el ; ElementPathBlock epb = null; Node recattNode ;Triple t; Node p; Node o; ArrayList<Node[]> poPairs ;}
+Element GroupRecordPattern(Node recordNode) : { Element el ; Element elatt; ElementPathBlock epb = null; ElementPathBlock epbtemp; Node recattNode ;Triple t; Node s = null; Node p; Node o; ArrayList<Node[]> poPairs ;}
 {
-
+	{
+	  epbtemp = new ElementPathBlock();
+	  epb = new ElementPathBlock();	}
     <LBRACE>
     (
       
-    (
-      el = TriplesBlock(null)
-    {
-      epb = (ElementPathBlock) el;
-      System.out.println(el.toString());
-    }
-    )
-  | 
-    (
-      
-	recattNode = DiachronRecattInPattern()
-	{
+	    (
+	      el = TriplesBlock(null)
+	    {
+	      epbtemp = (ElementPathBlock) el;
+	      //System.out.println(el.toString());
+	      
 	  
-	  poPairs = new ArrayList<Node[]>();	  
-	}
-	<LBRACE>	
-	  
-	(
-	  p = VarOrIri()
-	  o = VarOrIri()
-	(
-	    <SEMICOLON>
-	  p = VarOrIri()
-	  o = VarOrIri()
-	  {
-	    poPairs.add(new Node[]{p, o});
-	  }
-	)*	
+			for(TriplePath triplePath : epbtemp.getPattern().getList())
+			    {
+			   		epb.addTriplePath(triplePath);			   		 
+			    }
 	 
-	  [ <DOT> ]
-	   {
-	    poPairs.add(new Node[]{p, o});
-	  }
-	)
-	<RBRACE>
-	{
-	  //el = new ElementTriplesBlock();
-	  for(Node[] po : poPairs)
-	  {
-		t = new Triple(recordNode, po[0], po[1]);
-		epb.addTriple(t);
-	  }	  
-	}
+	    }
+	    )
+	  |
+
+	
+  		(  		  
+	    (
+	      
+			recattNode = DiachronRecattInPattern()
+			{
+			  
+			  poPairs = new ArrayList<Node[]>();	  
+			}
+			<LBRACE>
+			(				elatt = TriplesBlock(null)	 	 	
+			  {
+			    epbtemp = (ElementPathBlock) elatt; 	    	   
+			  }
+			)
+			<RBRACE>
+		)
+	{	  
+	for(TriplePath triplePath : epbtemp.getPattern().getList())
+	    {
+	   		epb.addTriplePath(triplePath);
+	   		getDiachronQuery().addAttribute(triplePath, recattNode);  
+	    }
+	 }
 	)
 	)+
 	<RBRACE>

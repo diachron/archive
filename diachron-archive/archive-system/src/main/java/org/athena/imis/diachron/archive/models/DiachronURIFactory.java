@@ -23,10 +23,20 @@ public class DiachronURIFactory {
         String recordId = URIUtils.generateHashEncodedID(subject.toString(), datasetName);//, version);
         return URI.create(DiachronOntology.diachronResourcePrefix+ "record/" + datasetName + /*"/" + version + */"/" + recordId );
     }
+    
+    public String generateRecordUriString(String subject) {
+        String recordId = URIUtils.generateHashEncodedID(subject.toString(), datasetName);//, version);
+        return DiachronOntology.diachronResourcePrefix+ "record/" + datasetName + "/" + recordId ;
+    }
 
     public URI generateRecordAttributeUri(URI subject, URI predicate, URI object) {
         String attributeId = URIUtils.generateHashEncodedID(subject.toString(), predicate.toString(), object.toString());//, version);
         return URI.create(DiachronOntology.diachronResourcePrefix + "attribute/" + datasetName + /*"/" + version + */"/" + attributeId );
+    }
+    
+    public String generateRecordAttributeUriString(String subject, String predicate, String object) {
+        String attributeId = URIUtils.generateHashEncodedID(subject.toString(), predicate.toString(), object.toString());//, version);
+        return DiachronOntology.diachronResourcePrefix + "attribute/" + datasetName + "/" + attributeId ;
     }
 
     public URI generateRecordAttributeUri(URI subject, URI predicate, String object) {

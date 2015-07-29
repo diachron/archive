@@ -1,6 +1,7 @@
 package org.athena.imis.diachron.archive.models;
 
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -8,7 +9,16 @@ import java.util.Set;
  *
  */
 public class RDFDataset extends AbstractDiachronEntity implements Dataset  {
+	
 	private RecordSet recSet;
+	private String changeSetOld;
+	private String changeSetNew;
+	private boolean fullyMaterialized;
+	private String lastFullyMaterialized;
+	private List<String> changeSets;
+	private String addedGraphId;
+	private String deletedGraphId;
+	private DiachronicDataset diachronicDataset;
 	//private List<String[]> metadataList;
 
 	private Hashtable<String, Object> metaProperties = new Hashtable<String, Object>();
@@ -74,6 +84,100 @@ public class RDFDataset extends AbstractDiachronEntity implements Dataset  {
 		return this.metadataList;
 	}
 */
+
+	@Override
+	public boolean isFullyMaterialized() {
+		
+		return fullyMaterialized;
+	}
+
+	@Override
+	public void setFullyMaterialized(boolean fullyMaterialized) {		
+		
+		this.fullyMaterialized = fullyMaterialized;
+		
+	}
+	
+	@Override
+	public void setLastFullyMaterialized(String uri){
+		lastFullyMaterialized = uri;
+	}
+	
+	@Override
+	public String getLastFullyMaterialized(){
+		return lastFullyMaterialized;
+	}
+
+	@Override
+	public List<String> getListOfChangesets() {
+		
+		return changeSets;
+	}
+
+	@Override
+	public void setListOfChangesets(List<String> changeSets) {
+		
+		this.changeSets = changeSets;
+		
+	}
+	
+	@Override
+	public void setDeltaGraphs(String addedGraphId, String deletedGraphId){
+		
+		this.addedGraphId = addedGraphId;
+		this.deletedGraphId = deletedGraphId;
+		
+	}
+
+	@Override
+	public String getAddedGraphId() {
+		
+		return this.addedGraphId;
+		
+	}
+
+	@Override
+	public String getDeletedGraphId() {
+		
+		return this.deletedGraphId;
+	}
+	
+	@Override
+	public void setChangeSetOld(String cs){
+		
+		this.changeSetOld = cs;
+		
+	}
+	
+	@Override
+	public void setChangeSetNew(String cs){
+		
+		this.changeSetNew = cs;
+		
+	}
+	
+	@Override
+	public String getChangeSetOld(){
+		return this.changeSetOld;
+	}
+	
+	@Override
+	public String getChangeSetNew(){
+		return this.changeSetNew;
+	}
+
+	@Override
+	public DiachronicDataset getDiachronicDataset() {
+		
+		return this.diachronicDataset;
+	}
+
+	@Override
+	public void setDiachronicDataset(DiachronicDataset diachronicDataset) {
+		
+		this.diachronicDataset = diachronicDataset;
+		
+	}
 
 	
 }

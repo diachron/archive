@@ -29,6 +29,8 @@ import com.hp.hpl.jena.update.* ;
 import com.hp.hpl.jena.sparql.modify.request.* ;
 import java.util.ArrayList;
 import com.hp.hpl.jena.sparql.lang.SPARQLParserBase;
+import com.hp.hpl.jena.sparql.core.TriplePath;
+import org.athena.imis.diachron.archive.utils.DiachronQueryUtils;
 
 /** Token Manager. */
 public class DiachronSPARQLParser11TokenManager implements DiachronSPARQLParser11Constants
