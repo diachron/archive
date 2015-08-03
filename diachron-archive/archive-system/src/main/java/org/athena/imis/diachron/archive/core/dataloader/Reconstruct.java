@@ -22,16 +22,26 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
+/**
+ * This class implements the methods to reconstruct the added and deleted triples inferred from a specified change set.
+ * @author Marios Meimaris
+ *
+ */
 public class Reconstruct {
 
 	
 	private Model added;
-	private Model deleted;
-	//private Model full;
+	private Model deleted;	
 	String changeSetURI;
 	String fmModelURI;
 	DiachronicDataset requestedDataset;
 	
+	/**
+	 * The class constructor.  
+	 * @param changeSetURI The change set URI to be reconstruced.
+	 * @param diachronic The diachronic dataset of the change set.
+	 * @throws ReconstructException
+	 */
 	public Reconstruct(String changeSetURI, DiachronicDataset diachronic) throws ReconstructException { 
 						
 		this.changeSetURI = changeSetURI;
@@ -48,7 +58,9 @@ public class Reconstruct {
 		
 	}
 		
-	
+	/**
+	 * Populates the added and deleted models based on the specified change set.
+	 */
 	private void populateModels(){
 		
 		String query = " SELECT ?s ?o1 ?o2 ?o3 ?type "
@@ -94,21 +106,36 @@ public class Reconstruct {
 		
 	}
 	
+	/**
+	 * Returns the model that represents the added triples of the change set.
+	 * @return A jena model with the added triples.
+	 */
 	public Model getAddedModel(){
 		return added;
 	}
 	
+	/**
+	 * Returns the model that represents the deleted triples of the change set.
+	 * @return A jena model with the deleted triples.
+	 */
 	public Model getDeletedModel(){
 		return deleted;
 	}	
 		
-	
+	/**
+	 * Serializes the added model to an output stream.
+	 * @param out
+	 */
 	public void writeAddedModel(OutputStream out){
 				
 			added.write(out);
 			
 	}
 	
+	/**
+	 * Serializes the deleted model to an output stream.
+	 * @param out
+	 */
 	public void writeDeletedModel(OutputStream out){
 		
 		deleted.write(out);
@@ -116,6 +143,12 @@ public class Reconstruct {
 	}
 	
 	
+	/**
+	 * Generates DIACHRON records from RDF triples.
+	 * @param triple A de-reified RDF triple.
+	 * @param diachronModel A jena model to add the triple.
+	 * @throws Exception
+	 */
 	public void generateRecord(Triple triple, Model diachronModel) throws Exception{
 						
 		DiachronURIFactory uriFactory = new DiachronURIFactory("efo", "");

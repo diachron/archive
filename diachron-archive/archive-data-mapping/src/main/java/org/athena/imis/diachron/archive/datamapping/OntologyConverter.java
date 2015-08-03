@@ -46,6 +46,12 @@ import com.hp.hpl.jena.rdf.model.impl.ResourceImpl;
 import com.hp.hpl.jena.rdf.model.impl.StatementImpl;
 import com.hp.hpl.jena.vocabulary.RDF;
 
+
+/**
+ * This class implements a converter from ontological source models to the DIACHRON model. Properties can be filtered.
+ * @author Marios Meimaris
+ *
+ */
 public class OntologyConverter implements DataConverter {
 	private OWLOntologyManager manager;
 	private Dataset dataset;
@@ -54,6 +60,13 @@ public class OntologyConverter implements DataConverter {
 	private static final Logger logger = LoggerFactory
 			.getLogger(OntologyConverter.class);
 
+	/**
+	 * Converts a source model from the input stream, using a dataset label and a collection of property filters.
+	 * @param input The input model to be converted.
+	 * @param output The output stream where the converted model will be serialized.
+	 * @param datasetName The label of the dataset to be used in the created URI. 
+	 * @param filter A collection of property URIs to be filtered out from the conversion process.
+	 */
 	public void convert(InputStream input, OutputStream output, String datasetName, Collection<URI> filter) {
 
 		String version = (new Date()).getTime() + "";
@@ -63,6 +76,12 @@ public class OntologyConverter implements DataConverter {
 
 	}
 	
+	/**
+	 * Converts a source model from the input stream, using a dataset label.
+	 * @param input The input model to be converted.
+	 * @param output The output stream where the converted model will be serialized.
+	 * @param datasetName The label of the dataset to be used in the created URI. 	 
+	 */
 	public void convert(InputStream input, OutputStream output,  String datasetName) {
 
 		String version = (new Date()).getTime() + "";
@@ -73,6 +92,10 @@ public class OntologyConverter implements DataConverter {
 
 	}
 
+	/**
+	 * Returns a jena model with the converted dataset.
+	 * @return A jena Model object containing the converted dataset along with its metadata.
+	 */
 	public Model getJenaModelFromDataset() {
 		Model model = ModelFactory.createDefaultModel();
 
@@ -161,6 +184,13 @@ public class OntologyConverter implements DataConverter {
 		return model;
 	}
 
+	/**
+	 * Covnerts the dataset found in the input to java objects from the DIACHRON models package.
+	 * @param input The input stream containing the source dataset.
+	 * @param datasetName The label of the dataset.
+	 * @param version A version number under a custom numbering scheme defined by the user.
+	 * @param predicateFilters A collection of property URIs to be filtered out from the conversion process.
+	 */
 	private void convert(InputStream input, String datasetName, String version,
 			Collection<URI> predicateFilters) {
 
@@ -276,21 +306,5 @@ public class OntologyConverter implements DataConverter {
 		}
 	}
 	
-	public static void main(String args[]) {
-
-		Collection<URI> filter = new HashSet<URI>();
-		filter.add(OWLRDFVocabulary.RDFS_LABEL.getIRI().toURI());
-		filter.add(URI
-				.create("http://www.ebi.ac.uk/efo/reason_for_obsolescence"));
-		filter.add(URI.create("http://www.ebi.ac.uk/efo/definition"));
-		filter.add(URI.create("http://www.ebi.ac.uk/efo/alternative_term"));
-
-		InputStream input = null; //open the efo file here 
-		OntologyConverter converter = new OntologyConverter();
-		converter.convert(input, System.out, "efo", filter);
-		// System.out.println(dataset.getId());
-		
-
-	}
-
+	
 }

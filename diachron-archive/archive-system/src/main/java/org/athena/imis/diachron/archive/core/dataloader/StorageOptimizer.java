@@ -11,6 +11,11 @@ import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 
+/**
+ * Selects the best storage policy for an incoming dataset. It is invoked by the Loader class.
+ * @author Marios Meimaris
+ *
+ */
 public class StorageOptimizer {
 	
 	/*public StorageOptimizer(String diachronicDatasetId) {
@@ -32,7 +37,9 @@ public class StorageOptimizer {
 		analyze();
 	}
 	
-	
+	/**
+	 * Extracts core statistics and profiling for the dataset.
+	 */
 	public void analyze() {
 		
 		numberOfStatements = getSize();
@@ -55,6 +62,9 @@ public class StorageOptimizer {
 		return "";
 	}
 	
+	/**
+	 * Computes the score and decides for full storage (1) or change-based storage (0).
+	 */
 	public void applyStrategy() {
 		
 		if(sizeScore<10) strategy = 1;
@@ -62,12 +72,20 @@ public class StorageOptimizer {
 		
 	}
 	
+	/**
+	 * Returns the computed strategy.
+	 * @return The computed strategy as an integer (0: change-based, 1: full storage)
+	 */
 	public int getStrategy(){
 		
 		return strategy;
 		
 	}
 	
+	/**
+	 * Computes score based on dataset profile.
+	 * @return A double that represents the score.
+	 */
 	public double computeSizeScore(){
 		
 		double score = -1.0;
@@ -184,19 +202,38 @@ public class StorageOptimizer {
 	}
 	
 	
-	
+	/**
+	 * Returns the number of distinct subjects in the temp graph. 
+	 * 
+	 * @return An int representation of the number of distinct subjects in the de-reified triples.
+	 */
 	public int getNumberOfSubjects(){
 		return numberOfRecords;
 	}
 	
+	/**
+	 * Returns the number of distinct predicates in the temp graph. 
+	 * 
+	 * @return An int representation of the number of distinct predicates in the de-reified triples.
+	 */
 	public int getNumberOfPredicates(){
 		return numberOfPredicates;
 	}
 	
+	/**
+	 * Returns the number of distinct objects in the temp graph. 
+	 * 
+	 * @return An int representation of the number of distinct objects in the de-reified triples.
+	 */
 	public int getNumberOfObjects(){
 		return numberOfObjects;
 	}
 	
+	/**
+	 * Returns the number of distinct record attrbutes (predicate-object pairs) in the temp graph. 
+	 * 
+	 * @return An int representation of the number of distinct record attributes in the de-reified triples.
+	 */
 	public int getNumberOfRecordAttributes(){
 		return numberOfRecordAttributes;
 	}

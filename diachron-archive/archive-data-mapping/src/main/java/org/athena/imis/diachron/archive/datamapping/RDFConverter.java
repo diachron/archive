@@ -26,18 +26,28 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 
+/**
+ * This class implements a generic RDF converter, used to convert an incoming RDF dataset (schema-agnostic) to the DIACHRON
+ * model. 
+ * @author Marios Meimaris
+ *
+ */
 public class RDFConverter implements DataConverter {
 
 	private static final Logger logger = LoggerFactory.getLogger(MultidimensionalConverter.class);
 	//private DiachronicDataset diachronicDataset;
 	private DiachronURIFactory uriFactory;
 	
-	public void convert(InputStream input, OutputStream out) {
-		// TODO Auto-generated method stub
-
-	}
-
 	
+	public void convert(InputStream input, OutputStream out) {}
+
+	/**
+	 * Converts an incoming RDF dataset from an input stream to the DIACHRON model.
+	 * @param input The dataset to be converted.
+	 * @param out	The method's output, containing the converted dataset.
+	 * @param datasetName The label of the dataset.
+	 * @param ext The extension of the RDF serialization
+	 */
 	public void convert(InputStream input, OutputStream out, String datasetName, String ext) {
 		// TODO Auto-generated method stub
 		StoreConnection.init();

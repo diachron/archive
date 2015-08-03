@@ -3,6 +3,11 @@ package org.athena.imis.diachron.archive.core.dataloader;
 import org.athena.imis.diachron.archive.models.Dataset;
 import org.athena.imis.diachron.archive.models.DiachronicDataset;
 
+/**
+ * Interface for classes that implement dataset deletion and removal from the archive.
+ * @author Marios Meimaris
+ *
+ */
 public interface Remover {
 	
 	/**

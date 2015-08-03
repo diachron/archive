@@ -1,5 +1,11 @@
 package org.athena.imis.diachron.archive.models;
 
+
+/**
+ * Interface for DIACHRON record attributes
+ * @author Marios Meimaris
+ *
+ */
 public interface RecordAttribute extends DiachronEntity  {
 	public String getProperty();
 	public void setProperty(String property);

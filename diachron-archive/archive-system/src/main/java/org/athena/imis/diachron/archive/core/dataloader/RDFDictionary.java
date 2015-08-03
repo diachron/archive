@@ -285,6 +285,11 @@ public class RDFDictionary implements DictionaryService {
 		return metaProperties;	
 	}
 	
+	/**
+	 * Returns the metadata associated with the specified dataset version.
+	 * @param datasetId The dataset URI.
+	 * @return	A Hashtable of predicate-object pairs.
+	 */
 	private Hashtable<String, Object>  getDatasetMetadata(String datasetId) {
 		QueryStatement query = StatementFactory.createQueryStatement();
 		Query q = new Query();
@@ -339,6 +344,13 @@ public class RDFDictionary implements DictionaryService {
 		return null;	
 	}
 
+	/**
+	 * Adds a new dataset version to the peristent storage of the archive.
+	 * @param graph The connection to the archive.
+	 * @param diachronicDatasetURI The diachronic dataset to be updated.
+	 * @param datasetURI The URI of the new dataset version.
+	 * @param fullyMaterialized A boolean indicator of whether the dataset should be stored fully (true) or just the change set (false).
+	 */
 	@Override
 	public void addDataset(Graph graph, String diachronicDatasetURI, String datasetURI, boolean fullyMaterialized) {
 		Calendar cal = GregorianCalendar.getInstance();
@@ -358,6 +370,12 @@ public class RDFDictionary implements DictionaryService {
 		
 	}
 	
+	/**
+	 * Adds a new record set to the persistent storage of the archive.
+	 * @param graph The connection to the archive.
+	 * @param recordSetURI The URI of the record set to be added.
+	 * @param datasetId The URI of the dataset where the new record set belongs.
+	 */
 	@Override
 	public void addRecordSet(Graph graph, String recordSetURI, String datasetId) {
 		//TODO refactor to remove the Graph input param
@@ -370,6 +388,12 @@ public class RDFDictionary implements DictionaryService {
 		qexec.execute(); 
 	}
 	
+	/**
+	 * Adds a new schema set to the persistent storage of the archive.
+	 * @param graph The connection to the archive.
+	 * @param schemaSetURI The URI of the schema set to be added.
+	 * @param datasetId The URI of the dataset where the new schema set belongs.
+	 */
 	@Override
 	public void addSchemaSet(Graph graph, String schemaSetURI, String datasetId) {
 		//TODO refactor to remove the Graph input param
@@ -382,6 +406,13 @@ public class RDFDictionary implements DictionaryService {
 		qexec.execute(); 
 	}
 	
+	/**
+	 * Adds the dictionary metadata for a list of dataset versions of a specified diachronic dataset.
+	 * @param graph The connection to the archive.
+	 * @param list A list of dataset versions to be associated with the diachronic dataset.
+	 * @param diachronicDatasetURI The URI of the diachronic dataset.
+	 * @param versionNumber An optional version number to be associated with the dataset versions.
+	 */
 	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, String diachronicDatasetURI, String versionNumber){
 			
 		
@@ -432,20 +463,16 @@ public class RDFDictionary implements DictionaryService {
 				dataset.setMetaProperty(DCTerms.hasVersion.getURI().toString(), versionNumber);
 			}
 		}
-		/*query += " } }";
-		//System.out.println(query);
-		GraphStore gs = GraphStoreFactory.create(graph);
-		gs.addGraph(NodeFactory.createURI(RDFDictionary.getDictionaryNamedGraph()), graph);
-		UpdateRequest queryObj = UpdateFactory.create(query); 
-		UpdateProcessor qexec = UpdateExecutionFactory.create(queryObj,gs); 
-		qexec.execute();*/ 
-		//UpdateAction.parseExecute( query, graph);
 		
-		//VirtuosoUpdateRequest vur = VirtuosoUpdateFactory.create(query, graph);
-		//vur.exec();
 		
 	}
 	
+	/**
+	 * Adds the dictionary metadata for a list of dataset versions of a specified diachronic dataset.
+	 * @param graph The connection to the archive.
+	 * @param list A list of dataset versions to be associated with the diachronic dataset.
+	 * @param diachronicDatasetURI The URI of the diachronic dataset.	
+	 */
 	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, String diachronicDatasetURI){
 		
 		Calendar cal = GregorianCalendar.getInstance();
@@ -473,10 +500,7 @@ public class RDFDictionary implements DictionaryService {
 		UpdateRequest queryObj = UpdateFactory.create(query); 
 		UpdateProcessor qexec = UpdateExecutionFactory.create(queryObj,gs); 
 		qexec.execute(); 
-		//UpdateAction.parseExecute( query, graph);
-		
-		//VirtuosoUpdateRequest vur = VirtuosoUpdateFactory.create(query, graph);
-		//vur.exec();
+	
 		
 	}
 	

@@ -13,6 +13,9 @@ public class VirtRemover implements Remover {
 
 	static DictionaryService dict = StoreFactory.createDictionaryService();
 	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void removeDataset(Dataset dataset) {
 		// TODO Auto-generated method stub
@@ -81,6 +84,9 @@ public class VirtRemover implements Remover {
 
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void removeDiachronicDataset(DiachronicDataset diachronicDataset) {
 		

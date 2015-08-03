@@ -105,16 +105,14 @@ class VirtLoader implements Loader {
 		} catch (Exception e) {					
 			throw e;
 		}
-	    /*finally {
-	    	long tEnd = System.currentTimeMillis();
-	    	long tDelta = tEnd - tStart;
-	    	double elapsedSeconds = tDelta / 1000.0;
-	    	System.out.println(elapsedSeconds);
-	    }*/
+	   
 		
 	    
 	}
 	
+	/**
+	 * {@inheritDoc}
+	 */
 	public String loadData(InputStream stream, String diachronicDatasetURI, String format, String versionNumber) throws Exception{
 		
 		long tStart = System.currentTimeMillis();
@@ -165,8 +163,8 @@ class VirtLoader implements Loader {
 	    
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.athena.imis.diachron.archive.core.dataloader.Loader#loadData(java.io.InputStream, java.lang.String)
+	/**
+	 * {@inheritDoc}
 	 */
 	public String loadData(InputStream stream, String diachronicDatasetURI) throws Exception{
 		
@@ -174,6 +172,9 @@ class VirtLoader implements Loader {
 		
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public void loadMetadata(InputStream stream, String diachronicDatasetURI){
 		
 		Dataset dataset = DatasetFactory.createMem();

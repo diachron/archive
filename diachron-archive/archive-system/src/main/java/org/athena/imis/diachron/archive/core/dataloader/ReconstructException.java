@@ -1,5 +1,10 @@
 package org.athena.imis.diachron.archive.core.dataloader;
 
+/**
+ * This class models exceptions for the Reconstruct class.
+ * @author Marios Meimaris
+ *
+ */
 public class ReconstructException extends Exception {
 
 	

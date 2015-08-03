@@ -20,9 +20,8 @@
 		<dependency>
 			<groupId>diachron-athena</groupId>
 			<artifactId>archive-system</artifactId>
-			<version>1.0.1</version>
+			<version>2.0.0</version>
 		</dependency>
-
 
 		<!-- Spring core & mvc -->
 		<dependency>
@@ -59,6 +58,7 @@
 			<artifactId>slf4j-log4j12</artifactId>
 			<version>1.7.7</version>
 		</dependency>
+
 
 		<!-- Servlet Spec -->
 		<dependency>

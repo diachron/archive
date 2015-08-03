@@ -36,17 +36,7 @@ public class RDFSerializer implements Serializer {
 			json = serializeDiachronicDatasets(list);
 		} else if (list.get(0) instanceof Dataset) {
 			json = serializeDataset(list);
-			/*
-			 * Resource binding =
-			 * resultModel.createResource(AnonId.create("r"+count+"c"+count));
-			 * binding.addProperty(DiachronOntology.variable, variableName)
-			 * .addProperty(DiachronOntology.value,
-			 * resultModel.createResource(dd.getId())); Resource solution =
-			 * resultModel.createResource(AnonId.create("r"+count));
-			 * solution.addProperty(DiachronOntology.binding, binding);
-			 * rset.addProperty(DiachronOntology.solution, solution); count++; }
-			 * rset.addProperty(DiachronOntology.resultVariable, variableName);
-			 */
+			
 
 		} else {
 			throw new Exception("Unsupported type for serialization");
@@ -184,18 +174,7 @@ public class RDFSerializer implements Serializer {
 			
 			bindingsArray.put(result);
 			
-			/*
-			 * Resource binding =
-			 * resultModel.createResource(AnonId.create("r"
-			 * +count+"c"+count));
-			 * binding.addProperty(DiachronOntology.variable, variableName)
-			 * .addProperty(DiachronOntology.value,
-			 * resultModel.createResource(dd.getId())); Resource solution =
-			 * resultModel.createResource(AnonId.create("r"+count));
-			 * solution.addProperty(DiachronOntology.binding, binding);
-			 * rset.addProperty(DiachronOntology.solution, solution);
-			 * count++;
-			 */
+			
 		}
 		results.put("bindings", bindingsArray);
 		json.put("results", results);

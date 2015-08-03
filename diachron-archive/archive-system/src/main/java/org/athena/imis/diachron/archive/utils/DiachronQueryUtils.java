@@ -13,6 +13,11 @@ import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.rdf.model.AnonId;
 
+/**
+ * Helper class with utilities for the DIACHRON query engine.
+ * @author Marios Meimaris
+ *
+ */
 public class DiachronQueryUtils {
 		 
 	

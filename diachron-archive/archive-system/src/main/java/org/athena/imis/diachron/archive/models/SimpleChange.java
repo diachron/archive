@@ -13,6 +13,11 @@ import com.hp.hpl.jena.vocabulary.OWL;
 import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.vocabulary.RDFS;
 
+/**
+ * Class that models a simple change, to be used in the reconstruction process.
+ * @author Marios
+ *
+ */
 public class SimpleChange {
 
 	private Node subject;

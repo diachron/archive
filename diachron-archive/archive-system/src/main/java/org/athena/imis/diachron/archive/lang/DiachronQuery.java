@@ -67,6 +67,11 @@ import com.hp.hpl.jena.sparql.syntax.ElementUnion;
 import com.hp.hpl.jena.sparql.util.ExprUtils;
 
 
+/**
+ * Extension of the Query object to parse and pre-process queries expressed in the DIACHRON Query Language.
+ * @author Marios Meimaris
+ *
+ */
 public class DiachronQuery extends Query {
 	
     //Diachron Elements
@@ -110,7 +115,7 @@ public class DiachronQuery extends Query {
 
     
     
-    //Diachron methods here
+    
     /** 
 	* Add a diachronic dataset to the sources, taken from the FROM DATASET clause. No specification of version.
      */
@@ -124,14 +129,13 @@ public class DiachronQuery extends Query {
         HashMap<String, String> datasetParams = diachronDatasetURIs.get(diachronicDatasetURI.toString());
     	if (datasetParams == null || datasetParams.isEmpty()) 
     		diachronDatasetURIs.put(diachronicDatasetURI.toString(), null);
-    	//else diachronDatasetURIs.put(diachronicDatasetURI.toString(), datasetParams);
-    	/*System.out.println("The Diachronic Hash Table contains: ") ;
-    	for(String iri : diachronDatasetURIs.keySet()){
-    		System.out.println(iri+" := " + diachronDatasetURIs.get(iri));
-    	}*/
+    	
     	
     }
     
+    /** 
+   	* Add a diachronic dataset to the sources, taken from the FROM DATASET clause. No specification of version.
+        */
     public void addDiachronicDataset(Node diachronicDatasetURI, ArrayList<Node> datasetVersions, String type)
     {
     	
@@ -161,6 +165,9 @@ public class DiachronQuery extends Query {
     	}*/
     }
     
+    /** 
+   	* Add a diachronic dataset taken from the WHERE clause.
+    **/
     public void addDiachronicDatasetInPattern(Node diachronicDataset, ArrayList<Node> datasetVersions, String type)
     {
     	
@@ -193,6 +200,12 @@ public class DiachronQuery extends Query {
     	}*/
     }
     
+    /**
+     * Add a changeset taken from the WHERE clause.
+     * @param diachronicDataset The diachronic dataset.
+     * @param datasetVersions The versions of the changes.
+     * @param type
+     */
     public void addDiachronicChangesetInPattern(Node diachronicDataset, ArrayList<Node> datasetVersions, String type)
     {
     	
@@ -221,7 +234,12 @@ public class DiachronQuery extends Query {
     	}*/
     }
     
-    
+    /**
+     * Adds a changes object taken from the WHERE clause in the query pattern.
+     * @param diachronicDatasetURI
+     * @param datasetVersions
+     * @param type
+     */
     public void addDiachronicChangesInPattern(String diachronicDatasetURI, ArrayList<String> datasetVersions, String type)
     {
     	
@@ -303,7 +321,9 @@ public class DiachronQuery extends Query {
        }
               
        
-
+       /**
+        * Finalize the dictionary objects of the DIACHRON query.
+        */
        public void finalizeDiachronDictionaryQuery(){
     	   
     	   
@@ -425,6 +445,9 @@ public class DiachronQuery extends Query {
    			
    		}
        
+       /**
+        * Finalize the change set objects in the DIACHRON query.
+        */
        public void finalizeDiachronChangesetDictionaryQuery(){
     	   if(!isDiachronQuery()) throw new QueryException("Query is not initialized as a DIACHRON query. ") ;   		
    		  	
@@ -521,6 +544,12 @@ public class DiachronQuery extends Query {
    			
    		}
        
+       /**
+        * Handle DATASET patterns and rewrite them to SPARQL. Handle cases of non-materialized datasets as well.
+        * @param diachronicDataset
+        * @param pattern
+        * @return The jena Element of the re-written pattern.
+        */
        public Element createDiachronDatasetInPatternElement(Node diachronicDataset, Element pattern){
     	   
     	   if(!isDiachronQuery()) throw new QueryException("Query is not initialized as a DIACHRON query. ") ;
@@ -854,7 +883,12 @@ public class DiachronQuery extends Query {
        }
        
       
-       
+      /**
+       * Helper method to bulk load into Virtuoso. 
+       * @param stream
+       * @param graphName
+       * @throws Exception
+       */
        private void bulkLoadRDFDataToGraph(InputStream stream, String graphName) throws Exception {
    		
    		String fileExtension = ".rdf";
@@ -883,7 +917,16 @@ public class DiachronQuery extends Query {
    		}
    		
    	}
-       
+     
+       /**
+        * Perform source selection to a variable dataset.
+        * @param pattern
+        * @param diachronicDatasetId
+        * @param after
+        * @param before
+        * @return
+        * @throws Exception
+        */
        private List<Dataset> variableSourceSelection(ElementGroup pattern, String diachronicDatasetId, Node after, Node before) throws Exception{
     	   
     	   List<Dataset> list = new ArrayList<>();
@@ -978,6 +1021,7 @@ public class DiachronQuery extends Query {
     	   return list;
     	   
        }
+       
        
        public boolean isAfter(Dataset candidateDataset, Node after){
     	   
@@ -1145,7 +1189,13 @@ public class DiachronQuery extends Query {
 		
        }
              
-       
+       /**
+        * Re-write the query to materialize a non-materialized dataset based on its added and deleted triples in the query.
+        * @param datasetList
+        * @param diachronicDataset
+        * @return A list of dataset versions and their added/deleted graphs.
+        * @throws Exception
+        */
        private HashMap<Dataset, String[]> fakeMaterializeDataset(List<Dataset> datasetList, DiachronicDataset diachronicDataset) throws Exception{
     	   
        	
@@ -1274,6 +1324,14 @@ public class DiachronQuery extends Query {
 		
        }
       
+       
+       /**
+        * Add the added and deleted graphs to sub-queries to represent and query non-materialized dataset verions.
+        * @param fakeMatGroup
+        * @param matMap
+        * @param inputPattern
+        * @return
+        */
        public ElementGroup addFakeQueryElements(ElementGroup fakeMatGroup, HashMap<Dataset, String[]> matMap, ElementGroup inputPattern){
     	       	   
     	   
@@ -1368,6 +1426,13 @@ public class DiachronQuery extends Query {
     	   
        }
        
+       /**
+        * Performs source selection for merge graphs.
+        * @param pattern
+        * @param graph1
+        * @param graph2
+        * @return
+        */
        public boolean[] mergeGraphSourceSelection(ElementGroup pattern, String graph1, String graph2){
     	   
     	   //Source selection for merge of graphs
@@ -1413,7 +1478,7 @@ public class DiachronQuery extends Query {
 	    			       		   		   	+ "		GRAPH <"+graph1+"> {" 
 	    			       		   		   	+ 			tripleElement.toString().replaceAll("\\. \\.", "\\. ")
 	    			       		   		   	+" }}";
-	    		     			  System.out.println(query);
+	    		     			  
 		    		     		   vqe = VirtuosoQueryExecutionFactory.create(query, graph);
 		    		 	       	  
 		    		 	       	   if(!vqe.execAsk()) {
@@ -1429,7 +1494,7 @@ public class DiachronQuery extends Query {
 	    			       		   		   	+ "		GRAPH <"+graph2+"> {" 
 	    			       		   		   	+ 			tripleElement.toString().replaceAll("\\. \\.", "\\. ")
 	    			       		   		   	+" }}";
-	    		     			 System.out.println(query);
+	    		     			
 		    		     		   vqe = VirtuosoQueryExecutionFactory.create(query, graph);
 		    		 	       	  
 		    		 	       	   if(!vqe.execAsk()) {
@@ -1472,7 +1537,7 @@ public class DiachronQuery extends Query {
   	    			       		   		   	+ "		GRAPH <"+graph1+"> {" 
   	    			       		   		   	+ 			tripleElement.toString().replaceAll("\\. \\.", "\\. ")
   	    			       		   		   	+" }}";
-  	    		     			System.out.println(query);
+  	    		     			
   		    		     		   vqe = VirtuosoQueryExecutionFactory.create(query, graph);
   		    		 	       	  
   		    		 	       	   if(!vqe.execAsk()) {
@@ -1488,7 +1553,7 @@ public class DiachronQuery extends Query {
   	    			       		   		   	+ "		GRAPH <"+graph2+"> {" 
   	    			       		   		   	+ 			tripleElement.toString().replaceAll("\\. \\.", "\\. ")
   	    			       		   		   	+" }}";
-  	    		     			System.out.println(query);
+  	    		     			
   		    		     		   vqe = VirtuosoQueryExecutionFactory.create(query, graph);
   		    		 	       	  
   		    		 	       	   if(!vqe.execAsk()) {
@@ -1512,6 +1577,10 @@ public class DiachronQuery extends Query {
     	   
        }
        
+       /**
+        * Helper method that rewrites a variable or multi-scope DATASET pattern taking into account non-materialized versions
+        * @return
+        */
        public ElementGroup addFakeQueryElements(ElementGroup fakeMatGroup, HashMap<Dataset, String[]> matMap, ElementGroup inputPattern, String versionVariable, Node diachronicDataset){
     	   
     	   for(Dataset dataset : matMap.keySet()){
@@ -1628,6 +1697,10 @@ public class DiachronQuery extends Query {
     	
        }
        
+       /**
+        * Deletes a version that has been reconstructed in the archive
+        * @param versionURI The URI of the version to be deleted
+        */
     public void deleteReconstructedVersion(String versionURI){
     	
     	Dataset dataset = dict.getDataset(versionURI);
@@ -1683,6 +1756,12 @@ public class DiachronQuery extends Query {
 		
 	}
 	
+	/**
+	 * Creates a SPARQL element for a CHANGES keyword found inside the query pattern
+	 * @param diachronicDataset The queried diachronic dataset
+	 * @param pattern The change pattern in the CHANGES clause
+	 * @return The resulting pattern element
+	 */
 	public Element createDiachronChangesetInPatternElement(Node diachronicDataset, Element pattern){
 		
 		isFloatingQuery = false;
@@ -1790,6 +1869,12 @@ public class DiachronQuery extends Query {
 		
 	}
     
+	/**
+	 * Obsolete - Creates a SPARQL element for a CHANGES keyword found inside the query pattern
+	 * @param diachronicDataset The queried diachronic dataset
+	 * @param pattern The change pattern in the CHANGES clause
+	 * @return The resulting pattern element
+	 */
 	public Element createDiachronChangesetInPatternElement_old(Node diachronicDataset, Element pattern){
     	   //TODO
     	   //System.out.println(datasetURI + ": " + diachronChangesetInPatternURIs.get(datasetURI) + " " + pattern.toString());
@@ -1889,6 +1974,14 @@ public class DiachronQuery extends Query {
     	   return null;
        }
        
+	/**
+	 * Creates a SPARQL pattern for the DIACHRON RECATT keyword
+	 * @param subject The subject of the record attribute
+	 * @param epb The triples specified in the record attribute block
+	 * @param recordNode The node of the wrapper record
+	 * @param poPairs A list of the predicate-object pairs
+	 * @return The resulting SPARQL pattern
+	 */
        public ElementPathBlock finalizeRecordAttributePattern(Node subject, ElementPathBlock epb, Node recordNode, ArrayList<Node[]> poPairs){
     	   
     	   Triple t;
@@ -1900,41 +1993,35 @@ public class DiachronQuery extends Query {
     	   return epb;
        }
        
+       /**
+        * Creates a SPARQL pattern for the DIACHRON RECORD keyword.
+        * @param recordURI The node (uri or var) of the record specified in the query
+        * @param pattern The pattern inside the RECORD keyword.
+        * @return The resulting pattern element
+        */
        public Element createDiachronRecordInPatternElement(Node recordURI, Element pattern){
-    	   //TODO
-    	   //System.out.println(recordURI + ": " +pattern.toString());
-    	   //if(true) return null;
+    	   
     	   ElementTriplesBlock triples = new ElementTriplesBlock();
+    	   
     	   Node recordNode ;
+    	   
     	   boolean isSetSubject = false;
+    	  
     	   recordNode = DiachronQueryUtils.getCleanNode(recordURI);
-    	  /* if (recordURI.equals("")){
-    		   recordNode = NodeFactory.createAnon();
-    	   }
-    	   else if(recordURI.startsWith("_var_")){
-    		   recordNode = NodeFactory.createVariable(recordURI.replaceAll("_var_", ""));
-    	   }
-    	   else{    		   
-    		   recordNode = NodeFactory.createURI(recordURI);
-    	   }*/
+    	  
     	   Node subject = null, predicate = null, object = null;
-    	   //ElementGroup etb = (ElementGroup) pattern;
-    	   //for(Element el : etb.getElements()){
     		   
     		   ElementPathBlock epb = (ElementPathBlock) pattern;
     		   
     		   for(TriplePath tp : epb.getPattern().getList()){
-    			   //System.out.println("hello " + tp.toString());
-    			   //subject = NodeFactory.createURI(tp.getSubject().toString());
+
     			   Node recAtt = null; 
     			   if(!attributeMap.containsKey(tp) || attributeMap.get(tp)==null) 		
     				   recAtt = NodeFactory.createVariable(DiachronQueryUtils.getNextVariable());
     			   else
     				   recAtt = DiachronQueryUtils.getCleanNode(attributeMap.get(tp));
     			   predicate = DiachronQueryUtils.getCleanNode(tp.getPredicate());
-    			   object = DiachronQueryUtils.getCleanNode(tp.getObject());
-    			   //Node recAtt ;
-    			   
+    			   object = DiachronQueryUtils.getCleanNode(tp.getObject());    			   
     	    	   
     	    	   Triple t1 = new Triple(recordNode,  
     	    			   NodeFactory.createURI("http://www.diachron-fp7.eu/resource/hasRecordAttribute"), 
@@ -1962,16 +2049,18 @@ public class DiachronQuery extends Query {
     		   }
     			   
     		   
-    	   //}
-    	   
-    	   //System.out.println("Triples: " + triples.toString());
-    	   //System.out.println(triples);
+    	  
     	   return triples;
        }
        
+       /**
+        * Finalize the DIACHRON query.
+        * @return The resuting pattern
+        */
        public ElementGroup buildDiachronQuery(){
+    	   
     	   ElementGroup g = new ElementGroup();
-    	   //System.out.println(getDiachronDictionaryElements());
+    	   
     	   if(getDiachronDictionaryElements() != null) {
     		   
     		   if(isFloatingQuery) {
