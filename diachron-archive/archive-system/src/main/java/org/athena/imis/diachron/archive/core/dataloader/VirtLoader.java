@@ -360,7 +360,7 @@ class VirtLoader implements Loader {
 			QuerySolution rs = results.next();
 			RDFNode schemaSet = rs.get("ss");
 			if(full)
-				insertSchemaSetTriples(graph, schemaSet.toString(), tempGraph);
+				insertSchemaSetTriples(graph, schemaSet.toString(), tempGraph, datasetURI);
 			dict.addSchemaSet(dictGraph, schemaSet.toString(), datasetURI);
 		}
 		vqe.close();
