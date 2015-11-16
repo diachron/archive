@@ -150,5 +150,22 @@ public class BasicDataStatement implements DataStatement {
 		else
 			throw new Exception("Non-existing Dataset Instatiation");
 	}
+	
+	/**
+	 * Implementation of  {@link org.athena.imis.diachron.archive.api.DataStatement#removeDataset}
+	 * 
+	 * @param datasetURI The URI of the dataset to be deleted from the archive.
+	 */
+	public void removeDataset(String datasetURI) throws Exception {
+		
+		DictionaryService dict = StoreFactory.createDictionaryService();
+		
+		if (dict.getDataset(datasetURI) != null) {
+		 StoreFactory.createDataRemover()
+					.removeDataset(dict.getDataset(datasetURI));
+		} else
+			throw new Exception("Non-existing Dataset");
+		
+	}
 
 }

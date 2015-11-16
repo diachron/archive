@@ -152,15 +152,28 @@ public class DatasetVersionController {
     }
 
     @RequestMapping(method = RequestMethod.DELETE)
-    public @ResponseBody Response deleteDiachronicDatasetVersion(@RequestBody int[] ids) {
+    public @ResponseBody Response deleteDiachronicDatasetVersion(HttpServletRequest request) {
 
     	logger.info("deleteDiachronicDatasetVersion called");
 
-        Response data = new Response();
-        data.setSuccess(false);
-        data.setMessage("Not supported yet");
+        Response resp = new Response();
 
-        return data;
+    	try{
+
+    		dataStatement.removeDataset(request.getParameter("datasetURI"));
+
+    	}
+    	catch(Exception e){
+
+    		logger.error(e.getMessage(),e);
+
+        	resp.setSuccess(false);
+
+        	resp.setMessage(e.getMessage());
+    	}
+
+
+        return resp;
     }
 
     @SuppressWarnings("unused")

@@ -14,6 +14,11 @@ import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.graph.Graph;
 
+/**
+ * Helper class with useful utilities.
+ * @author Marios Meimaris
+ *
+ */
 public class BulkLoader {
 
 	private static final Logger logger = LoggerFactory.getLogger(BulkLoader.class);

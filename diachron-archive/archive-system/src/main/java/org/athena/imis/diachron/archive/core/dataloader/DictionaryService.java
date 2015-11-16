@@ -23,8 +23,10 @@ public interface DictionaryService {
 	public Hashtable<String, Object>  getDiachronicDatasetMetadata(String diachronicDatasetId);
 	public DiachronicDataset getDiachronicDataset(String id);
 	public Dataset getDataset(String id);
-	public void addDataset(Graph graph, String diachronicDatasetURI, String datasetURI);
+	public void addDataset(Graph graph, String diachronicDatasetURI, String datasetURI, boolean fullyMaterialized);
+	//public void addDataset(Graph graph, String diachronicDatasetURI, String datasetURI);
 	public void addRecordSet(Graph graph, String recordSetURI, String datasetURI);
+	public void addSchemaSet(Graph graph, String schemaSetURI, String datasetURI);
 	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, String diachronicDatasetURI);
 	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, String diachronicDatasetURI, String versionNumber);
 	//public void insertDatasetMetadata(String )

@@ -1,5 +1,7 @@
 package org.athena.imis.diachron.archive.core.datamanager;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -17,13 +19,13 @@ import virtuoso.jena.driver.VirtGraph;
 import virtuoso.jena.driver.VirtModel;
 
 /**
- * 
+ *
  * Provides access to the store and definitions for the connection.
  *
  */
 public class StoreConnection {
 	private static boolean isInit = false;
-	
+
 	private static final String DEFAULT_BULK_LOAD_PATH = "c:/RDF/";
 	private static final String DEFAULT_USERNAME = "dba";
 	private static final String DEFAULT_PWD = "dba";
@@ -33,7 +35,7 @@ public class StoreConnection {
 	private static final int DEFAULT_MAX_POOL = 10;
 	private static final boolean DEFAULT_CONN_POOL = true;
 
-	
+
 	private static String username = DEFAULT_USERNAME;
 	private static String pwd = DEFAULT_PWD;
 	private static String host = DEFAULT_HOST;
@@ -43,24 +45,24 @@ public class StoreConnection {
 	private static boolean connPool = DEFAULT_CONN_POOL;
 
 	private static String bulkLoadPath = DEFAULT_BULK_LOAD_PATH;
-	
-	
+
+
 	private static VirtuosoDataSource vDatasource = new VirtuosoConnectionPoolDataSource();
-	
-	
+
+
 	//private static final String JDBC_DRIVER = "virtuoso.jdbc4.Driver";
 	private static final Logger logger = LoggerFactory.getLogger(StoreConnection.class);
-	
-	
+
+
 	private StoreConnection() {
-		
+
 	}
-	
+
 	static {
 		if (!isInit)
 			init();
 	}
-	
+
 	private static String loadConfigParam(Properties prop, String paramName, String paramLabel, String defaultValue) {
 		if (prop.getProperty(paramName)!=null) {
 			return prop.getProperty(paramName);
@@ -69,7 +71,7 @@ public class StoreConnection {
 			return defaultValue;
 		}
 	}
-	
+
 	private static int loadConfigParam(Properties prop, String paramName, String paramLabel, int defaultValue) {
 		if (prop.getProperty(paramName)!=null) {
 			return Integer.parseInt(prop.getProperty(paramName));
@@ -78,7 +80,7 @@ public class StoreConnection {
 			return defaultValue;
 		}
 	}
-	
+
 	private static boolean loadConfigParam(Properties prop, String paramName, String paramLabel, boolean defaultValue) {
 		if (prop.getProperty(paramName)!=null) {
 			return Boolean.parseBoolean(prop.getProperty(paramName));
@@ -87,7 +89,7 @@ public class StoreConnection {
 			return defaultValue;
 		}
 	}
-	
+
 	/**
 	 * Initializes the StoreConnection object.
 	 */
@@ -96,14 +98,22 @@ public class StoreConnection {
 			if (!isInitialized()) {
 				//initializing the connection parameters from the configuration file, 
 				//if a parameter or the whole file isn't found the initialization will be done with default values
-				
+
 				InputStream input = StoreConnection.class.getClassLoader().getResourceAsStream("virt-connection.properties");
 				Properties prop = new Properties();
-					
+
 				if (input == null) {
 					logger.warn("RDF STORE CONFIGURATION WASN'T FOUND. REVERTING TO DEFAULT PARAMETERS");
 				} else {
 					prop.load(input);
+
+					if (System.getProperty("diachron.config.location") != null) {
+						InputStream overideInput = new FileInputStream(new File(System.getProperty("diachron.config.location")));
+						Properties override = new Properties();
+						override.load(overideInput);
+						prop.putAll(override);
+					}
+
 					username = loadConfigParam(prop, "virtuoso-username", "USERNAME", DEFAULT_USERNAME);
 					pwd = loadConfigParam(prop, "virtuoso-pwd", "PASSWORD", DEFAULT_PWD);
 					host = loadConfigParam(prop, "virtuoso-host", "HOST", DEFAULT_HOST);
@@ -114,26 +124,26 @@ public class StoreConnection {
 					bulkLoadPath = loadConfigParam(prop, "virtuoso-bulk-load-path", "BULK-LOAD-PATH", DEFAULT_BULK_LOAD_PATH);
 					input.close();
 				}
-				
+
 				if (connPool) {
 					//create the pool Datasource
 					vDatasource = new VirtuosoConnectionPoolDataSource();
-					
+
 					((VirtuosoConnectionPoolDataSource)vDatasource).setInitialPoolSize(initialPool);
 					((VirtuosoConnectionPoolDataSource)vDatasource).setMaxPoolSize(maxPool);
-					
+
 					//initial the pool
 					((VirtuosoConnectionPoolDataSource)vDatasource).fill();
 				} else {
 					vDatasource = new VirtuosoDataSource();
 				}
-				
+
 				vDatasource.setCharset("UTF-8");
 				vDatasource.setPassword(pwd);
 				vDatasource.setPortNumber(port);
 				vDatasource.setUser(username);
 				vDatasource.setServerName(host);
-				
+
 				isInit = true;
 			}
 		} catch (Exception e) {
@@ -141,7 +151,7 @@ public class StoreConnection {
 			logger.error(e.getMessage(), e);
 		}
 	}
-	
+
 	/**
 	 * Checks if the StoreConnection object is initialized.
 	 * @return True if StoreConnection is initialized, else false.
@@ -171,7 +181,7 @@ public class StoreConnection {
 	public static Connection getConnection() throws SQLException{
 		return vDatasource.getConnection();
 	}
-	
+
 	/**
 	 * Fetches the VirtGraph connection to the Virtuoso data source.
 	 * @return A VirtGraph object with a connection to the Virtuoso data source.
@@ -179,7 +189,7 @@ public class StoreConnection {
 	public static VirtGraph getVirtGraph(){
 		return new VirtGraph(vDatasource);
 	}
-	
+
 	/**
 	 * Fetches the VirtGraph connection to a specific named graph of the Virtuoso data source.
 	 * @param namedGraph The URI of the named graph to connect to.
@@ -188,7 +198,7 @@ public class StoreConnection {
 	public static Graph getGraph(String namedGraph){
 		return new VirtGraph (namedGraph,vDatasource);
 	}
-	
+
 	public static Model getJenaModel(String namedGraph){
 		return new VirtModel(new VirtGraph (namedGraph,vDatasource));
 	}
@@ -199,6 +209,6 @@ public class StoreConnection {
 	public static String getBulkLoadPath() {
 		return bulkLoadPath;
 	}
-	
-	
+
+
 }

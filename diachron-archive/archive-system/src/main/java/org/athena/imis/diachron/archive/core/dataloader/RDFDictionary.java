@@ -19,6 +19,10 @@ import org.athena.imis.diachron.archive.models.DiachronURIFactory;
 import org.athena.imis.diachron.archive.models.DiachronicDataset;
 import org.athena.imis.diachron.archive.models.ModelsFactory;
 import org.athena.imis.diachron.archive.models.RDFDataset;
+import org.athena.imis.diachron.archive.models.RDFRecordSet;
+import org.athena.imis.diachron.archive.models.RecordSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.NodeFactory;
@@ -34,6 +38,7 @@ import com.hp.hpl.jena.update.UpdateFactory;
 import com.hp.hpl.jena.update.UpdateProcessor;
 import com.hp.hpl.jena.update.UpdateRequest;
 import com.hp.hpl.jena.vocabulary.DCTerms;
+import com.hp.hpl.jena.vocabulary.XSD;
 
 /**
  * 
@@ -43,7 +48,7 @@ import com.hp.hpl.jena.vocabulary.DCTerms;
 public class RDFDictionary implements DictionaryService {
 	
 	static final String dictionaryNamedGraph = "http://www.diachron-fp7.eu/archive/dictionary";
-
+	private static final Logger logger = LoggerFactory.getLogger(RDFDictionary.class);
 	/**
 	 * Fetches the named graph where the dictionary is defined in the archive.
 	 * @return A String containing a URI of the dictionary graph.
@@ -122,27 +127,133 @@ public class RDFDictionary implements DictionaryService {
 	/**
 	 * {@inheritDoc}
 	 */
-	public List<Dataset> getListOfDatasets(DiachronicDataset diachronicDataset) {		
+	public List<Dataset> getListOfDatasets(DiachronicDataset diachronicDataset) {
+		
 		QueryStatement query = StatementFactory.createQueryStatement();
 		Query q = new Query();
 		q.setQueryText("SELECT DISTINCT ?o FROM <" + RDFDictionary.getDictionaryNamedGraph() +
 				"> WHERE {  <"+diachronicDataset.getId()+"> <"+DiachronOntology.hasInstantiation+"> ?o . " +
-						"OPTIONAL { {?o <"+DiachronOntology.generatedAtTime+"> ?time} "
+						"OPTIONAL { "
+						+ "{?o <"+DiachronOntology.generatedAtTime+"> ?time} "
 								+ "UNION {?o <"+DCTerms.created.getURI().toString()+"> ?time}"
 								+ "}"
 								+ "} ORDER BY DESC(?time) ");
 		q.setQueryType("SELECT");		
-		ArchiveResultSet res = query.executeQuery(q);		
-		List<Dataset> datasets = new ArrayList<Dataset>(); 
+		ArchiveResultSet res = query.executeQuery(q);
+		List<Dataset> datasets = new ArrayList<Dataset>();
 		ResultSet rs = res.getJenaResultSet();
-		while (rs.hasNext()) {			
+		while (rs.hasNext()) {
 			QuerySolution qs = rs.next();
-			String datasetId = qs.get("o").toString();			
-			//Dataset ds = ModelsFactory.createDataset(diachronicDataset);
-			Dataset ds = new RDFDataset();			
-			ds.setId(datasetId);
+			String datasetId = qs.get("o").toString();
 			
+			Dataset ds = new RDFDataset();			
+			ds.setId(datasetId);			
+			ds.setDiachronicDataset(diachronicDataset);
 			ds.setMetaProperties(getDatasetMetadata(datasetId));
+			
+			Query qin = new Query();
+			qin.setQueryText(" SELECT ?fm ?rs ?added ?deleted FROM <"+RDFDictionary.getDictionaryNamedGraph()+">"
+					+ " WHERE {"
+					+ "<"+datasetId+"> <"+DiachronOntology.isFullyMaterialized+"> ?fm ; "
+							+ "<"+DiachronOntology.hasRecordSet+"> ?rs . "
+							+ "OPTIONAL { <"+datasetId+"> <"+DiachronOntology.addedGraph+"> ?added ; <"+DiachronOntology.deletedGraph+"> ?deleted }"
+							+ "}"
+							);
+			qin.setQueryType("SELECT");
+			
+			QueryStatement queryin = StatementFactory.createQueryStatement();
+			ArchiveResultSet resin = queryin.executeQuery(qin);					
+			ResultSet rsin = resin.getJenaResultSet();
+			while (rsin.hasNext()) {			
+				
+				QuerySolution qsin = rsin.next();				
+				String isFully = qsin.getLiteral("fm").getString();
+				if(isFully.equals("false"))
+					ds.setFullyMaterialized(false);
+				else
+					ds.setFullyMaterialized(true);
+				if(qsin.contains("added") && qsin.contains("deleted"))
+					ds.setDeltaGraphs(qsin.get("added").toString(), qsin.get("deleted").toString());
+				
+				RecordSet rset = new RDFRecordSet();
+				rset.setId(qsin.get("rs").toString());
+				ds.setRecordSet(rset);
+				if(!ds.isFullyMaterialized()){
+					
+					String qfm = ""
+							+ "SELECT DISTINCT ?version ?fm ?cs FROM <"+RDFDictionary.getDictionaryNamedGraph()+"> WHERE {"
+									+ "?diachronic <"+DiachronOntology.hasInstantiation+"> <"+datasetId+"> ; "
+											+ " <"+DiachronOntology.hasInstantiation+"> ?version . "
+									+ " ?version a <"+DiachronOntology.dataset+"> ;"
+									+ " <"+DiachronOntology.isFullyMaterialized+"> ?fm ; "
+									+ " <"+DiachronOntology.creationTime+"> ?time . "
+									+ " <"+datasetId+"> <"+DiachronOntology.creationTime+"> ?time2 . "
+									//+ " FILTER(<"+XSD.dateTime+">(?time2) > <"+XSD.dateTime+">(?time))"
+									+ " FILTER(?time2 > ?time)"
+									+ " FILTER(?version!=<"+datasetId+">) "
+									+ " OPTIONAL {?cs <"+DiachronOntology.oldVersion+"> ?version }"
+									+ "} ORDER BY DESC(?time)";					
+					
+					qin.setQueryText(qfm);
+					
+					queryin.executeQuery(qin);
+					
+					ArchiveResultSet resin_fm = queryin.executeQuery(qin);	
+					
+					ResultSet rsin_fm = resin_fm.getJenaResultSet();
+					
+					ArrayList<String> changeSets = new ArrayList<String>();
+					
+					while (rsin_fm.hasNext()) {								
+						
+						QuerySolution qsin_fm = rsin_fm.next();
+						
+						//if(qsin_fm.contains("cs"))
+						changeSets.add(qsin_fm.get("cs").toString());
+						
+						if(qsin_fm.getLiteral("fm").getBoolean()){
+							
+							ds.setLastFullyMaterialized(qsin_fm.get("version").toString());
+							ds.setListOfChangesets(changeSets);
+							break;
+						}
+						
+					}
+					
+					
+					
+				}
+				
+				String qfm = ""
+						+ "SELECT DISTINCT ?cs_old ?cs_new FROM <"+RDFDictionary.getDictionaryNamedGraph()+"> WHERE {"
+								
+								+ "OPTIONAL{ <"+datasetId+"> <"+DiachronOntology.hasChangeSet+"> ?cs_old ."
+										+ "?cs_old <"+DiachronOntology.oldVersion+"> <"+datasetId+"> } ."
+								+ "OPTIONAL{ <"+datasetId+"> <"+DiachronOntology.hasChangeSet+"> ?cs_new ."
+										+ "?cs_new <"+DiachronOntology.newVersion+"> <"+datasetId+"> } ."								
+								+ "}";					
+				
+				qin.setQueryText(qfm);
+				
+				queryin.executeQuery(qin);
+				
+				ArchiveResultSet resin_fm = queryin.executeQuery(qin);	
+				
+				ResultSet rsin_fm = resin_fm.getJenaResultSet();								
+				
+				while (rsin_fm.hasNext()) {								
+					
+					QuerySolution qsin_fm = rsin_fm.next();
+					if(qsin_fm.contains("cs_old")) ds.setChangeSetOld(qsin_fm.get("cs_old").toString());
+					
+					if(qsin_fm.contains("cs_new")) ds.setChangeSetNew(qsin_fm.get("cs_new").toString());
+					
+				}
+				
+				
+				
+			}
+			
 			
 			datasets.add(ds);			
 		}				
@@ -174,6 +285,11 @@ public class RDFDictionary implements DictionaryService {
 		return metaProperties;	
 	}
 	
+	/**
+	 * Returns the metadata associated with the specified dataset version.
+	 * @param datasetId The dataset URI.
+	 * @return	A Hashtable of predicate-object pairs.
+	 */
 	private Hashtable<String, Object>  getDatasetMetadata(String datasetId) {
 		QueryStatement query = StatementFactory.createQueryStatement();
 		Query q = new Query();
@@ -228,14 +344,22 @@ public class RDFDictionary implements DictionaryService {
 		return null;	
 	}
 
+	/**
+	 * Adds a new dataset version to the peristent storage of the archive.
+	 * @param graph The connection to the archive.
+	 * @param diachronicDatasetURI The diachronic dataset to be updated.
+	 * @param datasetURI The URI of the new dataset version.
+	 * @param fullyMaterialized A boolean indicator of whether the dataset should be stored fully (true) or just the change set (false).
+	 */
 	@Override
-	public void addDataset(Graph graph, String diachronicDatasetURI, String datasetURI) {
+	public void addDataset(Graph graph, String diachronicDatasetURI, String datasetURI, boolean fullyMaterialized) {
 		Calendar cal = GregorianCalendar.getInstance();
 		String timestamp = ResourceFactory.createTypedLiteral(cal).getString();		
 		String query = "INSERT DATA { GRAPH <"+RDFDictionary.dictionaryNamedGraph+"> " +
 				"{ <"+diachronicDatasetURI+"> <"+DiachronOntology.hasInstantiation+"> <"+datasetURI+"> ."
 				//+ "<"+datasetURI+">  <"+DiachronOntology.generatedAtTime+"> \""+timestamp+"\" " 
-				+ "<"+datasetURI+">  <"+DCTerms.created.getURI()+"> \""+timestamp+"\" "
+				+ "<"+datasetURI+">  <"+DiachronOntology.creationTime.getURI()+"> \""+timestamp+"\" ; "
+				+ " <"+DiachronOntology.isFullyMaterialized+"> \""+fullyMaterialized+"\" "				
 				+ "}}";
 		//System.out.println(query);
 		GraphStore gs = GraphStoreFactory.create(graph);
@@ -246,6 +370,12 @@ public class RDFDictionary implements DictionaryService {
 		
 	}
 	
+	/**
+	 * Adds a new record set to the persistent storage of the archive.
+	 * @param graph The connection to the archive.
+	 * @param recordSetURI The URI of the record set to be added.
+	 * @param datasetId The URI of the dataset where the new record set belongs.
+	 */
 	@Override
 	public void addRecordSet(Graph graph, String recordSetURI, String datasetId) {
 		//TODO refactor to remove the Graph input param
@@ -258,24 +388,64 @@ public class RDFDictionary implements DictionaryService {
 		qexec.execute(); 
 	}
 	
+	/**
+	 * Adds a new schema set to the persistent storage of the archive.
+	 * @param graph The connection to the archive.
+	 * @param schemaSetURI The URI of the schema set to be added.
+	 * @param datasetId The URI of the dataset where the new schema set belongs.
+	 */
+	@Override
+	public void addSchemaSet(Graph graph, String schemaSetURI, String datasetId) {
+		//TODO refactor to remove the Graph input param
+		String query = "INSERT DATA { GRAPH <"+RDFDictionary.dictionaryNamedGraph+"> " +
+				"{ <"+datasetId+"> <"+DiachronOntology.hasSchemaSet+"> <"+schemaSetURI+"> }}";
+		GraphStore gs = GraphStoreFactory.create(graph);
+		gs.addGraph(NodeFactory.createURI(RDFDictionary.getDictionaryNamedGraph()), graph);
+		UpdateRequest queryObj = UpdateFactory.create(query); 
+		UpdateProcessor qexec = UpdateExecutionFactory.create(queryObj,gs); 
+		qexec.execute(); 
+	}
+	
+	/**
+	 * Adds the dictionary metadata for a list of dataset versions of a specified diachronic dataset.
+	 * @param graph The connection to the archive.
+	 * @param list A list of dataset versions to be associated with the diachronic dataset.
+	 * @param diachronicDatasetURI The URI of the diachronic dataset.
+	 * @param versionNumber An optional version number to be associated with the dataset versions.
+	 */
 	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, String diachronicDatasetURI, String versionNumber){
-				
+			
+		
+		GraphStore gs = GraphStoreFactory.create(graph);
+		gs.addGraph(NodeFactory.createURI(RDFDictionary.getDictionaryNamedGraph()), graph);
 		Calendar cal = GregorianCalendar.getInstance();
 		String timestamp = ResourceFactory.createTypedLiteral(cal).getString();
 		String query = "INSERT DATA { GRAPH <"+RDFDictionary.dictionaryNamedGraph+"> " +
 				"{";
+		UpdateRequest queryObj;
+		UpdateProcessor qexec;		
 		for(RDFDataset dataset : list){
-			query += "<"+dataset.getId()+"> <"+DCTerms.created.getURI().toString()+"> \""+timestamp+"\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .";
-			dataset.setMetaProperty(DCTerms.created.getURI().toString(), timestamp);
+			query = "INSERT DATA { GRAPH <"+RDFDictionary.dictionaryNamedGraph+"> {" ;					
+			query += "<"+dataset.getId()+"> <"+DCTerms.created.getURI().toString()+"> \""+timestamp+"\" .";
+			query += " } }";			
+			
+			queryObj = UpdateFactory.create(query); 
+			qexec = UpdateExecutionFactory.create(queryObj,gs); 
+			qexec.execute(); 
+			
 			if(!versionNumber.equals("")){
-				
+				query = "INSERT DATA { GRAPH <"+RDFDictionary.dictionaryNamedGraph+"> {" ;
 				query += "<"+dataset.getId()+"> <"+DCTerms.hasVersion.getURI().toString()+"> \""+versionNumber+"\" .";
-				dataset.setMetaProperty(DCTerms.hasVersion.getURI().toString(), versionNumber);
+				query += " } }";				
+				queryObj = UpdateFactory.create(query); 
+				qexec = UpdateExecutionFactory.create(queryObj,gs); 
+				qexec.execute(); 				
 			}
 			
 			
 			for(String propertyName : dataset.getMetaPropertiesNames()){
 				String object = (String) dataset.getMetaProperty(propertyName);
+				query = "INSERT DATA { GRAPH <"+RDFDictionary.dictionaryNamedGraph+"> {" ;
 				query += "<"+dataset.getId()+"> <"+propertyName+"> ";
 				try {
 					object = "<"+new URL(object)+">";
@@ -283,21 +453,26 @@ public class RDFDictionary implements DictionaryService {
 			    	object = "\""+object+"\"";
 			    }
 				query += object + " . ";
-			}		
+				query += " } }";
+				queryObj = UpdateFactory.create(query); 
+				qexec = UpdateExecutionFactory.create(queryObj,gs); 
+				qexec.execute();
+			}	
+			dataset.setMetaProperty(DCTerms.created.getURI().toString(), timestamp);
+			if(!versionNumber.equals("")){								
+				dataset.setMetaProperty(DCTerms.hasVersion.getURI().toString(), versionNumber);
+			}
 		}
-		query += " } }";						
-		GraphStore gs = GraphStoreFactory.create(graph);
-		gs.addGraph(NodeFactory.createURI(RDFDictionary.getDictionaryNamedGraph()), graph);
-		UpdateRequest queryObj = UpdateFactory.create(query); 
-		UpdateProcessor qexec = UpdateExecutionFactory.create(queryObj,gs); 
-		qexec.execute(); 
-		//UpdateAction.parseExecute( query, graph);
 		
-		//VirtuosoUpdateRequest vur = VirtuosoUpdateFactory.create(query, graph);
-		//vur.exec();
 		
 	}
 	
+	/**
+	 * Adds the dictionary metadata for a list of dataset versions of a specified diachronic dataset.
+	 * @param graph The connection to the archive.
+	 * @param list A list of dataset versions to be associated with the diachronic dataset.
+	 * @param diachronicDatasetURI The URI of the diachronic dataset.	
+	 */
 	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, String diachronicDatasetURI){
 		
 		Calendar cal = GregorianCalendar.getInstance();
@@ -325,10 +500,7 @@ public class RDFDictionary implements DictionaryService {
 		UpdateRequest queryObj = UpdateFactory.create(query); 
 		UpdateProcessor qexec = UpdateExecutionFactory.create(queryObj,gs); 
 		qexec.execute(); 
-		//UpdateAction.parseExecute( query, graph);
-		
-		//VirtuosoUpdateRequest vur = VirtuosoUpdateFactory.create(query, graph);
-		//vur.exec();
+	
 		
 	}
 	

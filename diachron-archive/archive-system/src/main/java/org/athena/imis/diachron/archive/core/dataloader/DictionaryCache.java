@@ -90,6 +90,11 @@ public class DictionaryCache implements DictionaryService {
 		
 	}
 
+	/**
+	 * Creates an id (URI) for a new diachronic dataset.
+	 * @param datasetName The name of the dataset
+	 * @return A String of the created id.
+	 */
 	public String createDiachronicDatasetId(String datasetName) {
 		return persistentStorage.createDiachronicDatasetId(datasetName);
 	}
@@ -145,16 +150,31 @@ public class DictionaryCache implements DictionaryService {
 	public Dataset getDataset(String id) {
 		return datasetInstantiations.get(id);
 	}
-
-	@Override
-	public void addDataset(Graph graph, String diachronicDatasetURI, String datasetId) {
-		persistentStorage.addDataset(graph, diachronicDatasetURI, datasetId);
+	
+	/**
+	 * Creates a new dataset version. 
+	 * @param graph The connection to the archive graph.
+	 * @param diachronicDatasetURI The URI of the diachronic dataset of which a new version is added.
+	 * @param datasetId The URI of the newly created dataset.
+	 * @param fullyMaterialized A boolean indication of whether the archive should store the whole dataset or just the changes.	 
+	 */
+	//@Override
+	public void addDataset(Graph graph, String diachronicDatasetURI, String datasetId, boolean fullyMaterialized) {
+				
+		persistentStorage.addDataset(graph, diachronicDatasetURI, datasetId, fullyMaterialized);
 		Dataset ds = new RDFDataset();			
 		ds.setId(datasetId);
+		ds.setFullyMaterialized(fullyMaterialized);
 		datasetInstantiations.put(datasetId, ds);
 		diachronicDatasets.get(diachronicDatasetURI).addDatasetInstatiation(ds);
 	}
 
+	/**
+	 * Adds a new record set to an existing dataset.
+	 * @param graph The connection to the archive graph.
+	 * @param recordSetURI The URI of the record set to be added.
+	 * @param datasetId The URI of the dataset the record set belongs.
+	 */
 	@Override
 	public void addRecordSet(Graph graph, String recordSetURI, String datasetId) {
 		persistentStorage.addRecordSet(graph, recordSetURI, datasetId);
@@ -164,6 +184,28 @@ public class DictionaryCache implements DictionaryService {
 		diachronicDatasets.get(diachronicDatasetURI).addDatasetInstatiation(ds);*/
 	}
 	
+	/**
+	 * Adds a new schema set to an existing dataset.
+	 * @param graph The connection to the archive graph.
+	 * @param schemaSetURI The URI of the schema set to be added.
+	 * @param datasetId The URI of the dataset the schema set belongs.
+	 */
+	@Override
+	public void addSchemaSet(Graph graph, String schemaSetURI, String datasetId) {
+		persistentStorage.addSchemaSet(graph, schemaSetURI, datasetId);
+		/*RecordSet ds = new RDFRecordSet();			
+		ds.setId(recordSetURI);
+		datasetInstantiations.put(datasetId, ds);
+		diachronicDatasets.get(diachronicDatasetURI).addDatasetInstatiation(ds);*/
+	}
+	
+	/**
+	 * Adds a list of dataset version to an existing diachronic dataset. 
+	 * @param graph The connection to the archive graph.
+	 * @param list A list of RDF datasets to be added.
+	 * @param diachronicDatasetURI The URI of the diachronic dataset to be updated.
+	 * @param versionNumber The number of the new version(s) following a user-defined numbering convention.
+	 */
 	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, String diachronicDatasetURI, String versionNumber){
 		persistentStorage.addDatasetMetadata(graph, list, diachronicDatasetURI, versionNumber);
 		for(RDFDataset dataset : list){
@@ -172,6 +214,12 @@ public class DictionaryCache implements DictionaryService {
 		}
 	}
 	
+	/**
+	 * Adds a list of dataset version to an existing diachronic dataset. 
+	 * @param graph The connection to the archive graph.
+	 * @param list A list of RDF datasets to be added.
+	 * @param diachronicDatasetURI The URI of the diachronic dataset to be updated.	 
+	 */
 	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, String diachronicDatasetURI){
 			persistentStorage.addDatasetMetadata(graph, list, diachronicDatasetURI);
 			for(RDFDataset dataset : list){

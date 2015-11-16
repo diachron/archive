@@ -10,7 +10,8 @@
 				<li>'query'    : The URL-encoded query string expressed in SPARQL</li>
 				<li>'queryType : The query type (e.g. 'CONSTRUCT' or 'SELECT')</li>  
 			</ul>
-			<c:set var="baseURL" 
+                        <c:set var="url">${pageContext.request.requestURL}</c:set>
+			<c:set var="baseURL"
 				value="/" />
 			
 			<p>Example request: <br/>
