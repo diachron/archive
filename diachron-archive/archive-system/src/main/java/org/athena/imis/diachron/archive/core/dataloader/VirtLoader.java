@@ -202,11 +202,11 @@ class VirtLoader implements Loader {
 		Connection conn = null;
 		Statement stmt = null;
 		try{			
-			conn = StoreConnection.getConnection();											 
+			conn = StoreConnection.getConnection();
 		    stmt = conn.createStatement ();
 		    stmt.execute ("log_enable(3,1)");
 		    stmt.executeQuery("SPARQL CLEAR GRAPH <"+tempGraph+">");
-		    
+
 		}catch(Exception e){
 			logger.error(e.getMessage(), e);
 			Graph graph = StoreConnection.getGraph(tempGraph);	    
@@ -351,8 +351,7 @@ class VirtLoader implements Loader {
 			//register recordset
 			dict.addRecordSet(dictGraph, recordSet.toString(), dataset.toString());
 		}
-		vqe.close();	
-		dictGraph.close();
+		vqe.close();
 		query = "SELECT DISTINCT ?ss FROM <"+tempGraph+"> WHERE {?ss a <"+DiachronOntology.schemaSet+">}";
 		vqe = QueryExecutionFactory.create (query, model);
 		results = vqe.execSelect();
@@ -360,10 +359,11 @@ class VirtLoader implements Loader {
 			QuerySolution rs = results.next();
 			RDFNode schemaSet = rs.get("ss");
 			if(full)
-				insertSchemaSetTriples(graph, schemaSet.toString(), tempGraph, datasetURI);
+				insertSchemaSetTriples(graph, schemaSet.toString(), tempGraph);
 			dict.addSchemaSet(dictGraph, schemaSet.toString(), datasetURI);
 		}
 		vqe.close();
+		dictGraph.close();
 		
 		insertChangeSetTriples(model, tempGraph);		
 		
@@ -424,44 +424,44 @@ class VirtLoader implements Loader {
 	 * @param graph The connection VirtGraph to the archive.
 	 * @param schemaSet The URI of the schema set to upload.
 	 * @param tempGraph The URI of the temporary graph where the bulk loading has been performed.
-     * @param datasetURI
 	 */
-	private static void insertSchemaSetTriples(Graph graph, String schemaSet, String tempGraph, String datasetURI){
-        Graph graph1 = StoreConnection.getGraph(datasetURI);
-        GraphStore gs = GraphStoreFactory.create(graph1);
-        gs.addGraph(NodeFactory.createURI(datasetURI), graph1);
-        String query = "INSERT INTO <"+datasetURI+"> {" +
+	private static void insertSchemaSetTriples(Graph graph, String schemaSet, String tempGraph){
+		//System.out.println(recordSet.toString());
+		Graph graph1 = StoreConnection.getGraph(schemaSet);
+		GraphStore gs = GraphStoreFactory.create(graph1);
+		gs.addGraph(NodeFactory.createURI(schemaSet.toString()), graph1);
+        String query = "INSERT { GRAPH <"+schemaSet.toString()+"> {" +
                 "<"+schemaSet.toString()+"> ?p ?o" +
-                "} FROM <"+tempGraph+">  WHERE " +
-                "{<"+schemaSet.toString()+"> ?p ?o}";
+                "}} WHERE { GRAPH <"+tempGraph+"> " +
+                "{<"+schemaSet.toString()+"> ?p ?o}}";
 
         VirtGraph virt = StoreConnection.getVirtGraph();
         VirtuosoUpdateRequest vur = VirtuosoUpdateFactory.create(query, virt);
         vur.exec();
 
-		query = "INSERT INTO <"+datasetURI+"> {" +
+		query = "INSERT { GRAPH <"+schemaSet.toString()+"> {" +
 				"?o ?p2 ?o2" +
-			"} FROM <"+tempGraph+"> WHERE " +
-					"{<"+schemaSet.toString()+"> ?p ?o . ?o ?p2 ?o2}";
+			"}} WHERE { GRAPH <"+tempGraph+"> " +
+					"{<"+schemaSet.toString()+"> ?p ?o . ?o ?p2 ?o2}}";
         System.out.println(query);
         vur = VirtuosoUpdateFactory.create(query, virt);
         vur.exec();
 
 
-        query = "INSERT INTO <"+datasetURI+"> {" +
+        query = "INSERT { GRAPH <"+schemaSet.toString()+"> {" +
 				"?o ?p3 ?o3" +
-			"} FROM <"+tempGraph+"> WHERE " +
-					"{<"+schemaSet.toString()+"> ?p1 [ ?p2 ?o ]. ?o ?p3 ?o3.}";
+			"}} WHERE { GRAPH <"+tempGraph+"> " +
+					"{<"+schemaSet.toString()+"> ?p1 [ ?p2 ?o ]. ?o ?p3 ?o3.}}";
 
         vur = VirtuosoUpdateFactory.create(query, virt);
         vur.exec();
 
         // Previous query fetches component-like definition
         // But some may reference it using patterns like skos:inScheme (see datacube code list)
-        query = "INSERT INTO <"+datasetURI+"> {" +
+        query = "INSERT { GRAPH <"+schemaSet.toString()+"> {" +
                 "?s ?p5 ?o5" +
-                "} FROM <"+tempGraph+"> WHERE " +
-                "{<"+schemaSet.toString()+"> ?p1 [ ?p2 ?o ]. ?o ?p3 ?o3. ?s ?p4 ?o3. ?s ?p5 ?o5}";
+                "}} WHERE { GRAPH <"+tempGraph+"> " +
+                "{<"+schemaSet.toString()+"> ?p1 [ ?p2 ?o ]. ?o ?p3 ?o3. ?s ?p4 ?o3. ?s ?p5 ?o5}}";
 
         vur = VirtuosoUpdateFactory.create(query, virt);
         vur.exec();
