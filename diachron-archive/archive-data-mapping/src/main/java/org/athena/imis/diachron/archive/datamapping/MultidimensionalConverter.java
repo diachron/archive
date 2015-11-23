@@ -179,7 +179,8 @@ public class MultidimensionalConverter {
 							DiachronOntology.diachronResourcePrefix + "Record/"
 									+ obsID, DiachronOntology.record)
 					.addProperty(RDF.type,
-							DiachronOntology.multidimensionalObservation);
+							DiachronOntology.multidimensionalObservation)
+					.addProperty(DiachronOntology.subject, obs.asResource());
 			RDFNode p = rs.get("p");
 			RDFNode o = rs.get("o");
 			String rattID = DigestUtils.md5Hex(p.toString() + o.toString());
