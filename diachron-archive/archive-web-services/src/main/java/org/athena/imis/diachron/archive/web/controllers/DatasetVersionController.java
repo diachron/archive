@@ -69,7 +69,7 @@ public class DatasetVersionController {
 	
 	        	// Parse the request
 	        	FileItemIterator iter = upload.getItemIterator(request);
-	        	
+
 	        	String diachronicDatasetURI = null;
 	        	String rdfFormat = null;
 	        	String versionNumber = "";
@@ -96,7 +96,7 @@ public class DatasetVersionController {
 	        	        	// Process the input stream
 	        	        	if (diachronicDatasetURI != null) {
 	        	        		logger.info("loading DatasetVersion started");
-	        	        		String res = dataStatement.loadData(stream, diachronicDatasetURI, rdfFormat, versionNumber);	        	        		
+	        	        		String res = dataStatement.loadData(stream, diachronicDatasetURI, rdfFormat, versionNumber);
 	        	        		logger.info("loading DatasetVersion finished");
 	        	        		resp.setData(res);
 	        	        		resp.setSuccess(true);
@@ -157,21 +157,21 @@ public class DatasetVersionController {
     	logger.info("deleteDiachronicDatasetVersion called");
 
         Response resp = new Response();
-       
+
     	try{
-    		
+
     		dataStatement.removeDataset(request.getParameter("datasetURI"));
-        	
+
     	}
     	catch(Exception e){
-    		
+
     		logger.error(e.getMessage(),e);
-    		
+
         	resp.setSuccess(false);
-        	
+
         	resp.setMessage(e.getMessage());
     	}
-    	
+
 
         return resp;
     }

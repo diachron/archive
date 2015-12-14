@@ -75,16 +75,16 @@ class VirtLoader implements Loader {
 	    	String datasetURI ;
 	    	boolean fullyMaterialized;
 	    	if(optimizer.getStrategy() == 1){
-	    		fullyMaterialized = true;	    		
+	    		fullyMaterialized = true;
 	    	}
 	    	else{
-	    		fullyMaterialized = false;	    		
+	    		fullyMaterialized = false;
 	    	}
-	    	
+
 	    	datasetURI = splitDataset(tempGraph, diachronicDatasetURI, "", fullyMaterialized);
-	    	
+
 	    	//split the dataset into the corresponding named graphs
-			
+
 			
 			//add the new dataset to the cache
 			DictionaryService dictService = StoreFactory.createDictionaryService();
@@ -99,13 +99,13 @@ class VirtLoader implements Loader {
 			
 			//update the statistics for this dataset
 			DataStatistics.getInstance().updateStatistics(diachronicDatasetURI);
-												
+
 			
 			return datasetURI;
 		} catch (Exception e) {					
 			throw e;
 		}
-	   
+
 		
 	    
 	}
@@ -125,13 +125,13 @@ class VirtLoader implements Loader {
 	    	//split the dataset into the corresponding named graphs
 	    	StorageOptimizer optimizer = new StorageOptimizer(tempGraph);
 	    	optimizer.applyStrategy();
-	    	String datasetURI ; 
+	    	String datasetURI ;
 	    	boolean fullyMaterialized;
 	    	if(optimizer.getStrategy() == 1){
-	    		fullyMaterialized = true;	    		
+	    		fullyMaterialized = true;
 	    	}
 	    	else{
-	    		fullyMaterialized = false;	    		
+	    		fullyMaterialized = false;
 	    	}
 	    	datasetURI = splitDataset(tempGraph, diachronicDatasetURI, versionNumber, fullyMaterialized);
 			//add the new dataset to the cache
@@ -147,10 +147,10 @@ class VirtLoader implements Loader {
 			
 			//update the statistics for this dataset
 			DataStatistics.getInstance().updateStatistics(diachronicDatasetURI);
-									
+
 			return datasetURI;
-			
-		} catch (Exception e) {					
+
+		} catch (Exception e) {
 			throw e;
 		}
 	    /*finally {
@@ -202,11 +202,11 @@ class VirtLoader implements Loader {
 		Connection conn = null;
 		Statement stmt = null;
 		try{			
-			conn = StoreConnection.getConnection();											 
+			conn = StoreConnection.getConnection();
 		    stmt = conn.createStatement ();
 		    stmt.execute ("log_enable(3,1)");
 		    stmt.executeQuery("SPARQL CLEAR GRAPH <"+tempGraph+">");
-		    
+
 		}catch(Exception e){
 			logger.error(e.getMessage(), e);
 			Graph graph = StoreConnection.getGraph(tempGraph);	    
@@ -306,7 +306,7 @@ class VirtLoader implements Loader {
 	 * @param diachronicDatasetURI	the URI of the diachronic dataset of which a new version is created
 	 * @throws Exception
 	 */
-	private static String splitDataset(String tempGraph, String diachronicDatasetURI, String versionNumber, boolean full) throws Exception{				
+	private static String splitDataset(String tempGraph, String diachronicDatasetURI, String versionNumber, boolean full) throws Exception{
 		
 		Graph graph = StoreConnection.getGraph(tempGraph);	
 		Model model = StoreConnection.getJenaModel(tempGraph);
@@ -331,28 +331,27 @@ class VirtLoader implements Loader {
 		/*for(RDFDataset d : newDatasetVersions)
 			System.out.println("xxx " + d.getId());*/
 		DictionaryService dict = StoreFactory.createDictionaryService();
-		Graph dictGraph = StoreConnection.getGraph(RDFDictionary.getDictionaryNamedGraph());		
+		Graph dictGraph = StoreConnection.getGraph(RDFDictionary.getDictionaryNamedGraph());
 		if(versionNumber.equals(""))
 			dict.addDatasetMetadata(dictGraph, newDatasetVersions, diachronicDatasetURI);
 		else
 			dict.addDatasetMetadata(dictGraph, newDatasetVersions, diachronicDatasetURI, versionNumber);
 		//This will link the dataset version to its diachronic dataset, if this information exists in the stream.
-							
+
 		query = "SELECT DISTINCT ?rs ?ds FROM <"+tempGraph+"> WHERE {?ds <"+DiachronOntology.hasRecordSet+"> ?rs }";//. ?rs a <"+DiachronOntology.recordSet+">}";		
 		vqe = QueryExecutionFactory.create (query, model);
 		results = vqe.execSelect();
-		
+
 		while(results.hasNext()){
 			QuerySolution rs = results.next();
 			RDFNode recordSet = rs.get("rs");
 			RDFNode dataset = rs.get("ds");
 			if(full)
-				insertRecordSetTriples(graph, recordSet.toString(), tempGraph);	
+				insertRecordSetTriples(graph, recordSet.toString(), tempGraph);
 			//register recordset
 			dict.addRecordSet(dictGraph, recordSet.toString(), dataset.toString());
 		}
-		vqe.close();	
-		dictGraph.close();
+		vqe.close();
 		query = "SELECT DISTINCT ?ss FROM <"+tempGraph+"> WHERE {?ss a <"+DiachronOntology.schemaSet+">}";
 		vqe = QueryExecutionFactory.create (query, model);
 		results = vqe.execSelect();
@@ -363,10 +362,9 @@ class VirtLoader implements Loader {
 				insertSchemaSetTriples(graph, schemaSet.toString(), tempGraph);
 			dict.addSchemaSet(dictGraph, schemaSet.toString(), datasetURI);
 		}
-		vqe.close();		
+		vqe.close();
+		dictGraph.close();
 		
-		
-						
 		insertChangeSetTriples(model, tempGraph);		
 		
 		
@@ -428,25 +426,46 @@ class VirtLoader implements Loader {
 	 * @param tempGraph The URI of the temporary graph where the bulk loading has been performed.
 	 */
 	private static void insertSchemaSetTriples(Graph graph, String schemaSet, String tempGraph){
-		
-		String query = "INSERT INTO <"+schemaSet.toString()+"> {" +
-							"<"+schemaSet.toString()+"> ?p ?o" +
-						"} FROM <"+tempGraph+"> WHERE " +
-								"{<"+schemaSet.toString()+"> ?p ?o}";
-		UpdateAction.parseExecute( query, graph);
-		
-		query = "INSERT INTO <"+schemaSet.toString()+"> {" +
+		//System.out.println(recordSet.toString());
+		Graph graph1 = StoreConnection.getGraph(schemaSet);
+		GraphStore gs = GraphStoreFactory.create(graph1);
+		gs.addGraph(NodeFactory.createURI(schemaSet.toString()), graph1);
+        String query = "INSERT { GRAPH <"+schemaSet.toString()+"> {" +
+                "<"+schemaSet.toString()+"> ?p ?o" +
+                "}} WHERE { GRAPH <"+tempGraph+"> " +
+                "{<"+schemaSet.toString()+"> ?p ?o}}";
+
+        VirtGraph virt = StoreConnection.getVirtGraph();
+        VirtuosoUpdateRequest vur = VirtuosoUpdateFactory.create(query, virt);
+        vur.exec();
+
+		query = "INSERT { GRAPH <"+schemaSet.toString()+"> {" +
 				"?o ?p2 ?o2" +
-			"} FROM <"+tempGraph+"> WHERE " +
-					"{<"+schemaSet.toString()+"> ?p ?o . ?o ?p2 ?o2}";
-		UpdateAction.parseExecute( query, graph);
-		
-		query = "INSERT INTO <"+schemaSet.toString()+"> {" +
+			"}} WHERE { GRAPH <"+tempGraph+"> " +
+					"{<"+schemaSet.toString()+"> ?p ?o . ?o ?p2 ?o2}}";
+        System.out.println(query);
+        vur = VirtuosoUpdateFactory.create(query, virt);
+        vur.exec();
+
+
+        query = "INSERT { GRAPH <"+schemaSet.toString()+"> {" +
 				"?o ?p3 ?o3" +
-			"} FROM <"+tempGraph+"> WHERE " +
-					"{<"+schemaSet.toString()+"> ?p1 [ ?p2 ?o ]. ?o ?p3 ?o3.}";
-		UpdateAction.parseExecute( query, graph);
-	}
+			"}} WHERE { GRAPH <"+tempGraph+"> " +
+					"{<"+schemaSet.toString()+"> ?p1 [ ?p2 ?o ]. ?o ?p3 ?o3.}}";
+
+        vur = VirtuosoUpdateFactory.create(query, virt);
+        vur.exec();
+
+        // Previous query fetches component-like definition
+        // But some may reference it using patterns like skos:inScheme (see datacube code list)
+        query = "INSERT { GRAPH <"+schemaSet.toString()+"> {" +
+                "?s ?p5 ?o5" +
+                "}} WHERE { GRAPH <"+tempGraph+"> " +
+                "{<"+schemaSet.toString()+"> ?p1 [ ?p2 ?o ]. ?o ?p3 ?o3. ?s ?p4 ?o3. ?s ?p5 ?o5}}";
+
+        vur = VirtuosoUpdateFactory.create(query, virt);
+        vur.exec();
+    }
 	
 	/**
 	 * Inserts the triples associated with the change set defined in the input temporary graph.

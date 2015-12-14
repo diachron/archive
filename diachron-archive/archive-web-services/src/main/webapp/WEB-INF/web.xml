@@ -36,7 +36,6 @@
        <listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>
 	</listener>
 
-
  	<servlet>
 		<servlet-name>starter</servlet-name>
 		<servlet-class>org.athena.imis.diachron.archive.web.AppStarter</servlet-class>
@@ -62,7 +61,6 @@
 		<servlet-name>spring</servlet-name>
 		<url-pattern>/</url-pattern>
 	</servlet-mapping>
-	
 	
 	<!-- <filter>
 	    <filter-name>MultipartFilter</filter-name>
