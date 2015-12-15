@@ -20,7 +20,9 @@ import org.athena.imis.diachron.archive.models.DiachronicDataset;
 import org.athena.imis.diachron.archive.models.ModelsFactory;
 import org.athena.imis.diachron.archive.models.RDFDataset;
 import org.athena.imis.diachron.archive.models.RDFRecordSet;
+import org.athena.imis.diachron.archive.models.RDFSchemaSet;
 import org.athena.imis.diachron.archive.models.RecordSet;
+import org.athena.imis.diachron.archive.models.SchemaSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +40,7 @@ import com.hp.hpl.jena.update.UpdateFactory;
 import com.hp.hpl.jena.update.UpdateProcessor;
 import com.hp.hpl.jena.update.UpdateRequest;
 import com.hp.hpl.jena.vocabulary.DCTerms;
-import com.hp.hpl.jena.vocabulary.XSD;
+import com.hp.hpl.jena.vocabulary.RDF;
 
 /**
  * 
@@ -157,6 +159,7 @@ public class RDFDictionary implements DictionaryService {
 					+ "<"+datasetId+"> <"+DiachronOntology.isFullyMaterialized+"> ?fm ; "
 							+ "<"+DiachronOntology.hasRecordSet+"> ?rs . "
 							+ "OPTIONAL { <"+datasetId+"> <"+DiachronOntology.addedGraph+"> ?added ; <"+DiachronOntology.deletedGraph+"> ?deleted }"
+							+ "OPTIONAL { <"+datasetId+"> <"+DiachronOntology.hasSchemaSet+"> ?ss  }"
 							+ "}"
 							);
 			qin.setQueryType("SELECT");
@@ -178,6 +181,12 @@ public class RDFDictionary implements DictionaryService {
 				RecordSet rset = new RDFRecordSet();
 				rset.setId(qsin.get("rs").toString());
 				ds.setRecordSet(rset);
+				
+				if(qsin.contains("ss")){
+					SchemaSet sset = new RDFSchemaSet();
+					sset.setId(qsin.get("ss").toString());
+					ds.setSchemaSet(sset);
+				}
 				if(!ds.isFullyMaterialized()){
 					
 					String qfm = ""
@@ -356,12 +365,10 @@ public class RDFDictionary implements DictionaryService {
 		Calendar cal = GregorianCalendar.getInstance();
 		String timestamp = ResourceFactory.createTypedLiteral(cal).getString();		
 		String query = "INSERT DATA { GRAPH <"+RDFDictionary.dictionaryNamedGraph+"> " +
-				"{ <"+diachronicDatasetURI+"> <"+DiachronOntology.hasInstantiation+"> <"+datasetURI+"> ."
-				//+ "<"+datasetURI+">  <"+DiachronOntology.generatedAtTime+"> \""+timestamp+"\" " 
+				"{ <"+diachronicDatasetURI+"> <"+DiachronOntology.hasInstantiation+"> <"+datasetURI+"> ."			
 				+ "<"+datasetURI+">  <"+DiachronOntology.creationTime.getURI()+"> \""+timestamp+"\" ; "
 				+ " <"+DiachronOntology.isFullyMaterialized+"> \""+fullyMaterialized+"\" "				
-				+ "}}";
-		//System.out.println(query);
+				+ "}}";		
 		GraphStore gs = GraphStoreFactory.create(graph);
 		gs.addGraph(NodeFactory.createURI(RDFDictionary.getDictionaryNamedGraph()), graph);
 		UpdateRequest queryObj = UpdateFactory.create(query); 
@@ -380,7 +387,7 @@ public class RDFDictionary implements DictionaryService {
 	public void addRecordSet(Graph graph, String recordSetURI, String datasetId) {
 		//TODO refactor to remove the Graph input param
 		String query = "INSERT DATA { GRAPH <"+RDFDictionary.dictionaryNamedGraph+"> " +
-				"{ <"+datasetId+"> <"+DiachronOntology.hasRecordSet+"> <"+recordSetURI+"> }}";
+				"{ <"+datasetId+"> <"+DiachronOntology.hasRecordSet+"> <"+recordSetURI+"> . <"+recordSetURI+"> <"+RDF.type+"> <"+DiachronOntology.recordSet+">}}";
 		GraphStore gs = GraphStoreFactory.create(graph);
 		gs.addGraph(NodeFactory.createURI(RDFDictionary.getDictionaryNamedGraph()), graph);
 		UpdateRequest queryObj = UpdateFactory.create(query); 
@@ -413,18 +420,36 @@ public class RDFDictionary implements DictionaryService {
 	 * @param diachronicDatasetURI The URI of the diachronic dataset.
 	 * @param versionNumber An optional version number to be associated with the dataset versions.
 	 */
-	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, String diachronicDatasetURI, String versionNumber){
+	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, 
+			String diachronicDatasetURI, 
+			String versionNumber, 
+			boolean fullyMaterialized
+			){
 			
 		
 		GraphStore gs = GraphStoreFactory.create(graph);
 		gs.addGraph(NodeFactory.createURI(RDFDictionary.getDictionaryNamedGraph()), graph);
 		Calendar cal = GregorianCalendar.getInstance();
 		String timestamp = ResourceFactory.createTypedLiteral(cal).getString();
-		String query = "INSERT DATA { GRAPH <"+RDFDictionary.dictionaryNamedGraph+"> " +
-				"{";
-		UpdateRequest queryObj;
-		UpdateProcessor qexec;		
+		String query ;		
+		
+		gs.addGraph(NodeFactory.createURI(RDFDictionary.getDictionaryNamedGraph()), graph);
+		UpdateRequest queryObj ;//= UpdateFactory.create(query); 
+		UpdateProcessor qexec ;//= UpdateExecutionFactory.create(queryObj,gs); 
+			
+				
 		for(RDFDataset dataset : list){
+			
+			query = "INSERT DATA { GRAPH <"+RDFDictionary.dictionaryNamedGraph+"> " +
+					"{ <"+diachronicDatasetURI+"> <"+DiachronOntology.hasInstantiation+"> <"+dataset.getId()+"> ."			
+					+ "<"+dataset.getId()+">  <"+DiachronOntology.creationTime.getURI()+"> \""+timestamp+"\" ; "
+					+ " <"+DiachronOntology.isFullyMaterialized+"> \""+fullyMaterialized+"\" "				
+					+ "}}";		
+			
+			queryObj = UpdateFactory.create(query); 
+			qexec = UpdateExecutionFactory.create(queryObj,gs); 
+			qexec.execute(); 			
+			
 			query = "INSERT DATA { GRAPH <"+RDFDictionary.dictionaryNamedGraph+"> {" ;					
 			query += "<"+dataset.getId()+"> <"+DCTerms.created.getURI().toString()+"> \""+timestamp+"\" .";
 			query += " } }";			
@@ -458,10 +483,12 @@ public class RDFDictionary implements DictionaryService {
 				qexec = UpdateExecutionFactory.create(queryObj,gs); 
 				qexec.execute();
 			}	
-			dataset.setMetaProperty(DCTerms.created.getURI().toString(), timestamp);
+			/*dataset.setMetaProperty(DCTerms.created.getURI().toString(), timestamp);
 			if(!versionNumber.equals("")){								
 				dataset.setMetaProperty(DCTerms.hasVersion.getURI().toString(), versionNumber);
-			}
+			}*/
+			dataset.setMetaProperties(getDatasetMetadata(dataset.getId()));
+			
 		}
 		
 		
@@ -492,7 +519,8 @@ public class RDFDictionary implements DictionaryService {
 			    	object = "\""+object+"\"";
 			    }
 				query += object + " . ";
-			}		
+			}
+			dataset.setMetaProperties(getDatasetMetadata(dataset.getId()));
 		}
 		query += " } }";						
 		GraphStore gs = GraphStoreFactory.create(graph);
@@ -500,6 +528,7 @@ public class RDFDictionary implements DictionaryService {
 		UpdateRequest queryObj = UpdateFactory.create(query); 
 		UpdateProcessor qexec = UpdateExecutionFactory.create(queryObj,gs); 
 		qexec.execute(); 
+		
 	
 		
 	}

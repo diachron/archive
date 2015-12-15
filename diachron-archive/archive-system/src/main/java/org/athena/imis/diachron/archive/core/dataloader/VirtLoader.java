@@ -16,6 +16,7 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.athena.imis.diachron.archive.core.datamanager.StoreConnection;
 import org.athena.imis.diachron.archive.core.loggers.DataStatistics;
 import org.athena.imis.diachron.archive.models.DiachronOntology;
+import org.athena.imis.diachron.archive.models.ModelsFactory;
 import org.athena.imis.diachron.archive.models.RDFDataset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -135,19 +136,19 @@ class VirtLoader implements Loader {
 	    	}
 	    	datasetURI = splitDataset(tempGraph, diachronicDatasetURI, versionNumber, fullyMaterialized);
 			//add the new dataset to the cache
-			DictionaryService dictService = StoreFactory.createDictionaryService();
+			/*DictionaryService dictService = StoreFactory.createDictionaryService();
 			Graph graph = StoreConnection.getGraph(RDFDictionary.dictionaryNamedGraph);
 			if(null != datasetURI) {
 				dictService.addDataset(graph, diachronicDatasetURI, datasetURI, fullyMaterialized);
 			}
-			graph.close();
+			graph.close();*/
 			
 			//empty the temp graph
 			clearStageGraph(tempGraph);
 			
 			//update the statistics for this dataset
 			DataStatistics.getInstance().updateStatistics(diachronicDatasetURI);
-									
+												
 			return datasetURI;
 			
 		} catch (Exception e) {					
@@ -324,18 +325,18 @@ class VirtLoader implements Loader {
 		if(datasetURI == null) 
 			throw new Exception("No dataset instantiation URI in input.");
 		
-		//String createdURI = diachronicDatasetURI;
 		diachronicDatasetURI = validateDiachronicDatasetURI(tempGraph, diachronicDatasetURI);				
-		//System.out.println(diachronicDatasetURI);
+		
 		ArrayList<RDFDataset> newDatasetVersions = selectDatasetMetadata(model, tempGraph, diachronicDatasetURI);
-		/*for(RDFDataset d : newDatasetVersions)
-			System.out.println("xxx " + d.getId());*/
+		
 		DictionaryService dict = StoreFactory.createDictionaryService();
+		
 		Graph dictGraph = StoreConnection.getGraph(RDFDictionary.getDictionaryNamedGraph());		
+		
 		if(versionNumber.equals(""))
 			dict.addDatasetMetadata(dictGraph, newDatasetVersions, diachronicDatasetURI);
 		else
-			dict.addDatasetMetadata(dictGraph, newDatasetVersions, diachronicDatasetURI, versionNumber);
+			dict.addDatasetMetadata(dictGraph, newDatasetVersions, diachronicDatasetURI, versionNumber, full);
 		//This will link the dataset version to its diachronic dataset, if this information exists in the stream.
 							
 		query = "SELECT DISTINCT ?rs ?ds FROM <"+tempGraph+"> WHERE {?ds <"+DiachronOntology.hasRecordSet+"> ?rs }";//. ?rs a <"+DiachronOntology.recordSet+">}";		
@@ -350,6 +351,7 @@ class VirtLoader implements Loader {
 				insertRecordSetTriples(graph, recordSet.toString(), tempGraph);	
 			//register recordset
 			dict.addRecordSet(dictGraph, recordSet.toString(), dataset.toString());
+			
 		}
 		vqe.close();	
 		dictGraph.close();
@@ -372,6 +374,7 @@ class VirtLoader implements Loader {
 		
 		model.close();	
 		graph.close();
+				
 		return datasetURI;
 		
 	}
@@ -561,33 +564,7 @@ class VirtLoader implements Loader {
 	 */
 	private static ArrayList<RDFDataset> selectDatasetMetadata(Model model, String tempGraph, String diachronicDatasetURI){
 				
-		//Calendar cal = GregorianCalendar.getInstance();
-		//String timestamp = ResourceFactory.createTypedLiteral(cal).getString();
-		/*ArrayList<RDFDataset> list = new ArrayList<RDFDataset>();
-		String query = "SELECT ?dataset ?p ?o FROM <"+tempGraph+"> WHERE { ";
-		query += "?dataset a <"+DiachronOntology.dataset+"> ; " +
-							 "?p ?o} ORDER BY ?dataset";
-		
-		QueryExecution vqe = QueryExecutionFactory.create (query, model);
-		ResultSet results = vqe.execSelect();		
-		String previousDatasetId = null;
-		ArrayList<String[]> metadata = new ArrayList<String[]>();
-		RDFDataset dataset = new RDFDataset();
-		while(results.hasNext()){			
-			QuerySolution rs = results.next();
-			String datasetId = rs.get("dataset").toString();
-			if(datasetId!=previousDatasetId){
-				dataset.setMetadata(metadata);
-				list.add(dataset);
-				dataset = new RDFDataset();								
-				dataset.setId(datasetId);								
-				metadata = new ArrayList<String[]>();
-			}
-			metadata.add(new String[] {rs.get("p").toString(), rs.get("o").toString()});
-			//dataset.se
-			previousDatasetId = datasetId;
-		}
-		vqe.close();*/
+	
 		ArrayList<RDFDataset> list = new ArrayList<RDFDataset>();
 		String query = "SELECT DISTINCT ?dataset FROM <"+tempGraph+"> WHERE { ";
 		query += "?dataset a <"+DiachronOntology.dataset+"> } ";
@@ -607,39 +584,16 @@ class VirtLoader implements Loader {
 			ResultSet metaResults = metaVqe.execSelect();
 			ArrayList<String[]> metadata = new ArrayList<String[]>();
 			while(metaResults.hasNext()){			
-				QuerySolution metaRs = metaResults.next();				
-				//metadata.add(new String[] {metaRs.get("p").toString(), metaRs.get("o").toString()});
+				QuerySolution metaRs = metaResults.next();								
 				dataset.setMetaProperty(metaRs.get("p").toString(), metaRs.get("o").toString());
 			}
 			metaVqe.close();
 			list.add(dataset);
 		}
 		vqe.close();		
-		//model.close();
+		
 		return list;
-		/*String query = "INSERT INTO <"+RDFDictionary.dictionaryNamedGraph+"> " +
-				"{" +
-					"?dataset ?p ?o ; <"+DiachronOntology.generatedAtTime+"> \""+timestamp+"\"^^xsd:dateTime " +
-				"} " +
-			"FROM <"+tempGraph+"> " +
-				"WHERE {" +
-					"?dataset a <"+DiachronOntology.dataset+"> ; " +
-							 "?p ?o" +
-						"}";	
-		VirtuosoUpdateRequest vur = VirtuosoUpdateFactory.create(query, graph);
-		vur.exec();*/
-		/*VirtuosoQueryExecution vqe = VirtuosoQueryExecutionFactory.create (query, graph);		
-		vqe.execSelect();
-		String queryDiachronic = "INSERT INTO <"+RDFDictionary.dictionaryNamedGraph+"> " +
-				"{" +
-					"<"+diachronicDatasetURI+"> ?p ?o" +
-				"} " +
-				"FROM <"+tempGraph+"> " +
-				"WHERE {" +					
-						 "<"+diachronicDatasetURI+"> ?p ?o" +
-					   "}";
-		VirtuosoQueryExecution vqeDiach = VirtuosoQueryExecutionFactory.create (queryDiachronic, graph);
-		vqeDiach.execSelect();		*/
+		
 	}
 	
 	/**
@@ -677,8 +631,10 @@ class VirtLoader implements Loader {
 					diachronicDatasetURI = existingDiachronicDatasetURI;													
 			}
 		}
+		
 		vqe.close();
 		model.close();
+		
 		return diachronicDatasetURI;
 	}
 	

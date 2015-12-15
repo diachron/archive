@@ -7,7 +7,12 @@ import java.util.List;
 
 import org.athena.imis.diachron.archive.models.Dataset;
 import org.athena.imis.diachron.archive.models.DiachronicDataset;
+import org.athena.imis.diachron.archive.models.ModelsFactory;
 import org.athena.imis.diachron.archive.models.RDFDataset;
+import org.athena.imis.diachron.archive.models.RDFRecordSet;
+import org.athena.imis.diachron.archive.models.RDFSchemaSet;
+import org.athena.imis.diachron.archive.models.RecordSet;
+import org.athena.imis.diachron.archive.models.SchemaSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,6 +77,28 @@ public class DictionaryCache implements DictionaryService {
 		}
         
 	}
+	/**
+	 * Updates the cache and populates it with objects from the dictionary of datasets.
+	 */
+	public static void refresh() {		
+			logger.info("UPDATING DICTIONARY");
+	        
+			DictionaryService store = StoreFactory.createPersDictionaryService();
+			Collection<DiachronicDataset> dDatasets = store.getListOfDiachronicDatasets();			
+			for(DiachronicDataset dds: dDatasets) {				
+				diachronicDatasets.put(dds.getId(), dds);				
+				List<Dataset> datasets = store.getListOfDatasets(dds);					
+				dds.setMetaProperties(store.getDiachronicDatasetMetadata(dds.getId()));
+				for (Dataset ds : datasets) {
+					dds.addDatasetInstatiation(ds);
+					datasetInstantiations.put(ds.getId(), ds);					
+				}
+				
+			}
+						
+			logger.info("DICTIONARY UPDATED");		
+        
+	}
 	
 	/**
 	 * Creates a new diachronic dataset entry in the cache.
@@ -121,6 +148,17 @@ public class DictionaryCache implements DictionaryService {
 			return null;		
 	}
 
+	/**
+	 * Fetches the diachronic dataset metadata of the diachronic dataset defined in the input parameter.
+	 * 
+	 * @param diachronicDatasetId The diachronic dataset URI whose metadata are to be returned.
+	 * @return A Hashtable with the diachronic dataset's metadata. 
+	 */
+	public Hashtable<String, Object> getDatasetMetadata(
+			String datasetId) {
+		return getDatasetMetadata(datasetId);
+	}
+	
 	/**
 	 * Fetches the diachronic dataset metadata of the diachronic dataset defined in the input parameter.
 	 * 
@@ -178,10 +216,10 @@ public class DictionaryCache implements DictionaryService {
 	@Override
 	public void addRecordSet(Graph graph, String recordSetURI, String datasetId) {
 		persistentStorage.addRecordSet(graph, recordSetURI, datasetId);
-		/*RecordSet ds = new RDFRecordSet();			
+		RecordSet ds = new RDFRecordSet();			
 		ds.setId(recordSetURI);
-		datasetInstantiations.put(datasetId, ds);
-		diachronicDatasets.get(diachronicDatasetURI).addDatasetInstatiation(ds);*/
+		getDataset(datasetId).setRecordSet(ds);
+		
 	}
 	
 	/**
@@ -193,6 +231,9 @@ public class DictionaryCache implements DictionaryService {
 	@Override
 	public void addSchemaSet(Graph graph, String schemaSetURI, String datasetId) {
 		persistentStorage.addSchemaSet(graph, schemaSetURI, datasetId);
+		SchemaSet ds = new RDFSchemaSet();			
+		ds.setId(schemaSetURI);
+		getDataset(datasetId).setSchemaSet(ds);
 		/*RecordSet ds = new RDFRecordSet();			
 		ds.setId(recordSetURI);
 		datasetInstantiations.put(datasetId, ds);
@@ -206,12 +247,17 @@ public class DictionaryCache implements DictionaryService {
 	 * @param diachronicDatasetURI The URI of the diachronic dataset to be updated.
 	 * @param versionNumber The number of the new version(s) following a user-defined numbering convention.
 	 */
-	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, String diachronicDatasetURI, String versionNumber){
-		persistentStorage.addDatasetMetadata(graph, list, diachronicDatasetURI, versionNumber);
+	public void addDatasetMetadata(Graph graph, ArrayList<RDFDataset> list, String diachronicDatasetURI, String versionNumber, boolean fullyMaterialized){		
+		
+		persistentStorage.addDatasetMetadata(graph, list, diachronicDatasetURI, versionNumber, fullyMaterialized);		
+		
 		for(RDFDataset dataset : list){
-			datasetInstantiations.put(dataset.getId(), dataset);
-			diachronicDatasets.get(diachronicDatasetURI).addDatasetInstatiation(dataset);
+			datasetInstantiations.put(dataset.getId(), dataset);			
+			dataset.setDiachronicDataset(diachronicDatasets.get(diachronicDatasetURI));
+			dataset.setFullyMaterialized(fullyMaterialized);
+			diachronicDatasets.get(diachronicDatasetURI).addDatasetInstatiation(dataset);			
 		}
+		
 	}
 	
 	/**
@@ -227,5 +273,7 @@ public class DictionaryCache implements DictionaryService {
 				diachronicDatasets.get(diachronicDatasetURI).addDatasetInstatiation(dataset);
 			}
 	}
+	
+	
 
 }

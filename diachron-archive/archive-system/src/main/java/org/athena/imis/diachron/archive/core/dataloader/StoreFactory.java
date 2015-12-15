@@ -7,11 +7,15 @@ package org.athena.imis.diachron.archive.core.dataloader;
  */
 public class StoreFactory {
 	
+	//private static DictionaryService dict = null;
 	/**
 	 * Creates a new Dictionary Cache and RDF dictionary (persistent storage) object. 
 	 * @return
 	 */
 	public static DictionaryService createDictionaryService() {
+		/*if(dict == null)
+			dict = new DictionaryCache(new RDFDictionary());					
+		return dict;*/
 		return new DictionaryCache(new RDFDictionary());
 	}
 	
