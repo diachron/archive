@@ -627,8 +627,15 @@ class VirtLoader implements Loader {
 			
 			if(!existingDiachronicDatasetURI.equals(diachronicDatasetURI) && !diachronicDatasetURI.equals("")){ 				
 				DictionaryService dict = StoreFactory.createDictionaryService();
-				if(null != dict.getDiachronicDataset(existingDiachronicDatasetURI))
-					diachronicDatasetURI = existingDiachronicDatasetURI;													
+				if(null != dict.getDiachronicDataset(existingDiachronicDatasetURI)){
+					diachronicDatasetURI = existingDiachronicDatasetURI;
+					System.out.println("Diachronic URI in the file already existed in the cache.");
+				}
+				System.out.println("Diachronic URI param: " + diachronicDatasetURI);
+				if(dict.getDiachronicDataset(diachronicDatasetURI) == null ){
+					System.out.println("Diachronic URI null (not in cache)");
+					
+				}
 			}
 		}
 		

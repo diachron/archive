@@ -11,6 +11,7 @@ import java.util.Set;
 public class RDFDataset extends AbstractDiachronEntity implements Dataset  {
 	
 	private RecordSet recSet;
+	private SchemaSet schSet;
 	private String changeSetOld;
 	private String changeSetNew;
 	private boolean fullyMaterialized;
@@ -63,6 +64,22 @@ public class RDFDataset extends AbstractDiachronEntity implements Dataset  {
 	 */
 	public void setRecordSet(RecordSet recSet) {
 		this.recSet = recSet;
+	}
+	
+	/**
+	 * Fetches the record set of this RDFDataset.
+	 * @return the recSet
+	 */
+	public SchemaSet getSchemaSet() {
+		return schSet;
+	}
+
+	/**
+	 * Sets the record set of this RDFDataset.
+	 * @param recSet the recSet to set
+	 */
+	public void setSchemaSet(SchemaSet schSet) {
+		this.schSet = schSet;
 	}
 
 

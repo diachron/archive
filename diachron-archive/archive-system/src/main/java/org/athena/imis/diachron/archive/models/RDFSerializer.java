@@ -69,6 +69,7 @@ public class RDFSerializer implements Serializer {
 		Iterator<Dataset> listIt = (Iterator<Dataset>) list.iterator();
 		while (listIt.hasNext()) {
 			Dataset dd = listIt.next();
+			System.out.println(dd.getMetaProperties().toString());
 			JSONObject result = new JSONObject();
 			JSONObject row = new JSONObject();
 			

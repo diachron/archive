@@ -11,6 +11,8 @@ import java.util.Set;
 public interface Dataset extends DiachronEntity {
 	public RecordSet getRecordSet();	
 	public void setRecordSet(RecordSet rs);
+	public SchemaSet getSchemaSet();	
+	public void setSchemaSet(SchemaSet rs);
 	public DiachronicDataset getDiachronicDataset();
 	public void setDiachronicDataset(DiachronicDataset diachronicDataset);
 	//public void setMetadata(List<String[]> metadataList);
