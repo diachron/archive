@@ -3,13 +3,11 @@ package org.athena.imis.diachron.archive.core.dataloader;
 import org.athena.imis.diachron.archive.core.datamanager.StoreConnection;
 import org.athena.imis.diachron.archive.models.DiachronOntology;
 
-import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryExecutionFactory;
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.RDFNode;
 
 /**
  * Selects the best storage policy for an incoming dataset. It is invoked by the Loader class.
@@ -116,8 +114,8 @@ public class StorageOptimizer {
 		while(results.hasNext()){
 			QuerySolution rs = results.next();
 			size  = rs.getLiteral("count").getInt();
-		}
-		
+		}		
+		model.close();
 		return size;
 	}
 	
@@ -137,7 +135,7 @@ public class StorageOptimizer {
 			QuerySolution rs = results.next();
 			size  = rs.getLiteral("count").getInt();
 		}
-		
+		model.close();
 		return size;
 	}
 	
@@ -157,7 +155,7 @@ public class StorageOptimizer {
 			QuerySolution rs = results.next();
 			size  = rs.getLiteral("count").getInt();
 		}
-		
+		model.close();
 		return size;
 	}
 	
@@ -177,7 +175,7 @@ public class StorageOptimizer {
 			QuerySolution rs = results.next();
 			size  = rs.getLiteral("count").getInt();
 		}
-		
+		model.close();
 		return size;
 	}
 	
@@ -197,7 +195,7 @@ public class StorageOptimizer {
 			QuerySolution rs = results.next();
 			size  = rs.getLiteral("count").getInt();
 		}
-		
+		model.close();
 		return size;
 	}
 	
