@@ -670,8 +670,12 @@ class VirtLoader implements Loader {
 		while(results.hasNext()){
 			QuerySolution rs = results.next();
 			String existingDiachronicDatasetURI = rs.get("diachronicDataset").toString();
-			if(!existingDiachronicDatasetURI.equals(diachronicDatasetURI)) 
-			diachronicDatasetURI = existingDiachronicDatasetURI;
+			
+			if(!existingDiachronicDatasetURI.equals(diachronicDatasetURI) && !diachronicDatasetURI.equals("")){ 				
+				DictionaryService dict = StoreFactory.createDictionaryService();
+				if(null != dict.getDiachronicDataset(existingDiachronicDatasetURI))
+					diachronicDatasetURI = existingDiachronicDatasetURI;													
+			}
 		}
 		vqe.close();
 		model.close();
