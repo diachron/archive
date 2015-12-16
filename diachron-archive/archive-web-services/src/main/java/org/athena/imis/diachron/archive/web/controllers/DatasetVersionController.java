@@ -96,6 +96,10 @@ public class DatasetVersionController {
 	        	        	// Process the input stream
 	        	        	if (diachronicDatasetURI != null) {
 	        	        		logger.info("loading DatasetVersion started");
+	        	        		if(rdfFormat == null){
+	        	        			if(item.getName().contains(".ttl"))
+	        	        				rdfFormat = "TURTLE";
+	        	        		}
 	        	        		String res = dataStatement.loadData(stream, diachronicDatasetURI, rdfFormat, versionNumber);	        	        		
 	        	        		logger.info("loading DatasetVersion finished");
 	        	        		resp.setData(res);
