@@ -612,8 +612,18 @@ public class DiachronQuery extends Query {
       					  		else{
       					  			
       					  			String rsURI = dict.getDataset(atVersionURI.getURI()).getRecordSet().getId().toString();
+      					  			String ssURI = null; 
+      					  			if( !getSchemaDisabled() && dict.getDataset(atVersionURI.getURI()).getSchemaSet() != null){
+      					  				ssURI = dict.getDataset(atVersionURI.getURI()).getSchemaSet().getId().toString();      					  			
+      					  				ElementUnion ssrs = new ElementUnion();
+      					  				ssrs.addElement(new ElementNamedGraph(NodeFactory.createURI(rsURI), pattern));      					  			
+      					  				ssrs.addElement(new ElementNamedGraph(NodeFactory.createURI(ssURI), pattern));      					  			
+      					  				fakeMatGroup.addElement(ssrs);	
+      					  			}
+      					  			else{      					  				
+      					  				fakeMatGroup.addElement(new ElementNamedGraph(NodeFactory.createURI(rsURI), pattern));
+      					  			}
       					  			
-      					  			fakeMatGroup.addElement(new ElementNamedGraph(NodeFactory.createURI(rsURI), pattern));
       					  			
       					  		}
       					  			
@@ -633,6 +643,7 @@ public class DiachronQuery extends Query {
     	  					  		List<Dataset> nonMaterializedList ;
 
     	  					  		ExprList inlist = new ExprList();
+    	  					  		ExprList inlist_ss = new ExprList();
 
     		  					  	for(Dataset dataset : list){
 
@@ -658,12 +669,15 @@ public class DiachronQuery extends Query {
     	  					  			}
     	  					  			else{
 
-    		  					  			inlist.add(ExprUtils.nodeToExpr(NodeFactory.createURI(dataset.getRecordSet().getId().toString())));			  					  			  					  					  					  								  			
+    		  					  			inlist.add(ExprUtils.nodeToExpr(NodeFactory.createURI(dataset.getRecordSet().getId().toString())));
+    		  					  			
+    		  					  			if(!getSchemaDisabled() && dataset.getSchemaSet() != null)
+    		  					  				inlist_ss.add(ExprUtils.nodeToExpr(NodeFactory.createURI(dataset.getSchemaSet().getId().toString())));
 
     	  					  			}
 
     	  					  		}
-
+    		  					  	inlist.addAll(inlist_ss);
     		  					  if(!inlist.isEmpty()){
 
     		  						  String var_full_mat_uri = DiachronQueryUtils.getNextVariable();
@@ -673,11 +687,11 @@ public class DiachronQuery extends Query {
     			  					  ElementFilter filter = new ElementFilter(e);
 
     			  					  Triple dictionaryTriple = new Triple(atVersionURI, NodeFactory.createURI(DiachronOntology.hasRecordSet.getURI()), NodeFactory.createVariable(var_full_mat_uri)); 	
-
+    			  					      			  					  
     			  					  ElementGroup fullDatasets = new ElementGroup();
 
     			  					  ElementTriplesBlock dictBlock = new ElementTriplesBlock();
-
+    			  					      			  					      			  					      			  					  
     			  					  dictBlock.addTriple(dictionaryTriple);
 
     			  					  if(diachronicDataset.isVariable()){
@@ -1340,6 +1354,10 @@ public class DiachronQuery extends Query {
     		   		    		   		
 					String rsURI = dict.getDataset(dataset.getLastFullyMaterialized()).getRecordSet().getId();
 					
+					String ssURI = null;
+					if(!getSchemaDisabled() && dict.getDataset(dataset.getLastFullyMaterialized()).getSchemaSet() != null)
+						ssURI = dict.getDataset(dataset.getLastFullyMaterialized()).getSchemaSet().getId();
+					
 					DiachronQuery subQuery = new DiachronQuery();
 					
 					SPARQLParser parser = new DiachronParserSPARQL11();
@@ -1356,8 +1374,9 @@ public class DiachronQuery extends Query {
 					qs += "WHERE " + inputPattern.toString().replaceAll("\\. \\.", "\\. ");*/				
 					
 					String qs = " SELECT DISTINCT * " 
-							+ "FROM <"+rsURI+"> "
-							+ "FROM <"+matMap.get(dataset)[0]+"> "
+							+ "FROM <"+rsURI+"> ";
+					if(ssURI != null) qs += "FROM <"+ssURI+"> ";
+					qs += "FROM <"+matMap.get(dataset)[0]+"> "
 							+ "WHERE " + inputPattern.toString().replaceAll("\\. \\.", "\\. ");	
 					
 					subQuery = (DiachronQuery) parser.parse( subQuery, qs);
@@ -1585,13 +1604,20 @@ public class DiachronQuery extends Query {
     	   
     	   for(Dataset dataset : matMap.keySet()){
 					
-					String rsURI = dict.getDataset(dataset.getLastFullyMaterialized()).getRecordSet().getId();  					  					
+					String rsURI = dict.getDataset(dataset.getLastFullyMaterialized()).getRecordSet().getId();
+					
+					String ssURI = null;
+					if(!getSchemaDisabled() && dict.getDataset(dataset.getLastFullyMaterialized()).getSchemaSet() !=null)
+					
+					ssURI = dict.getDataset(dataset.getLastFullyMaterialized()).getSchemaSet().getId();
 					
 					DiachronQuery subQuery = new DiachronQuery();
 					
 					SPARQLParser parser = new DiachronParserSPARQL11();
-			
-					subQuery = (DiachronQuery) parser.parse(subQuery, " SELECT DISTINCT * FROM <"+rsURI+"> FROM <"+matMap.get(dataset)[0]+"> WHERE " + inputPattern.toString().replaceAll("\\. \\.", "\\. "));  					  			
+					String subQString = " SELECT DISTINCT * FROM <"+rsURI+"> ";
+					if(ssURI != null) subQString += "FROM <"+ssURI+"> ";
+					subQString += "FROM <"+matMap.get(dataset)[0]+"> WHERE " + inputPattern.toString().replaceAll("\\. \\.", "\\. ");
+					subQuery = (DiachronQuery) parser.parse(subQuery, subQString);  					  			
 					
 					ElementSubQuery validGraphs = new ElementSubQuery(subQuery);  					  					  					  					
 					
