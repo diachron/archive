@@ -87,10 +87,10 @@ public class StorageOptimizer {
 	public double computeSizeScore(){
 		
 		double score = -1.0;
-		double recordDensity = numberOfRecordAttributes/numberOfRecords;
-		double subjectDensity = numberOfSubjects/numberOfRecordAttributes;
-		double objectDensity = numberOfObjects/numberOfSubjects;
-		double predicateDensity = numberOfPredicates/numberOfRecords;
+		double recordDensity = numberOfRecords == 0 ? 0 : numberOfRecordAttributes/numberOfRecords;
+		double subjectDensity = numberOfRecordAttributes == 0 ? 0 : numberOfSubjects/numberOfRecordAttributes;
+		double objectDensity = numberOfSubjects == 0 ? 0 : numberOfObjects/numberOfSubjects;
+		double predicateDensity = numberOfRecords == 0 ? 0 : numberOfPredicates/numberOfRecords;
 		//score = recordDensity + objectDensity + predicateDensity + subjectDensity;
 		score = recordDensity*0.5 + objectDensity*0.3 + predicateDensity*0.2;
 		

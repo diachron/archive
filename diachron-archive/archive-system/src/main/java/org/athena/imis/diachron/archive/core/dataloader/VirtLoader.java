@@ -121,6 +121,8 @@ class VirtLoader implements Loader {
 		
 	    try {
 	    	//TODO this is the only virtuoso dependent method, move to other class 
+	    	
+	    	System.out.println("format: " + format);
 	    	bulkLoadRDFDataToGraph(stream, tempGraph, format);
 	    	
 	    	//split the dataset into the corresponding named graphs
@@ -134,6 +136,9 @@ class VirtLoader implements Loader {
 	    	else{
 	    		fullyMaterialized = false;	    		
 	    	}
+	    	System.out.println("Temp graph: " + tempGraph);
+	    	System.out.println("Is fully materialized: " + fullyMaterialized);
+	    	
 	    	datasetURI = splitDataset(tempGraph, diachronicDatasetURI, versionNumber, fullyMaterialized);
 			//add the new dataset to the cache
 			/*DictionaryService dictService = StoreFactory.createDictionaryService();
@@ -354,7 +359,7 @@ class VirtLoader implements Loader {
 			
 		}
 		vqe.close();	
-		dictGraph.close();
+		
 		query = "SELECT DISTINCT ?ss FROM <"+tempGraph+"> WHERE {?ss a <"+DiachronOntology.schemaSet+">}";
 		vqe = QueryExecutionFactory.create (query, model);
 		results = vqe.execSelect();
@@ -366,7 +371,7 @@ class VirtLoader implements Loader {
 			dict.addSchemaSet(dictGraph, schemaSet.toString(), datasetURI);
 		}
 		vqe.close();		
-		
+		dictGraph.close();
 		
 						
 		insertChangeSetTriples(model, tempGraph);		
@@ -432,23 +437,46 @@ class VirtLoader implements Loader {
 	 */
 	private static void insertSchemaSetTriples(Graph graph, String schemaSet, String tempGraph){
 		
-		String query = "INSERT INTO <"+schemaSet.toString()+"> {" +
+		
+		/*Graph graph1 = StoreConnection.getGraph(schemaSet);
+		GraphStore gs = GraphStoreFactory.create(graph1);
+		gs.addGraph(NodeFactory.createURI(schemaSet.toString()), graph1);
+		gs.addGraph(NodeFactory.createURI(tempGraph.toString()), graph1);*/
+		
+		String query = "INSERT { GRAPH <"+schemaSet.toString()+"> {" +
 							"<"+schemaSet.toString()+"> ?p ?o" +
-						"} FROM <"+tempGraph+"> WHERE " +
-								"{<"+schemaSet.toString()+"> ?p ?o}";
-		UpdateAction.parseExecute( query, graph);
-		
-		query = "INSERT INTO <"+schemaSet.toString()+"> {" +
+						"}} WHERE { GRAPH <"+tempGraph+"> " +
+								"{<"+schemaSet.toString()+"> ?p ?o}"										
+										+ "}";
+		//UpdateAction.parseExecute( query, gs);
+		VirtGraph virt = StoreConnection.getVirtGraph();
+		VirtuosoUpdateRequest vur = VirtuosoUpdateFactory.create(query, virt);
+		vur.exec();
+		query = "INSERT {GRAPH <"+schemaSet.toString()+"> {" +
 				"?o ?p2 ?o2" +
-			"} FROM <"+tempGraph+"> WHERE " +
-					"{<"+schemaSet.toString()+"> ?p ?o . ?o ?p2 ?o2}";
-		UpdateAction.parseExecute( query, graph);
-		
-		query = "INSERT INTO <"+schemaSet.toString()+"> {" +
+			"}} WHERE { GRAPH <"+tempGraph+"> " +
+					"{<"+schemaSet.toString()+"> ?p ?o . ?o ?p2 ?o2}"							
+							+ "}";
+		//UpdateAction.parseExecute( query, gs);
+		vur = VirtuosoUpdateFactory.create(query, virt);
+		vur.exec();
+				
+		query = "INSERT {GRAPH <"+schemaSet.toString()+"> {" +
 				"?o ?p3 ?o3" +
-			"} FROM <"+tempGraph+"> WHERE " +
-					"{<"+schemaSet.toString()+"> ?p1 [ ?p2 ?o ]. ?o ?p3 ?o3.}";
-		UpdateAction.parseExecute( query, graph);
+			"}} WHERE {GRAPH <"+tempGraph+"> " +
+					"{<"+schemaSet.toString()+"> ?p1 [ ?p2 ?o ]. "
+							+ "?o ?p3 ?o3. "
+							+ "?s ?p4 ?o3. "
+							+ "?s ?p5 ?o5"							
+							+ "}"
+					+ "}";
+		/*UpdateAction.parseExecute( query, gs);
+		graph1.close();
+		gs.close();*/
+		
+		vur = VirtuosoUpdateFactory.create(query, virt);
+		vur.exec();
+		virt.close();
 	}
 	
 	/**
@@ -629,13 +657,13 @@ class VirtLoader implements Loader {
 				DictionaryService dict = StoreFactory.createDictionaryService();
 				if(null != dict.getDiachronicDataset(existingDiachronicDatasetURI)){
 					diachronicDatasetURI = existingDiachronicDatasetURI;
-					System.out.println("Diachronic URI in the file already existed in the cache.");
+					//System.out.println("Diachronic URI in the file already existed in the cache.");
 				}
-				System.out.println("Diachronic URI param: " + diachronicDatasetURI);
-				if(dict.getDiachronicDataset(diachronicDatasetURI) == null ){
+//				System.out.println("Diachronic URI param: " + diachronicDatasetURI);
+				/*if(dict.getDiachronicDataset(diachronicDatasetURI) == null ){
 					System.out.println("Diachronic URI null (not in cache)");
 					
-				}
+				}*/
 			}
 		}
 		
