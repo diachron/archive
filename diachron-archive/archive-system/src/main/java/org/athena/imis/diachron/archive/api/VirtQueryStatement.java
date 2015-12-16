@@ -9,6 +9,7 @@ import virtuoso.jena.driver.VirtGraph;
 import virtuoso.jena.driver.VirtuosoQueryExecution;
 import virtuoso.jena.driver.VirtuosoQueryExecutionFactory;
 
+import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.query.ResultSetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -42,7 +43,7 @@ class VirtQueryStatement implements QueryStatement {
 		if(queryType.equals("SELECT")){	
 		
 			// DiachronQuery is extending com.hp.hpl.jena.query.Query
-			
+			long start = System.nanoTime();
 			DiachronQuery dq = new DiachronQuery();
 			
 			SPARQLParser parser = new DiachronParserSPARQL11();
@@ -51,8 +52,14 @@ class VirtQueryStatement implements QueryStatement {
 			
 			String serializedQuery = dq.serialize().replaceAll("\\. \\.", "\\. ");
 			
+			long elapsed = System.nanoTime() - start;
 			System.out.println(serializedQuery);
+			/*System.out.println("elapsed time: " + elapsed);
+			start = System.nanoTime();
 			
+			com.hp.hpl.jena.query.Query qq = QueryFactory.create(serializedQuery);
+			elapsed = System.nanoTime() - start;
+			System.out.println("original sparql elapsed time: " + elapsed);*/
 			VirtuosoQueryExecution vqe = VirtuosoQueryExecutionFactory.create (serializedQuery, graph);
 		    
 			ResultSet results = vqe.execSelect();
