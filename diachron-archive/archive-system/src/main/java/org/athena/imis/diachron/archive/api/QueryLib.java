@@ -146,16 +146,22 @@ public class QueryLib {
 		QueryStatement query = StatementFactory.createQueryStatement();
 		String queryString = "SELECT ?change ?p ?o FROM <"+changeSet+"> WHERE {";
 		if(!changeType.equals("")){
-			queryString+="?change a <"+changeType+"> . ";			
-			for(String[] param : parameters){
-				String param1 = param[1];;
-				try {
-			        param1 = "<"+new URL(param1)+">";
-			    } catch (Exception e1) {
-			        param1 = "\""+param1+"\"";
-			    }
-				queryString+="?change <"+param[0]+"> [<"+DiachronOntology.paramValue+"> "+param1+"] . "; 
-			}			
+			queryString+="?change a <"+changeType+"> . ";	
+			if(parameters != null){
+				for(String[] param : parameters){
+					if(param == null || param.length < 2) continue;
+					String param1 = null;				
+						try {
+						param1 = param[1];
+				        param1 = "<"+new URL(param1)+">";
+				    } catch (Exception e1) {
+				        param1 = "\""+param1+"\"";
+				    
+					}
+					queryString+="?change <"+param[0]+"> [<"+DiachronOntology.paramValue+"> "+param1+"] . "; 
+				}	
+			}
+					
 		}
 		queryString+="?change ?p ?o . }";
 		System.out.println(queryString);

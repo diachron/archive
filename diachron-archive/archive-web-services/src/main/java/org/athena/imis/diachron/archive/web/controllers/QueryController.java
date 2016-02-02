@@ -306,6 +306,7 @@ public class QueryController {
         	if (changeType != null) {
         		if (isForm) {
 	        		String[] params = request.getParameterValues("changeTypeParams");
+	        		if(params!=null)
 	        		for (String param: params) {
 	        			changeTypeParams.add(param.split("|"));
 	        		}
@@ -315,6 +316,7 @@ public class QueryController {
         				JSONObject obj = templateParams.getJSONObject(i);
         				if (obj.has("changeTypeParams")) {
         					JSONArray params = obj.getJSONArray("changeTypeParams");
+        					if(params!=null)
         					for (int j = 0; j<params.length(); j++) {
         						JSONObject param = params.getJSONObject(j);
         						String [] ar = {param.getString("name"),
